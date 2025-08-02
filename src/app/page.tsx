@@ -8,7 +8,7 @@ export default function Home() {
     <main className="relative w-full h-screen">
       {/* Background Image */}
       <Image
-        src="/bg.jpg"
+        src="/bg.png"
         alt="Background"
         fill
         className="object-cover w-full h-full -z-10"
