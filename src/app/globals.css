@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
+
+:root {
+  /* Background Colors */
+  --bg-white-0: #FFFFFF;
+  
+  /* Text Colors */
+  --text-main-900: #0A0D14;
+  --text-sub-500: #525866;
+  --text-white-0: #FFFFFF;
+  
+  /* Primary Colors */
+  --primary-base: #375DFB;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-inter), Inter, sans-serif;
+}
