@@ -1,18 +1,25 @@
-import './globals.css';
+import type { Metadata } from "next";
+import { Inter, Geist } from "next/font/google";
+import "./globals.css";
 
-export const metadata = {
-  title: 'Login | GNC',
-  description: 'Login page for GNC app',
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+
+export const metadata: Metadata = {
+  title: "Welcome Back - Sign In",
+  description: "Continue from where you left off",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${inter.variable} ${geist.variable} antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }
