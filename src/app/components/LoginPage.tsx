@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,15 +16,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center">
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('/background-image.png')", 
-        }}
+      <Image
+        src="/bg.png"
+        alt="Background"
+        fill
+        className="object-cover"
+        priority
       />
-      
-      {/* Overlay for better contrast */}
-      <div className="absolute inset-0 bg-black bg-opacity-20" />
+
       
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md mx-4">
