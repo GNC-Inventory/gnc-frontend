@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -8,9 +9,30 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('joseph@example.com');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation - just check if fields are not empty
+    if (!email.trim() || !password.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      setIsLoading(false);
+      // Redirect to dashboard on successful login
+      router.push('/dashboard');
+    }, 1000);
   };
 
   return (
@@ -27,10 +49,11 @@ export default function LoginPage() {
       
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div 
-          className="rounded-2xl p-8 shadow-xl"
-          style={{ backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}
-        >
+        <form onSubmit={handleSubmit}>
+          <div 
+            className="rounded-2xl p-8 shadow-xl"
+            style={{ backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}
+          >
           {/* Welcome Back Title */}
           <h1 
             className="text-center mb-2"
@@ -138,7 +161,10 @@ export default function LoginPage() {
           {/* Sign In Button */}
           <button
             type="submit"
-            className="w-full rounded-lg"
+            disabled={isLoading}
+            className={`w-full rounded-lg transition-opacity ${
+              isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
+            }`}
             style={{
               height: '40px',
               padding: '10px',
@@ -156,10 +182,11 @@ export default function LoginPage() {
                 color: 'var(--text-white-0, #FFFFFF)',
               }}
             >
-              Sign in
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </span>
           </button>
         </div>
+        </form>
       </div>
     </div>
   );
