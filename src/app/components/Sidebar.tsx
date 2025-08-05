@@ -5,27 +5,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
-  CubeIcon,
-  ArrowsRightLeftIcon,
+  Square3Stack3DIcon,
+  ClockIcon,
   ArrowUturnLeftIcon,
-  CreditCardIcon,
-  ArrowPathIcon,
+  BanknotesIcon,
+  ArrowsRightLeftIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon,
+  LifebuoyIcon,
 } from '@heroicons/react/24/outline';
 
 const mainMenuItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Products', href: '/products', icon: CubeIcon },
-  { name: 'Transactions', href: '/transactions', icon: ArrowsRightLeftIcon },
+  { name: 'Products', href: '/products', icon: Square3Stack3DIcon },
+  { name: 'Transactions', href: '/transactions', icon: ClockIcon },
   { name: 'Returns', href: '/returns', icon: ArrowUturnLeftIcon },
-  { name: 'Payments', href: '/payments', icon: CreditCardIcon },
-  { name: 'Exchange', href: '/exchange', icon: ArrowPathIcon },
+  { name: 'Payments', href: '/payments', icon: BanknotesIcon },
+  { name: 'Exchange', href: '/exchange', icon: ArrowsRightLeftIcon },
 ];
 
 const otherMenuItems = [
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-  { name: 'Support', href: '/support', icon: QuestionMarkCircleIcon },
+  { name: 'Support', href: '/support', icon: LifebuoyIcon },
 ];
 
 export default function Sidebar() {
@@ -105,15 +105,18 @@ export default function Sidebar() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
                       isActive
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                        ? 'bg-blue-600 text-white'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
+                    {isActive && (
+                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
+                    )}
                     <item.icon 
                       className={`w-5 h-5 ${
-                        isActive ? 'text-blue-700' : 'text-gray-400'
+                        isActive ? 'text-white' : 'text-gray-400'
                       }`} 
                     />
                     <span
@@ -156,15 +159,18 @@ export default function Sidebar() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
                       isActive
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                        ? 'bg-blue-600 text-white'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
+                    {isActive && (
+                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
+                    )}
                     <item.icon 
                       className={`w-5 h-5 ${
-                        isActive ? 'text-blue-700' : 'text-gray-400'
+                        isActive ? 'text-white' : 'text-gray-400'
                       }`} 
                     />
                     <span
