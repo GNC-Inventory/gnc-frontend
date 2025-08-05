@@ -3,29 +3,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  HomeIcon,
-  Square3Stack3DIcon,
-  ClockIcon,
-  ArrowUturnLeftIcon,
-  BanknotesIcon,
-  ArrowsRightLeftIcon,
-  Cog6ToothIcon,
-  LifebuoyIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const mainMenuItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Products', href: '/products', icon: Square3Stack3DIcon },
-  { name: 'Transactions', href: '/transactions', icon: ClockIcon },
-  { name: 'Returns', href: '/returns', icon: ArrowUturnLeftIcon },
-  { name: 'Payments', href: '/payments', icon: BanknotesIcon },
-  { name: 'Exchange', href: '/exchange', icon: ArrowsRightLeftIcon },
+  { name: 'Dashboard', href: '/dashboard', iconPath: '/icons/dashboard.png' },
+  { name: 'Products', href: '/products', iconPath: '/icons/products.png' },
+  { name: 'Transactions', href: '/transactions', iconPath: '/icons/transactions.png' },
+  { name: 'Returns', href: '/returns', iconPath: '/icons/returns.png' },
+  { name: 'Payments', href: '/payments', iconPath: '/icons/payments.png' },
+  { name: 'Exchange', href: '/exchange', iconPath: '/icons/exchange.png' },
 ];
 
 const otherMenuItems = [
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-  { name: 'Support', href: '/support', icon: LifebuoyIcon },
+  { name: 'Settings', href: '/settings', iconPath: '/icons/settings.png' },
+  { name: 'Support', href: '/support', iconPath: '/icons/support.png' },
 ];
 
 export default function Sidebar() {
@@ -105,31 +96,39 @@ export default function Sidebar() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 relative">
+                        <Image
+                          src={item.iconPath}
+                          alt={`${item.name} icon`}
+                          width={20}
+                          height={20}
+                          className={`${
+                            isActive ? 'opacity-100' : 'opacity-60'
+                          }`}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontWeight: 500,
+                          fontSize: '14px',
+                          lineHeight: '20px',
+                          letterSpacing: '-0.6%',
+                        }}
+                      >
+                        {item.name}
+                      </span>
+                    </div>
                     {isActive && (
-                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
+                      <ChevronRightIcon className="w-4 h-4 text-blue-700" />
                     )}
-                    <item.icon 
-                      className={`w-5 h-5 ${
-                        isActive ? 'text-white' : 'text-gray-400'
-                      }`} 
-                    />
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        letterSpacing: '-0.6%',
-                      }}
-                    >
-                      {item.name}
-                    </span>
                   </Link>
                 </li>
               );
@@ -159,31 +158,39 @@ export default function Sidebar() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 relative">
+                        <Image
+                          src={item.iconPath}
+                          alt={`${item.name} icon`}
+                          width={20}
+                          height={20}
+                          className={`${
+                            isActive ? 'opacity-100' : 'opacity-60'
+                          }`}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontWeight: 500,
+                          fontSize: '14px',
+                          lineHeight: '20px',
+                          letterSpacing: '-0.6%',
+                        }}
+                      >
+                        {item.name}
+                      </span>
+                    </div>
                     {isActive && (
-                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
+                      <ChevronRightIcon className="w-4 h-4 text-blue-700" />
                     )}
-                    <item.icon 
-                      className={`w-5 h-5 ${
-                        isActive ? 'text-white' : 'text-gray-400'
-                      }`} 
-                    />
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        letterSpacing: '-0.6%',
-                      }}
-                    >
-                      {item.name}
-                    </span>
                   </Link>
                 </li>
               );
