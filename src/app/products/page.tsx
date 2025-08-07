@@ -203,7 +203,7 @@ export default function ProductsPage() {
               {/* Product Name */}
               <div className="px-2 mb-3">
                 <h3 
-                  className="text-center"
+                  className="text-left"
                   style={{
                     fontFamily: 'var(--font-inter), Inter, sans-serif',
                     fontWeight: 500,
@@ -220,7 +220,7 @@ export default function ProductsPage() {
               <div className="px-2">
                 <button
                   onClick={() => handleSelectProduct(product.id)}
-                  className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
                   style={{
                     width: '57px',
                     height: '28px',
