@@ -46,9 +46,17 @@ export default function ProductDetailModal({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Custom overlay with blur to match Figma exactly */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className="fixed z-40"
+        style={{
+          top: 0,
+          left: '256px', // Start after sidebar (sidebar width is 256px)  
+          right: 0,
+          bottom: 0,
+          background: '#0A0D1499',
+          backdropFilter: 'blur(2px)',
+        }}
         onClick={onClose}
       ></div>
 
@@ -57,9 +65,10 @@ export default function ProductDetailModal({
         className="fixed bg-white z-50"
         style={{
           width: '1104px',
-          height: '760px',
           top: '140px',
+          bottom: '0px', // Extend to bottom of screen
           left: '50%',
+          marginLeft: '128px', // Half of sidebar width (256px / 2) to account for sidebar
           transform: 'translateX(-50%)',
           paddingTop: '24px',
           paddingRight: '32px',
