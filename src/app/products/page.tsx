@@ -112,8 +112,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Container */}
-      <div className="bg-white rounded-[32px] p-8 mx-auto transition-all duration-300" 
-           style={{ width: showCart ? 'calc(100% - 352px)' : '95%', minHeight: '728px' }}>
+      <div className="bg-white rounded-[32px] p-8 mx-auto" 
+           style={{ width: '95%', minHeight: '728px' }}>
         
         {/* Header */}
         <div className="mb-4">
