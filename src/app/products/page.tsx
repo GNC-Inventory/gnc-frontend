@@ -115,32 +115,34 @@ export default function ProductsPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Search Bar */}
-      <div 
-        className="mb-6 bg-white rounded-lg flex items-center"
-        style={{
-          width: '540px',
-          height: '36px',
-          borderRadius: '8px',
-          gap: '8px',
-          padding: '8px',
-        }}
-      >
-        <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search items by name or SKU or category"
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="flex-1 outline-none bg-transparent"
+      <div className="mb-6 mx-auto" style={{ width: '95%' }}>
+        <div 
+          className="bg-white rounded-lg flex items-center"
           style={{
-            fontFamily: 'Sora, sans-serif',
-            fontWeight: 400,
-            fontSize: '14px',
-            lineHeight: '20px',
-            letterSpacing: '-0.6%',
-            color: 'var(--text-sub-500, #525866)',
+            width: '540px',
+            height: '36px',
+            borderRadius: '8px',
+            gap: '8px',
+            padding: '8px',
           }}
-        />
+        >
+          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search items by name or SKU or category"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="flex-1 outline-none bg-transparent"
+            style={{
+              fontFamily: 'Sora, sans-serif',
+              fontWeight: 400,
+              fontSize: '14px',
+              lineHeight: '20px',
+              letterSpacing: '-0.6%',
+              color: 'var(--text-sub-500, #525866)',
+            }}
+          />
+        </div>
       </div>
 
       {/* Products Container */}
