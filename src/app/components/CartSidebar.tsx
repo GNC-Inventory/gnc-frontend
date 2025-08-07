@@ -33,7 +33,7 @@ export default function CartSidebar({
 
   return (
     <div 
-      className="fixed bg-white rounded-l-[32px] shadow-lg"
+      className="fixed bg-white shadow-lg z-50"
       style={{
         width: '352px',
         height: '716px',
