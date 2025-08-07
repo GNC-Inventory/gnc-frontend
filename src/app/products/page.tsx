@@ -220,8 +220,9 @@ export default function ProductsPage() {
               <div className="px-2">
                 <button
                   onClick={() => handleSelectProduct(product.id)}
-                  className="w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                   style={{
+                    width: '57px',
                     height: '28px',
                     borderRadius: '8px',
                     gap: '2px',
