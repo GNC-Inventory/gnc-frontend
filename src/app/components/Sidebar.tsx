@@ -19,8 +19,27 @@ const otherMenuItems = [
   { name: 'Support', href: '/support', iconPath: '/icons/support.png' },
 ];
 
+// Company context based on current page
+const getCompanyContext = (pathname: string) => {
+  if (pathname.startsWith('/products')) {
+    return {
+      logoPath: '/apex-logo.png', // You'll provide this
+      companyName: 'APEX',
+      department: 'Employee'
+    };
+  }
+  
+  // Default to GNC context
+  return {
+    logoPath: '/logo.png',
+    companyName: 'GNC',
+    department: 'Sales'
+  };
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const companyContext = getCompanyContext(pathname);
 
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
@@ -30,15 +49,15 @@ export default function Sidebar() {
           {/* Logo */}
           <div className="w-10 h-10 relative">
             <Image
-              src="/logo.png" // Replace with your actual logo path
-              alt="GNC Logo"
+              src={companyContext.logoPath}
+              alt={`${companyContext.companyName} Logo`}
               width={40}
               height={40}
               className="rounded-full"
             />
           </div>
           
-          {/* Company Name and Sales */}
+          {/* Company Name and Department */}
           <div>
             <h1 
               className="uppercase"
@@ -51,7 +70,7 @@ export default function Sidebar() {
                 color: 'var(--text-main-900, #0A0D14)',
               }}
             >
-              GNC
+              {companyContext.companyName}
             </h1>
             <p 
               style={{
@@ -63,7 +82,7 @@ export default function Sidebar() {
                 color: 'var(--text-sub-500, #525866)',
               }}
             >
-              Sales
+              {companyContext.department}
             </p>
           </div>
         </div>
@@ -205,7 +224,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 relative">
             <Image
               src="/user-avatar.jpg" // Replace with actual user avatar
-              alt="Joseph"
+              alt="Arthur Taylor"
               width={32}
               height={32}
               className="rounded-full object-cover"
@@ -222,7 +241,7 @@ export default function Sidebar() {
                 color: 'var(--text-main-900, #0A0D14)',
               }}
             >
-              Joseph
+              Arthur Taylor
             </p>
             <p 
               className="truncate"
@@ -234,7 +253,7 @@ export default function Sidebar() {
                 color: 'var(--text-sub-500, #525866)',
               }}
             >
-              joseph@gnc.com
+              arthur@allignul.com
             </p>
           </div>
         </div>
