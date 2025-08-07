@@ -113,7 +113,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       {/* Search Bar */}
       <div 
         className="mb-6 bg-white rounded-lg flex items-center"
@@ -145,9 +145,9 @@ export default function ProductsPage() {
 
       {/* Products Container */}
       <div 
-        className="bg-white rounded-[32px] p-6"
+        className="bg-white rounded-[32px] p-8 mx-auto"
         style={{
-          width: '1104px',
+          width: '95%',
           minHeight: '728px',
         }}
       >
@@ -171,7 +171,7 @@ export default function ProductsPage() {
         <div className="border-t border-gray-200 mb-6"></div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-5 gap-6">
+        <div className="grid grid-cols-5 gap-8 justify-items-center">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
