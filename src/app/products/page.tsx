@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import ProductDetailModal from '../components/ProductDetailModal';
 
 // Mock products data structure
 interface Product {
@@ -11,6 +12,10 @@ interface Product {
   image: string;
   category: string;
   sku: string;
+  basePrice?: number;
+  types?: string[];
+  brands?: string[];
+  sizes?: string[];
 }
 
 const mockProducts: Product[] = [
@@ -19,76 +24,118 @@ const mockProducts: Product[] = [
     name: 'Generator',
     image: '/products/generator.png',
     category: 'Electronics',
-    sku: 'GEN001'
+    sku: 'GEN001',
+    basePrice: 150000,
+    types: ['Portable', 'Gas-powered'],
+    brands: ['Honda', 'Yamaha'],
+    sizes: ['Small', 'Medium']
   },
   {
     id: '2',
     name: 'Air Conditioner',
     image: '/products/air-conditioner.png',
     category: 'Electronics',
-    sku: 'AC001'
+    sku: 'AC001',
+    basePrice: 180000,
+    types: ['Split', 'Window'],
+    brands: ['LG', 'Samsung'],
+    sizes: ['1HP', '1.5HP', '2HP']
   },
   {
     id: '3',
     name: 'Television',
     image: '/products/television.png',
     category: 'Electronics',
-    sku: 'TV001'
+    sku: 'TV001',
+    basePrice: 120000,
+    types: ['LED', 'Smart TV'],
+    brands: ['Samsung', 'LG'],
+    sizes: ['32"', '43"', '55"']
   },
   {
     id: '4',
     name: 'Theatre System',
     image: '/products/theatre-system.png',
     category: 'Electronics',
-    sku: 'TS001'
+    sku: 'TS001',
+    basePrice: 95000,
+    types: ['5.1', 'Bluetooth'],
+    brands: ['Sony', 'JBL'],
+    sizes: ['Compact', 'Full-size']
   },
   {
     id: '5',
     name: 'Washing Machine',
     image: '/products/washing-machine.png',
     category: 'Appliances',
-    sku: 'WM001'
+    sku: 'WM001',
+    basePrice: 200000,
+    types: ['Top-load', 'Front-load'],
+    brands: ['Bosch', 'LG'],
+    sizes: ['7kg', '8kg', '10kg']
   },
   {
     id: '6',
     name: 'Drying Machine',
     image: '/products/drying-machine.png',
     category: 'Appliances',
-    sku: 'DM001'
+    sku: 'DM001',
+    basePrice: 180000,
+    types: ['Condenser', 'Vented'],
+    brands: ['Bosch', 'Samsung'],
+    sizes: ['6kg', '8kg', '9kg']
   },
   {
     id: '7',
     name: 'Solar Inverter',
     image: '/products/solar-inverter.png',
     category: 'Electronics',
-    sku: 'SI001'
+    sku: 'SI001',
+    basePrice: 85000,
+    types: ['Pure Sine Wave', 'Modified'],
+    brands: ['Luminous', 'Sukam'],
+    sizes: ['1KVA', '2KVA', '5KVA']
   },
   {
     id: '8',
     name: 'Fan',
     image: '/products/fan.png',
     category: 'Appliances',
-    sku: 'FAN001'
+    sku: 'FAN001',
+    basePrice: 25000,
+    types: ['Standing fan', 'Table-top'],
+    brands: ['QASA', 'OX', 'Lontor', 'Oraimo', 'Soiltech'],
+    sizes: ['13"', '14"', '15"', '16"', '17"', '18"', '19"', '20"', '21"', '22"', '23"']
   },
   {
     id: '9',
     name: 'Refrigerator',
     image: '/products/refrigerator.png',
     category: 'Appliances',
-    sku: 'REF001'
+    sku: 'REF001',
+    basePrice: 220000,
+    types: ['Single door', 'Double door'],
+    brands: ['Samsung', 'LG'],
+    sizes: ['200L', '350L', '500L']
   },
   {
     id: '10',
     name: 'Solar Panel',
     image: '/products/solar-panel.png',
     category: 'Electronics',
-    sku: 'SP001'
+    sku: 'SP001',
+    basePrice: 45000,
+    types: ['Monocrystalline', 'Polycrystalline'],
+    brands: ['Jinko', 'Canadian Solar'],
+    sizes: ['100W', '200W', '300W']
   }
 ];
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState(mockProducts);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -108,8 +155,16 @@ export default function ProductsPage() {
   };
 
   const handleSelectProduct = (productId: string) => {
-    console.log('Selected product:', productId);
-    // Handle product selection logic here
+    const product = mockProducts.find(p => p.id === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
   };
 
   return (
@@ -264,6 +319,13 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
