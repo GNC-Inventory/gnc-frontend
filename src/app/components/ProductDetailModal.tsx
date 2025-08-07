@@ -20,23 +20,21 @@ interface ProductDetailModalProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
+  onAddToCart?: (product: Product, price: number) => void;
 }
 
 export default function ProductDetailModal({ 
   product, 
   isOpen, 
-  onClose 
+  onClose,
+  onAddToCart 
 }: ProductDetailModalProps) {
   const [price, setPrice] = useState('');
 
   const handleAddItem = () => {
-    if (product && price) {
-      console.log('Adding item:', {
-        product: product.name,
-        price: parseFloat(price),
-      });
-      // Handle add to cart logic here
-      onClose();
+    if (product && price && onAddToCart) {
+      onAddToCart(product, parseFloat(price));
+      setPrice(''); // Reset price after adding
     }
   };
 
