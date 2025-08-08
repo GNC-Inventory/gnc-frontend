@@ -5,6 +5,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
+import PendingSalesView from '../components/PendingSalesView';
 
 interface Product {
   id: string;
@@ -24,6 +25,13 @@ interface CartItem {
   image: string;
   price: number;
   quantity: number;
+}
+
+interface PendingSale {
+  id: string;
+  items: CartItem[];
+  total: number;
+  createdAt: Date;
 }
 
 const mockProducts: Product[] = [
@@ -46,11 +54,14 @@ export default function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
+  const [showPendingSales, setShowPendingSales] = useState(false);
 
-  // Load cart from localStorage on component mount
+  // Load cart and pending sales from localStorage on component mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     const savedShowCart = localStorage.getItem('showCart');
+    const savedPendingSales = localStorage.getItem('pendingSales');
     
     if (savedCart) {
       const parsedCart = JSON.parse(savedCart);
@@ -60,13 +71,24 @@ export default function ProductsPage() {
         setShowCart(true);
       }
     }
+
+    if (savedPendingSales) {
+      const parsedPendingSales = JSON.parse(savedPendingSales);
+      setPendingSales(parsedPendingSales);
+      
+      // Show pending sales view if there are pending sales and no active cart
+      if (parsedPendingSales.length > 0 && (!savedCart || JSON.parse(savedCart).length === 0)) {
+        setShowPendingSales(true);
+      }
+    }
   }, []);
 
-  // Save cart to localStorage whenever cartItems or showCart change
+  // Save cart and pending sales to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     localStorage.setItem('showCart', showCart.toString());
-  }, [cartItems, showCart]);
+    localStorage.setItem('pendingSales', JSON.stringify(pendingSales));
+  }, [cartItems, showCart, pendingSales]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -110,13 +132,38 @@ export default function ProductsPage() {
   };
 
   const handleCartAction = (action: 'complete' | 'hold' | 'cancel') => {
+    if (action === 'hold') {
+      // Create a new pending sale
+      const newPendingSale: PendingSale = {
+        id: `pending-${Date.now()}`,
+        items: [...cartItems],
+        total: cartItems.reduce((total, item) => total + (item.price * item.quantity), 0),
+        createdAt: new Date()
+      };
+      
+      setPendingSales(prev => [...prev, newPendingSale]);
+      setShowPendingSales(true);
+    }
+    
     console.log(`${action} action:`, cartItems);
     setCartItems([]);
     setShowCart(false);
     
-    // Clear localStorage when cart actions are performed
+    // Clear cart from localStorage
     localStorage.removeItem('cart');
     localStorage.removeItem('showCart');
+  };
+
+  const handleResumeSale = (saleId: string) => {
+    const saleToResume = pendingSales.find(sale => sale.id === saleId);
+    if (saleToResume) {
+      setCartItems(saleToResume.items);
+      setShowCart(true);
+      setShowPendingSales(false);
+      
+      // Remove the resumed sale from pending sales
+      setPendingSales(prev => prev.filter(sale => sale.id !== saleId));
+    }
   };
 
   const containerStyle = {
@@ -150,7 +197,7 @@ export default function ProductsPage() {
            marginLeft: window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 16}px` : '16px' 
          } : {}}>
       {/* Search Bar */}
-      <div className="mb-6" style={{ width: '95%' }}>
+      <div className="mb-6" style={{ width: '95%', display: showPendingSales ? 'none' : 'block' }}>
         <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
           <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
           <input
@@ -206,6 +253,14 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Pending Sales View */}
+      {showPendingSales && (
+        <PendingSalesView
+          pendingSales={pendingSales}
+          onResumeSale={handleResumeSale}
+        />
+      )}
 
       {/* Modals & Sidebar */}
       <ProductDetailModal product={selectedProduct} isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} onAddToCart={handleAddToCart} />
