@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
-import PendingSalesView from '../components/PendingSalesView';
+import CheckoutView from '../components/CheckoutView';
 
 interface Product {
   id: string;
@@ -49,55 +49,42 @@ const mockProducts: Product[] = [
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState(mockProducts);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
-  const [showPendingSales, setShowPendingSales] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
 
-  // Load cart and pending sales from localStorage on component mount
+  const filteredProducts = searchQuery.trim() 
+    ? mockProducts.filter(p => [p.name, p.sku, p.category].some(field => 
+        field.toLowerCase().includes(searchQuery.toLowerCase())))
+    : mockProducts;
+
+  const showPendingSales = pendingSales.length > 0 && cartItems.length === 0 && !showCheckout;
+
+  // Load from localStorage
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    const savedShowCart = localStorage.getItem('showCart');
-    const savedPendingSales = localStorage.getItem('pendingSales');
-    
-    if (savedCart) {
-      const parsedCart = JSON.parse(savedCart);
-      setCartItems(parsedCart);
-      
-      if (savedShowCart === 'true' && parsedCart.length > 0) {
-        setShowCart(true);
-      }
-    }
+    const loadData = (key: string) => {
+      try { return JSON.parse(localStorage.getItem(key) || '[]'); } 
+      catch { return []; }
+    };
 
-    if (savedPendingSales) {
-      const parsedPendingSales = JSON.parse(savedPendingSales);
-      setPendingSales(parsedPendingSales);
-      
-      // Show pending sales view if there are pending sales and no active cart
-      if (parsedPendingSales.length > 0 && (!savedCart || JSON.parse(savedCart).length === 0)) {
-        setShowPendingSales(true);
-      }
-    }
+    const savedCart = loadData('cart');
+    const savedPendingSales = loadData('pendingSales');
+    const savedShowCart = localStorage.getItem('showCart') === 'true';
+    
+    setCartItems(savedCart);
+    setPendingSales(savedPendingSales);
+    if (savedShowCart && savedCart.length > 0) setShowCart(true);
   }, []);
 
-  // Save cart and pending sales to localStorage whenever they change
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     localStorage.setItem('showCart', showCart.toString());
     localStorage.setItem('pendingSales', JSON.stringify(pendingSales));
   }, [cartItems, showCart, pendingSales]);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    const filtered = query.trim() 
-      ? mockProducts.filter(p => [p.name, p.sku, p.category].some(field => 
-          field.toLowerCase().includes(query.toLowerCase())))
-      : mockProducts;
-    setFilteredProducts(filtered);
-  };
 
   const handleSelectProduct = (productId: string) => {
     const product = mockProducts.find(p => p.id === productId);
@@ -109,12 +96,11 @@ export default function ProductsPage() {
 
   const handleAddToCart = (product: Product, price: number) => {
     const existingItem = cartItems.find(item => item.id === product.id);
-    if (existingItem) {
-      setCartItems(cartItems.map(item =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1, price } : item));
-    } else {
-      setCartItems([...cartItems, { id: product.id, name: product.name, image: product.image, price, quantity: 1 }]);
-    }
+    const newItems = existingItem
+      ? cartItems.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1, price } : item)
+      : [...cartItems, { id: product.id, name: product.name, image: product.image, price, quantity: 1 }];
+    
+    setCartItems(newItems);
     setShowCart(true);
     setIsModalOpen(false);
     setSelectedProduct(null);
@@ -132,199 +118,143 @@ export default function ProductsPage() {
   };
 
   const handleCartAction = (action: 'complete' | 'hold' | 'cancel') => {
+    if (action === 'complete') {
+      setShowCheckout(true);
+      setShowCart(false);
+      return;
+    }
+    
     if (action === 'hold') {
-      // Create a new pending sale
       const newPendingSale: PendingSale = {
         id: `pending-${Date.now()}`,
         items: [...cartItems],
         total: cartItems.reduce((total, item) => total + (item.price * item.quantity), 0),
         createdAt: new Date()
       };
-      
       setPendingSales(prev => [...prev, newPendingSale]);
-      setShowPendingSales(true);
     }
     
-    console.log(`${action} action:`, cartItems);
     setCartItems([]);
     setShowCart(false);
-    
-    // Clear cart from localStorage
     localStorage.removeItem('cart');
     localStorage.removeItem('showCart');
   };
 
   const handleResumeSale = (saleId: string) => {
-    const saleToResume = pendingSales.find(sale => sale.id === saleId);
-    if (saleToResume) {
-      setCartItems(saleToResume.items);
+    const sale = pendingSales.find(s => s.id === saleId);
+    if (sale) {
+      setCartItems(sale.items);
       setShowCart(true);
-      setShowPendingSales(false);
-      
-      // Remove the resumed sale from pending sales
-      setPendingSales(prev => prev.filter(sale => sale.id !== saleId));
+      setPendingSales(prev => prev.filter(s => s.id !== saleId));
     }
   };
 
-  const containerStyle = {
-    width: showCart ? '728px' : '95%',
-    height: showCart ? '716px' : 'auto',
-    minHeight: showCart ? 'auto' : '728px',
-    position: showCart ? 'fixed' : 'relative',
-    top: showCart ? '172px' : 'auto',
-    left: showCart ? (window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 304}px` : '304px') : 'auto',
-    borderRadius: '32px',
-    backgroundColor: 'var(--bg-white-0, #FFFFFF)',
-  } as const;
+  const handlePrintReceipt = (customerName: string, paymentMethod: string) => {
+    console.log('Printing receipt:', { customer: customerName, paymentMethod, items: cartItems });
+    setCartItems([]);
+    setShowCheckout(false);
+    ['cart', 'showCart'].forEach(key => localStorage.removeItem(key));
+  };
 
-  const cardStyle = (showCart: boolean) => ({
-    width: showCart ? '152px' : '192px',
-    height: showCart ? '246px' : '290px',
+  const getContainerStyle = () => {
+    const isCompact = showCart || showCheckout;
+    const offset = typeof window !== 'undefined' && window.innerWidth > 1440 ? (window.innerWidth - 1440) / 2 : 0;
+    
+    return {
+      width: isCompact ? '728px' : '95%',
+      height: isCompact ? '716px' : 'auto',
+      minHeight: isCompact ? 'auto' : '728px',
+      position: isCompact ? 'fixed' : 'relative',
+      top: isCompact ? '172px' : 'auto',
+      left: isCompact ? `${offset + 304}px` : 'auto',
+      borderRadius: '32px',
+      backgroundColor: 'var(--bg-white-0, #FFFFFF)',
+    } as const;
+  };
+
+  const getCardStyle = (isCompact: boolean) => ({
+    width: isCompact ? '152px' : '192px',
+    height: isCompact ? '246px' : '290px',
     borderRadius: '8px',
     gap: '12px',
-    paddingTop: '4px',
-    paddingRight: '4px',
-    paddingBottom: '16px',
-    paddingLeft: '4px',
+    padding: '4px 4px 16px 4px',
     backgroundColor: 'var(--bg-white-0, #FFFFFF)',
-    boxShadow: showCart ? '0px 2px 4px 0px #1B1C1D0A' : 'none',
-    border: showCart ? 'none' : '1px solid #E5E7EB',
+    boxShadow: isCompact ? '0px 2px 4px 0px #1B1C1D0A' : 'none',
+    border: isCompact ? 'none' : '1px solid #E5E7EB',
   });
 
+  const getMainStyle = () => {
+    const offset = typeof window !== 'undefined' && window.innerWidth > 1440 ? (window.innerWidth - 1440) / 2 : 0;
+    return showCart ? { marginLeft: `${offset + 16}px` } : {};
+  };
+
   return (
-    <div className={`p-8 transition-all duration-300 ${showCart ? '' : 'max-w-7xl mx-auto'} ${showCart ? 'ml-4' : ''}`} 
-         style={showCart ? { 
-           marginLeft: window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 16}px` : '16px' 
-         } : {}}>
-      {/* Search Bar - Always visible */}
-      <div className="mb-6" style={{ width: '95%' }}>
-        <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search items by name or SKU or category"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="flex-1 outline-none bg-transparent"
-            style={{ fontFamily: 'Sora, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: 'var(--text-sub-500, #525866)' }}
-          />
-        </div>
-      </div>
-
-      {/* Pending Sales View - Shows above products */}
-      {showPendingSales && (
-        <div className="mb-6">
-          <div className="flex gap-6">
-            {pendingSales.map((sale, index) => (
-              <div
-                key={sale.id}
-                className="bg-white rounded-[32px]"
-                style={{
-                  width: '258px',
-                  height: '204px',
-                  borderRadius: '32px',
-                  padding: '24px',
-                  gap: '16px',
-                  backgroundColor: 'var(--bg-white-0, #FFFFFF)',
-                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                {/* Pending Sale Title */}
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '16px',
-                    lineHeight: '24px',
-                    letterSpacing: '-1.1%',
-                    color: 'var(--text-sub-500, #525866)',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Pending sale {index + 1}
-                </h3>
-
-                {/* Items Count */}
-                <p
-                  style={{
-                    fontFamily: 'Sora, sans-serif',
-                    fontWeight: 400,
-                    fontSize: '14px',
-                    lineHeight: '20px',
-                    letterSpacing: '-0.6%',
-                    color: 'var(--text-soft-400, #868C98)',
-                    marginBottom: '16px',
-                  }}
-                >
-                  {sale.items.reduce((total, item) => total + item.quantity, 0)} item{sale.items.reduce((total, item) => total + item.quantity, 0) !== 1 ? 's' : ''}
-                </p>
-
-                {/* Total Price */}
-                <h2
-                  style={{
-                    fontFamily: 'var(--font-geist), Geist, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '32px',
-                    lineHeight: '40px',
-                    letterSpacing: '0%',
-                    color: 'var(--text-main-900, #0A0D14)',
-                    marginBottom: '16px',
-                  }}
-                >
-                  ₦ {sale.total.toLocaleString()}
-                </h2>
-
-                {/* Resume Link */}
-                <button
-                  onClick={() => handleResumeSale(sale.id)}
-                  className="w-full text-center hover:opacity-80 transition-opacity"
-                  style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    lineHeight: '20px',
-                    letterSpacing: '-0.6%',
-                    textAlign: 'center',
-                    color: 'var(--primary-base, #375DFB)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Resume
-                </button>
-              </div>
-            ))}
+    <div className={`p-8 transition-all duration-300 ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}`} style={getMainStyle()}>
+      {/* Search Bar */}
+      {!showCheckout && (
+        <div className="mb-6" style={{ width: '95%' }}>
+          <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
+            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search items by name or SKU or category"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 outline-none bg-transparent"
+              style={{ fontFamily: 'Sora, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: 'var(--text-sub-500, #525866)' }}
+            />
           </div>
         </div>
       )}
 
+      {/* Pending Sales */}
+      {showPendingSales && (
+        <div className="mb-6 flex gap-6">
+          {pendingSales.map((sale, index) => (
+            <div key={sale.id} className="bg-white rounded-[32px]" style={{ width: '258px', height: '204px', padding: '24px', boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)' }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '16px', lineHeight: '24px', letterSpacing: '-1.1%', color: '#525866', marginBottom: '8px' }}>
+                Pending sale {index + 1}
+              </h3>
+              <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#868C98', marginBottom: '16px' }}>
+                {sale.items.reduce((total, item) => total + item.quantity, 0)} item{sale.items.reduce((total, item) => total + item.quantity, 0) !== 1 ? 's' : ''}
+              </p>
+              <h2 style={{ fontFamily: 'Geist, sans-serif', fontWeight: 500, fontSize: '32px', lineHeight: '40px', color: '#0A0D14', marginBottom: '16px' }}>
+                ₦ {sale.total.toLocaleString()}
+              </h2>
+              <button onClick={() => handleResumeSale(sale.id)} className="w-full text-center hover:opacity-80 transition-opacity" 
+                      style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#375DFB', background: 'none', border: 'none', cursor: 'pointer' }}>
+                Resume
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Products Container */}
-      <div className={`bg-white rounded-[32px] p-8 ${showCart ? 'overflow-y-auto' : ''}`} style={containerStyle}>
+      <div className={`bg-white rounded-[32px] p-8 ${(showCart || showCheckout) ? 'overflow-y-auto' : ''}`} style={getContainerStyle()}>
         <div className="mb-4">
-          <h2 style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: 'var(--text-main-900, #0A0D14)' }}>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#0A0D14' }}>
             Showing items by name
           </h2>
         </div>
         <div className="border-t border-gray-200 mb-6"></div>
 
-        {/* Products Grid */}
-        <div className={`grid gap-8 justify-items-center ${showCart ? 'grid-cols-4' : 'grid-cols-5'}`}>
+        <div className={`grid gap-8 justify-items-center ${(showCart || showCheckout) ? 'grid-cols-4' : 'grid-cols-5'}`}>
           {filteredProducts.map((product) => (
-            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden" style={cardStyle(showCart)}>
-              <div className={`mb-3 flex items-center justify-center bg-gray-50 ${showCart ? 'h-32' : 'h-48'}`}>
-                <Image src={product.image} alt={product.name} width={showCart ? 120 : 160} height={showCart ? 120 : 160} className="object-contain max-h-full" />
+            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden" style={getCardStyle(showCart || showCheckout)}>
+              <div className={`mb-3 flex items-center justify-center bg-gray-50 ${(showCart || showCheckout) ? 'h-32' : 'h-48'}`}>
+                <Image src={product.image} alt={product.name} width={(showCart || showCheckout) ? 120 : 160} height={(showCart || showCheckout) ? 120 : 160} className="object-contain max-h-full" />
               </div>
               <div className="px-2 mb-3">
-                <h3 className="text-left" style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', color: 'var(--text-main-900, #0A0D14)' }}>
+                <h3 className="text-left" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', color: '#0A0D14' }}>
                   {product.name}
                 </h3>
               </div>
               <div className="px-2">
                 <button onClick={() => handleSelectProduct(product.id)} 
                         className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
-                        style={{ width: '57px', height: '28px', padding: '6px', backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}>
-                  <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 500, fontSize: '12px', lineHeight: '16px', color: 'var(--text-main-900, #0A0D14)' }}>
+                        style={{ width: '57px', height: '28px', padding: '6px', backgroundColor: '#FFFFFF' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '12px', lineHeight: '16px', color: '#0A0D14' }}>
                     Select
                   </span>
                 </button>
@@ -335,7 +265,7 @@ export default function ProductsPage() {
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
-            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'var(--text-sub-500, #525866)' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: '#525866' }}>
               No products found matching your search.
             </p>
           </div>
@@ -343,7 +273,12 @@ export default function ProductsPage() {
       </div>
 
       {/* Modals & Sidebar */}
-      <ProductDetailModal product={selectedProduct} isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} onAddToCart={handleAddToCart} />
+      <ProductDetailModal 
+        product={selectedProduct} 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} 
+        onAddToCart={handleAddToCart} 
+      />
       
       {showCart && (
         <CartSidebar
@@ -353,6 +288,14 @@ export default function ProductsPage() {
           onCompleteSale={() => handleCartAction('complete')}
           onHoldTransaction={() => handleCartAction('hold')}
           onCancel={() => handleCartAction('cancel')}
+        />
+      )}
+
+      {showCheckout && (
+        <CheckoutView
+          cartItems={cartItems}
+          onBack={() => { setShowCheckout(false); setShowCart(true); }}
+          onPrintReceipt={handlePrintReceipt}
         />
       )}
     </div>
