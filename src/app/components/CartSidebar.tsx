@@ -38,8 +38,10 @@ export default function CartSidebar({
         width: '352px',
         height: '716px',
         top: '172px',
-        right: '0px',
-        borderRadius: '32px 0 0 0',
+        left: typeof window !== 'undefined' && window.innerWidth > 1440 
+          ? `${(window.innerWidth - 1440) / 2 + 1056}px` 
+          : '1056px',
+        borderRadius: '32px',
         backgroundColor: 'var(--bg-white-0, #FFFFFF)',
       }}
     >
@@ -94,111 +96,110 @@ export default function CartSidebar({
       {/* Cart Items */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ maxHeight: '400px' }}>
         {cartItems.map((item) => (
-          <div key={item.id} className="flex items-start space-x-3">
-            {/* Quantity Box */}
-            <div 
-              className="flex items-center justify-center border border-gray-300 rounded"
-              style={{
-                width: '24px',
-                height: '20px',
-                borderRadius: '4px',
-                paddingTop: '2px',
-                paddingRight: '3px',
-                paddingBottom: '2px',
-                paddingLeft: '3px',
-              }}
-            >
-              <span 
+          <div 
+            key={item.id} 
+            className="flex items-center justify-between"
+            style={{
+              width: '304px',
+              height: '90px',
+              paddingTop: '12px',
+              paddingBottom: '12px',
+            }}
+          >
+            {/* Left Side - Quantity, Multiply, Image, Details */}
+            <div className="flex items-center space-x-3 flex-1">
+              {/* Quantity Box */}
+              <div 
+                className="flex items-center justify-center border border-gray-300 rounded"
                 style={{
-                  fontFamily: 'var(--font-inter), Inter, sans-serif',
-                  fontWeight: 500,
-                  fontSize: '10px',
-                  lineHeight: '12px',
-                  color: 'var(--text-main-900, #0A0D14)',
+                  width: '24px',
+                  height: '20px',
+                  borderRadius: '4px',
+                  paddingTop: '2px',
+                  paddingRight: '3px',
+                  paddingBottom: '2px',
+                  paddingLeft: '3px',
                 }}
               >
-                {item.quantity}
-              </span>
-            </div>
-
-            {/* Multiplication Sign */}
-            <span 
-              className="text-gray-400 mt-1"
-              style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif',
-                fontSize: '12px',
-              }}
-            >
-              ×
-            </span>
-
-            {/* Product Image */}
-            <div 
-              className="flex-shrink-0"
-              style={{
-                width: '44px',
-                height: '44px',
-              }}
-            >
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={44}
-                height={44}
-                className="object-contain rounded bg-gray-50"
-              />
-            </div>
-
-            {/* Product Details */}
-            <div className="flex-1 min-w-0">
-              <h3 
-                className="truncate"
-                style={{
-                  fontFamily: 'Sora, sans-serif',
-                  fontWeight: 400,
-                  fontSize: '14px',
-                  lineHeight: '20px',
-                  letterSpacing: '-0.6%',
-                  color: 'var(--text-main-900, #0A0D14)',
-                }}
-              >
-                {item.name}
-              </h3>
-              
-              <div className="flex items-center justify-between mt-1">
-                <div 
-                  className="rounded px-2 py-1"
+                <span 
                   style={{
-                    width: '179px',
-                    height: '24px',
-                    borderRadius: '4px',
-                    paddingTop: '4px',
-                    paddingBottom: '4px',
-                    backgroundColor: '#F9FAFB',
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '10px',
+                    lineHeight: '12px',
+                    color: 'var(--text-main-900, #0A0D14)',
                   }}
                 >
-                  <span 
-                    style={{
-                      fontFamily: 'var(--font-inter), Inter, sans-serif',
-                      fontWeight: 500,
-                      fontSize: '12px',
-                      lineHeight: '16px',
-                      color: 'var(--text-main-900, #0A0D14)',
-                    }}
-                  >
-                    ₦ {(item.price * item.quantity).toLocaleString()}
-                  </span>
-                </div>
+                  {item.quantity}
+                </span>
+              </div>
 
-                {/* Delete Button */}
-                <button
-                  onClick={() => onRemoveItem(item.id)}
-                  className="p-1 text-red-500 hover:text-red-700 transition-colors"
+              {/* Multiplication Sign */}
+              <span 
+                className="text-gray-400"
+                style={{
+                  fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  fontSize: '12px',
+                }}
+              >
+                ×
+              </span>
+
+              {/* Product Image */}
+              <div 
+                className="flex-shrink-0"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                }}
+              >
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  width={44}
+                  height={44}
+                  className="object-contain rounded bg-gray-50"
+                />
+              </div>
+
+              {/* Product Details */}
+              <div className="flex-1 min-w-0">
+                <h3 
+                  className="truncate mb-1"
+                  style={{
+                    fontFamily: 'Sora, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    letterSpacing: '-0.6%',
+                    color: 'var(--text-main-900, #0A0D14)',
+                  }}
                 >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+                  {item.name}
+                </h3>
+                
+                <div 
+                  className="text-sm"
+                  style={{
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    color: 'var(--text-main-900, #0A0D14)',
+                  }}
+                >
+                  ₦ {(item.price * item.quantity).toLocaleString()}
+                </div>
               </div>
             </div>
+
+            {/* Right Side - Delete Button */}
+            <button
+              onClick={() => onRemoveItem(item.id)}
+              className="p-1 text-red-500 hover:text-red-700 transition-colors ml-2"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </button>
           </div>
         ))}
 

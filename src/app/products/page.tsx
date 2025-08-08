@@ -94,10 +94,38 @@ export default function ProductsPage() {
     setShowCart(false);
   };
 
+  const containerStyle = {
+    width: showCart ? '728px' : '95%',
+    height: showCart ? '716px' : 'auto',
+    minHeight: showCart ? 'auto' : '728px',
+    position: showCart ? 'fixed' : 'relative',
+    top: showCart ? '172px' : 'auto',
+    left: showCart ? (window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 304}px` : '304px') : 'auto',
+    borderRadius: '32px',
+    backgroundColor: 'var(--bg-white-0, #FFFFFF)',
+  } as const;
+
+  const cardStyle = (showCart: boolean) => ({
+    width: showCart ? '152px' : '192px',
+    height: showCart ? '246px' : '290px',
+    borderRadius: '8px',
+    gap: '12px',
+    paddingTop: '4px',
+    paddingRight: '4px',
+    paddingBottom: '16px',
+    paddingLeft: '4px',
+    backgroundColor: 'var(--bg-white-0, #FFFFFF)',
+    boxShadow: showCart ? '0px 2px 4px 0px #1B1C1D0A' : 'none',
+    border: showCart ? 'none' : '1px solid #E5E7EB',
+  });
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className={`p-8 transition-all duration-300 ${showCart ? '' : 'max-w-7xl mx-auto'} ${showCart ? 'ml-4' : ''}`} 
+         style={showCart ? { 
+           marginLeft: window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 16}px` : '16px' 
+         } : {}}>
       {/* Search Bar */}
-      <div className="mb-6 mx-auto" style={{ width: '95%' }}>
+      <div className="mb-6" style={{ width: '95%' }}>
         <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
           <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
           <input
@@ -112,10 +140,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Container */}
-      <div className="bg-white rounded-[32px] p-8 mx-auto" 
-           style={{ width: '95%', minHeight: '728px' }}>
-        
-        {/* Header */}
+      <div className={`bg-white rounded-[32px] p-8 ${showCart ? 'overflow-y-auto' : ''}`} style={containerStyle}>
         <div className="mb-4">
           <h2 style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: 'var(--text-main-900, #0A0D14)' }}>
             Showing items by name
@@ -124,24 +149,17 @@ export default function ProductsPage() {
         <div className="border-t border-gray-200 mb-6"></div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-5 gap-8 justify-items-center">
+        <div className={`grid gap-8 justify-items-center ${showCart ? 'grid-cols-4' : 'grid-cols-5'}`}>
           {filteredProducts.map((product) => (
-            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden" 
-                 style={{ width: '192px', height: '290px', padding: '4px 4px 16px 4px' }}>
-              
-              {/* Product Image */}
-              <div className="h-48 mb-3 flex items-center justify-center bg-gray-50">
-                <Image src={product.image} alt={product.name} width={160} height={160} className="object-contain max-h-full" />
+            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden" style={cardStyle(showCart)}>
+              <div className={`mb-3 flex items-center justify-center bg-gray-50 ${showCart ? 'h-32' : 'h-48'}`}>
+                <Image src={product.image} alt={product.name} width={showCart ? 120 : 160} height={showCart ? 120 : 160} className="object-contain max-h-full" />
               </div>
-
-              {/* Product Name */}
               <div className="px-2 mb-3">
                 <h3 className="text-left" style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', color: 'var(--text-main-900, #0A0D14)' }}>
                   {product.name}
                 </h3>
               </div>
-
-              {/* Select Button */}
               <div className="px-2">
                 <button onClick={() => handleSelectProduct(product.id)} 
                         className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
@@ -155,7 +173,6 @@ export default function ProductsPage() {
           ))}
         </div>
 
-        {/* No results message */}
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'var(--text-sub-500, #525866)' }}>
