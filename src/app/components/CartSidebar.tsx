@@ -257,7 +257,7 @@ export default function CartSidebar({
         {/* Complete Sale Button */}
         <button
           onClick={onCompleteSale}
-          className="w-full mb-3 hover:opacity-90 transition-opacity"
+          className="w-full mb-3 hover:opacity-90 transition-opacity flex items-center justify-center"
           style={{
             width: '304px',
             height: '36px',
@@ -285,7 +285,7 @@ export default function CartSidebar({
         {/* Hold Transaction Button */}
         <button
           onClick={onHoldTransaction}
-          className="w-full mb-3 hover:opacity-90 transition-opacity"
+          className="w-full mb-3 hover:opacity-90 transition-opacity flex items-center justify-center"
           style={{
             width: '304px',
             height: '36px',
