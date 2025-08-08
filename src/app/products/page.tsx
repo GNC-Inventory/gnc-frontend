@@ -196,8 +196,8 @@ export default function ProductsPage() {
          style={showCart ? { 
            marginLeft: window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 16}px` : '16px' 
          } : {}}>
-      {/* Search Bar */}
-      <div className="mb-6" style={{ width: '95%', display: showPendingSales ? 'none' : 'block' }}>
+      {/* Search Bar - Always visible */}
+      <div className="mb-6" style={{ width: '95%' }}>
         <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
           <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
           <input
@@ -210,6 +210,94 @@ export default function ProductsPage() {
           />
         </div>
       </div>
+
+      {/* Pending Sales View - Shows above products */}
+      {showPendingSales && (
+        <div className="mb-6">
+          <div className="flex gap-6">
+            {pendingSales.map((sale, index) => (
+              <div
+                key={sale.id}
+                className="bg-white rounded-[32px]"
+                style={{
+                  width: '258px',
+                  height: '204px',
+                  borderRadius: '32px',
+                  padding: '24px',
+                  gap: '16px',
+                  backgroundColor: 'var(--bg-white-0, #FFFFFF)',
+                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                {/* Pending Sale Title */}
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '16px',
+                    lineHeight: '24px',
+                    letterSpacing: '-1.1%',
+                    color: 'var(--text-sub-500, #525866)',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Pending sale {index + 1}
+                </h3>
+
+                {/* Items Count */}
+                <p
+                  style={{
+                    fontFamily: 'Sora, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    letterSpacing: '-0.6%',
+                    color: 'var(--text-soft-400, #868C98)',
+                    marginBottom: '16px',
+                  }}
+                >
+                  {sale.items.reduce((total, item) => total + item.quantity, 0)} item{sale.items.reduce((total, item) => total + item.quantity, 0) !== 1 ? 's' : ''}
+                </p>
+
+                {/* Total Price */}
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-geist), Geist, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '32px',
+                    lineHeight: '40px',
+                    letterSpacing: '0%',
+                    color: 'var(--text-main-900, #0A0D14)',
+                    marginBottom: '16px',
+                  }}
+                >
+                  ₦ {sale.total.toLocaleString()}
+                </h2>
+
+                {/* Resume Link */}
+                <button
+                  onClick={() => handleResumeSale(sale.id)}
+                  className="w-full text-center hover:opacity-80 transition-opacity"
+                  style={{
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    letterSpacing: '-0.6%',
+                    textAlign: 'center',
+                    color: 'var(--primary-base, #375DFB)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Resume
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Products Container */}
       <div className={`bg-white rounded-[32px] p-8 ${showCart ? 'overflow-y-auto' : ''}`} style={containerStyle}>
@@ -253,14 +341,6 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
-
-      {/* Pending Sales View */}
-      {showPendingSales && (
-        <PendingSalesView
-          pendingSales={pendingSales}
-          onResumeSale={handleResumeSale}
-        />
-      )}
 
       {/* Modals & Sidebar */}
       <ProductDetailModal product={selectedProduct} isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} onAddToCart={handleAddToCart} />
