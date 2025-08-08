@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -47,6 +47,27 @@ export default function ProductsPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
 
+  // Load cart from localStorage on component mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    const savedShowCart = localStorage.getItem('showCart');
+    
+    if (savedCart) {
+      const parsedCart = JSON.parse(savedCart);
+      setCartItems(parsedCart);
+      
+      if (savedShowCart === 'true' && parsedCart.length > 0) {
+        setShowCart(true);
+      }
+    }
+  }, []);
+
+  // Save cart to localStorage whenever cartItems or showCart change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+    localStorage.setItem('showCart', showCart.toString());
+  }, [cartItems, showCart]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     const filtered = query.trim() 
@@ -92,6 +113,10 @@ export default function ProductsPage() {
     console.log(`${action} action:`, cartItems);
     setCartItems([]);
     setShowCart(false);
+    
+    // Clear localStorage when cart actions are performed
+    localStorage.removeItem('cart');
+    localStorage.removeItem('showCart');
   };
 
   const containerStyle = {
