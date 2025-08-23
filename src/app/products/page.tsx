@@ -6,20 +6,18 @@ import Image from 'next/image';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
 import CheckoutView from '../components/CheckoutView';
+import { createTransaction, saveTransaction } from '../utils/transactionUtils';
 
-// Extended interface that includes both original and new properties
 interface Product {
   id: string;
   name: string;
-  image: string; // Made required to fix type error
+  image: string;
   category: string;
   sku: string;
   basePrice: number;
-  // New properties from admin inventory
   stockLeft: number;
   unitCost: number;
   dateAdded: string;
-  // Keep existing properties for compatibility
   types?: string[];
   brands?: string[];
   sizes?: string[];
@@ -41,6 +39,7 @@ interface PendingSale {
 }
 
 export default function ProductsPage() {
+  // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,40 +51,48 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const extractCategory = (productName: string): string => {
-    const name = productName.toLowerCase();
-    if (name.includes('generator') || name.includes('inverter') || name.includes('solar') || name.includes('tv') || name.includes('television')) return 'Electronics';
-    if (name.includes('washing') || name.includes('refrigerator') || name.includes('fan') || name.includes('air conditioner')) return 'Appliances';
-    if (name.includes('theatre') || name.includes('sound')) return 'Audio & Video';
+  // Utility functions
+  const extractCategory = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('generator') || lower.includes('inverter') || lower.includes('solar') || lower.includes('tv')) return 'Electronics';
+    if (lower.includes('washing') || lower.includes('refrigerator') || lower.includes('fan') || lower.includes('air conditioner')) return 'Appliances';
+    if (lower.includes('theatre') || lower.includes('sound')) return 'Audio & Video';
     return 'General';
   };
 
+  const loadData = (key: string) => {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+  };
+
+  const saveData = (key: string, data: any) => localStorage.setItem(key, JSON.stringify(data));
+
+  // API call
   const loadInventory = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory');
       
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          const transformedProducts: Product[] = result.data.map((item: any) => ({
-            id: item.id,
-            name: item.product,
-            image: item.image || '/products/default.png',
-            category: extractCategory(item.product),
-            sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
-            basePrice: item.unitCost,
-            stockLeft: item.stockLeft,
-            unitCost: item.unitCost,
-            dateAdded: item.dateAdded,
-            types: ['Standard'],
-            brands: ['Generic'],
-            sizes: ['Default']
-          }));
-          setProducts(transformedProducts);
-        } else throw new Error('Invalid response format');
-      } else throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      
+      const result = await response.json();
+      if (!result.success || !result.data) throw new Error('Invalid response format');
+      
+      const transformedProducts: Product[] = result.data.map((item: any) => ({
+        id: item.id,
+        name: item.product,
+        image: item.image || '/products/default.png',
+        category: extractCategory(item.product),
+        sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
+        basePrice: item.unitCost,
+        stockLeft: item.stockLeft,
+        unitCost: item.unitCost,
+        dateAdded: item.dateAdded,
+        types: ['Standard'],
+        brands: ['Generic'],
+        sizes: ['Default']
+      }));
+      setProducts(transformedProducts);
     } catch (err) {
       console.error('Error loading inventory:', err);
       setError(err instanceof Error ? err.message : 'Failed to load products');
@@ -95,8 +102,26 @@ export default function ProductsPage() {
     }
   };
 
+  // Effects
   useEffect(() => { loadInventory(); }, []);
 
+  useEffect(() => {
+    const savedCart = loadData('cart');
+    const savedPendingSales = loadData('pendingSales');
+    const savedShowCart = localStorage.getItem('showCart') === 'true';
+    
+    setCartItems(savedCart);
+    setPendingSales(savedPendingSales);
+    if (savedShowCart && savedCart.length > 0) setShowCart(true);
+  }, []);
+
+  useEffect(() => {
+    saveData('cart', cartItems);
+    saveData('pendingSales', pendingSales);
+    localStorage.setItem('showCart', showCart.toString());
+  }, [cartItems, showCart, pendingSales]);
+
+  // Computed values
   const filteredProducts = searchQuery.trim() 
     ? products.filter(p => [p.name, p.sku, p.category].some(field => 
         field?.toLowerCase().includes(searchQuery.toLowerCase())))
@@ -110,26 +135,7 @@ export default function ProductsPage() {
 
   const showPendingSales = pendingSales.length > 0 && cartItems.length === 0 && !showCheckout;
 
-  // Load/save localStorage data
-  useEffect(() => {
-    const loadData = (key: string) => {
-      try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
-    };
-    const savedCart = loadData('cart');
-    const savedPendingSales = loadData('pendingSales');
-    const savedShowCart = localStorage.getItem('showCart') === 'true';
-    
-    setCartItems(savedCart);
-    setPendingSales(savedPendingSales);
-    if (savedShowCart && savedCart.length > 0) setShowCart(true);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-    localStorage.setItem('showCart', showCart.toString());
-    localStorage.setItem('pendingSales', JSON.stringify(pendingSales));
-  }, [cartItems, showCart, pendingSales]);
-
+  // Event handlers
   const handleSelectProduct = (productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
@@ -180,8 +186,7 @@ export default function ProductsPage() {
     
     setCartItems([]);
     setShowCart(false);
-    localStorage.removeItem('cart');
-    localStorage.removeItem('showCart');
+    ['cart', 'showCart'].forEach(key => localStorage.removeItem(key));
   };
 
   const handleResumeSale = (saleId: string) => {
@@ -194,13 +199,31 @@ export default function ProductsPage() {
   };
 
   const handlePrintReceipt = (customerName: string, paymentMethod: string) => {
-    console.log('Printing receipt:', { customer: customerName, paymentMethod, items: cartItems });
-    // TODO: Implement inventory deduction here
-    setCartItems([]);
-    setShowCheckout(false);
-    ['cart', 'showCart'].forEach(key => localStorage.removeItem(key));
+    try {
+      const transaction = createTransaction(cartItems, customerName, paymentMethod);
+      saveTransaction(transaction);
+      
+      console.log('Transaction created successfully:', {
+        id: transaction.id,
+        customer: customerName,
+        paymentMethod,
+        total: transaction.total,
+        items: cartItems
+      });
+
+      alert(`Transaction ${transaction.id} completed successfully!`);
+      
+      setCartItems([]);
+      setShowCheckout(false);
+      ['cart', 'showCart'].forEach(key => localStorage.removeItem(key));
+      
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+      alert('Error processing transaction. Please try again.');
+    }
   };
 
+  // Style helpers
   const getContainerStyle = () => {
     const isCompact = showCart || showCheckout;
     const offset = typeof window !== 'undefined' && window.innerWidth > 1440 ? (window.innerWidth - 1440) / 2 : 0;
@@ -324,6 +347,7 @@ export default function ProductsPage() {
               <div className={`grid gap-8 justify-items-center ${(showCart || showCheckout) ? 'grid-cols-4' : 'grid-cols-5'}`}>
                 {categoryProducts.map((product) => {
                   const isOutOfStock = product.stockLeft === 0;
+                  const isLowStock = product.stockLeft <= 5 && product.stockLeft > 0;
                   
                   return (
                     <div key={product.id} className={`border rounded-lg overflow-hidden transition-all ${isOutOfStock ? 'border-red-200 bg-red-50' : 'border-gray-200'}`} style={getCardStyle(showCart || showCheckout)}>
@@ -338,13 +362,11 @@ export default function ProductsPage() {
                         
                         {/* Stock indicator */}
                         <div className="absolute top-2 right-2">
-                          {isOutOfStock ? (
-                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">Out of Stock</span>
-                          ) : product.stockLeft <= 5 ? (
-                            <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs font-medium">Low ({product.stockLeft})</span>
-                          ) : (
-                            <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">{product.stockLeft} left</span>
-                          )}
+                          <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                            isOutOfStock ? 'bg-red-500' : isLowStock ? 'bg-orange-500' : 'bg-green-500'
+                          }`}>
+                            {isOutOfStock ? 'Out of Stock' : isLowStock ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
+                          </span>
                         </div>
                       </div>
                       
