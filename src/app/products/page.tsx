@@ -7,13 +7,19 @@ import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
 import CheckoutView from '../components/CheckoutView';
 
+// Extended interface that includes both original and new properties
 interface Product {
   id: string;
   name: string;
-  image: string;
+  image: string; // Made required to fix type error
   category: string;
   sku: string;
-  basePrice?: number;
+  basePrice: number;
+  // New properties from admin inventory
+  stockLeft: number;
+  unitCost: number;
+  dateAdded: string;
+  // Keep existing properties for compatibility
   types?: string[];
   brands?: string[];
   sizes?: string[];
@@ -34,19 +40,6 @@ interface PendingSale {
   createdAt: Date;
 }
 
-const mockProducts: Product[] = [
-  { id: '1', name: 'Generator', image: '/products/generator.png', category: 'Electronics', sku: 'GEN001', basePrice: 150000, types: ['Portable', 'Gas-powered'], brands: ['Honda', 'Yamaha'], sizes: ['Small', 'Medium'] },
-  { id: '2', name: 'Air Conditioner', image: '/products/air-conditioner.png', category: 'Electronics', sku: 'AC001', basePrice: 180000, types: ['Split', 'Window'], brands: ['LG', 'Samsung'], sizes: ['1HP', '1.5HP', '2HP'] },
-  { id: '3', name: 'Television', image: '/products/television.png', category: 'Electronics', sku: 'TV001', basePrice: 120000, types: ['LED', 'Smart TV'], brands: ['Samsung', 'LG'], sizes: ['32"', '43"', '55"'] },
-  { id: '4', name: 'Theatre System', image: '/products/theatre-system.png', category: 'Electronics', sku: 'TS001', basePrice: 95000, types: ['5.1', 'Bluetooth'], brands: ['Sony', 'JBL'], sizes: ['Compact', 'Full-size'] },
-  { id: '5', name: 'Washing Machine', image: '/products/washing-machine.png', category: 'Appliances', sku: 'WM001', basePrice: 200000, types: ['Top-load', 'Front-load'], brands: ['Bosch', 'LG'], sizes: ['7kg', '8kg', '10kg'] },
-  { id: '6', name: 'Drying Machine', image: '/products/drying-machine.png', category: 'Appliances', sku: 'DM001', basePrice: 180000, types: ['Condenser', 'Vented'], brands: ['Bosch', 'Samsung'], sizes: ['6kg', '8kg', '9kg'] },
-  { id: '7', name: 'Solar Inverter', image: '/products/solar-inverter.png', category: 'Electronics', sku: 'SI001', basePrice: 85000, types: ['Pure Sine Wave', 'Modified'], brands: ['Luminous', 'Sukam'], sizes: ['1KVA', '2KVA', '5KVA'] },
-  { id: '8', name: 'Fan', image: '/products/fan.png', category: 'Appliances', sku: 'FAN001', basePrice: 25000, types: ['Standing fan', 'Table-top'], brands: ['QASA', 'OX', 'Lontor', 'Oraimo', 'Soiltech'], sizes: ['13"', '14"', '15"', '16"', '17"', '18"', '19"', '20"', '21"', '22"', '23"'] },
-  { id: '9', name: 'Refrigerator', image: '/products/refrigerator.png', category: 'Appliances', sku: 'REF001', basePrice: 220000, types: ['Single door', 'Double door'], brands: ['Samsung', 'LG'], sizes: ['200L', '350L', '500L'] },
-  { id: '10', name: 'Solar Panel', image: '/products/solar-panel.png', category: 'Electronics', sku: 'SP001', basePrice: 45000, types: ['Monocrystalline', 'Polycrystalline'], brands: ['Jinko', 'Canadian Solar'], sizes: ['100W', '200W', '300W'] }
-];
-
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -55,21 +48,73 @@ export default function ProductsPage() {
   const [showCart, setShowCart] = useState(false);
   const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const extractCategory = (productName: string): string => {
+    const name = productName.toLowerCase();
+    if (name.includes('generator') || name.includes('inverter') || name.includes('solar') || name.includes('tv') || name.includes('television')) return 'Electronics';
+    if (name.includes('washing') || name.includes('refrigerator') || name.includes('fan') || name.includes('air conditioner')) return 'Appliances';
+    if (name.includes('theatre') || name.includes('sound')) return 'Audio & Video';
+    return 'General';
+  };
+
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory');
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const transformedProducts: Product[] = result.data.map((item: any) => ({
+            id: item.id,
+            name: item.product,
+            image: item.image || '/products/default.png',
+            category: extractCategory(item.product),
+            sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
+            basePrice: item.unitCost,
+            stockLeft: item.stockLeft,
+            unitCost: item.unitCost,
+            dateAdded: item.dateAdded,
+            types: ['Standard'],
+            brands: ['Generic'],
+            sizes: ['Default']
+          }));
+          setProducts(transformedProducts);
+        } else throw new Error('Invalid response format');
+      } else throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    } catch (err) {
+      console.error('Error loading inventory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load products');
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadInventory(); }, []);
 
   const filteredProducts = searchQuery.trim() 
-    ? mockProducts.filter(p => [p.name, p.sku, p.category].some(field => 
-        field.toLowerCase().includes(searchQuery.toLowerCase())))
-    : mockProducts;
+    ? products.filter(p => [p.name, p.sku, p.category].some(field => 
+        field?.toLowerCase().includes(searchQuery.toLowerCase())))
+    : products;
+
+  const groupedProducts = filteredProducts.reduce((acc, product) => {
+    if (!acc[product.category]) acc[product.category] = [];
+    acc[product.category].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
 
   const showPendingSales = pendingSales.length > 0 && cartItems.length === 0 && !showCheckout;
 
-  // Load from localStorage
+  // Load/save localStorage data
   useEffect(() => {
     const loadData = (key: string) => {
-      try { return JSON.parse(localStorage.getItem(key) || '[]'); } 
-      catch { return []; }
+      try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
     };
-
     const savedCart = loadData('cart');
     const savedPendingSales = loadData('pendingSales');
     const savedShowCart = localStorage.getItem('showCart') === 'true';
@@ -79,7 +124,6 @@ export default function ProductsPage() {
     if (savedShowCart && savedCart.length > 0) setShowCart(true);
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     localStorage.setItem('showCart', showCart.toString());
@@ -87,8 +131,8 @@ export default function ProductsPage() {
   }, [cartItems, showCart, pendingSales]);
 
   const handleSelectProduct = (productId: string) => {
-    const product = mockProducts.find(p => p.id === productId);
-    if (product) {
+    const product = products.find(p => p.id === productId);
+    if (product && product.stockLeft > 0) {
       setSelectedProduct(product);
       setIsModalOpen(true);
     }
@@ -151,6 +195,7 @@ export default function ProductsPage() {
 
   const handlePrintReceipt = (customerName: string, paymentMethod: string) => {
     console.log('Printing receipt:', { customer: customerName, paymentMethod, items: cartItems });
+    // TODO: Implement inventory deduction here
     setCartItems([]);
     setShowCheckout(false);
     ['cart', 'showCart'].forEach(key => localStorage.removeItem(key));
@@ -159,7 +204,6 @@ export default function ProductsPage() {
   const getContainerStyle = () => {
     const isCompact = showCart || showCheckout;
     const offset = typeof window !== 'undefined' && window.innerWidth > 1440 ? (window.innerWidth - 1440) / 2 : 0;
-    
     return {
       width: isCompact ? '728px' : '95%',
       height: isCompact ? '716px' : 'auto',
@@ -188,11 +232,34 @@ export default function ProductsPage() {
     return showCart ? { marginLeft: `${offset + 16}px` } : {};
   };
 
+  if (loading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`p-8 transition-all duration-300 ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}`} style={getMainStyle()}>
-      {/* Search Bar */}
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 mb-2">Failed to load products: {error}</p>
+          <button onClick={loadInventory} className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Search Bar & Refresh */}
       {!showCheckout && (
-        <div className="mb-6" style={{ width: '95%' }}>
+        <div className="mb-6 flex items-center gap-4" style={{ width: '95%' }}>
           <div className="bg-white rounded-lg flex items-center" style={{ width: '540px', height: '36px', padding: '8px', gap: '8px' }}>
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
             <input
@@ -200,10 +267,16 @@ export default function ProductsPage() {
               placeholder="Search items by name or SKU or category"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none bg-transparent"
-              style={{ fontFamily: 'Sora, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: 'var(--text-sub-500, #525866)' }}
+              className="flex-1 outline-none bg-transparent text-sm"
             />
           </div>
+          <button 
+            onClick={loadInventory}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
+          >
+            {loading ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
       )}
 
@@ -211,18 +284,13 @@ export default function ProductsPage() {
       {showPendingSales && (
         <div className="mb-6 flex gap-6">
           {pendingSales.map((sale, index) => (
-            <div key={sale.id} className="bg-white rounded-[32px]" style={{ width: '258px', height: '204px', padding: '24px', boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)' }}>
-              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '16px', lineHeight: '24px', letterSpacing: '-1.1%', color: '#525866', marginBottom: '8px' }}>
-                Pending sale {index + 1}
-              </h3>
-              <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#868C98', marginBottom: '16px' }}>
+            <div key={sale.id} className="bg-white rounded-[32px] p-6 shadow-lg">
+              <h3 className="text-gray-600 text-base font-medium mb-2">Pending sale {index + 1}</h3>
+              <p className="text-gray-500 text-sm mb-4">
                 {sale.items.reduce((total, item) => total + item.quantity, 0)} item{sale.items.reduce((total, item) => total + item.quantity, 0) !== 1 ? 's' : ''}
               </p>
-              <h2 style={{ fontFamily: 'Geist, sans-serif', fontWeight: 500, fontSize: '32px', lineHeight: '40px', color: '#0A0D14', marginBottom: '16px' }}>
-                ₦ {sale.total.toLocaleString()}
-              </h2>
-              <button onClick={() => handleResumeSale(sale.id)} className="w-full text-center hover:opacity-80 transition-opacity" 
-                      style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#375DFB', background: 'none', border: 'none', cursor: 'pointer' }}>
+              <h2 className="text-3xl font-medium text-black mb-4">₦ {sale.total.toLocaleString()}</h2>
+              <button onClick={() => handleResumeSale(sale.id)} className="w-full text-blue-600 font-medium hover:opacity-80 transition-opacity">
                 Resume
               </button>
             </div>
@@ -233,42 +301,79 @@ export default function ProductsPage() {
       {/* Products Container */}
       <div className={`bg-white rounded-[32px] p-8 ${(showCart || showCheckout) ? 'overflow-y-auto' : ''}`} style={getContainerStyle()}>
         <div className="mb-4">
-          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', letterSpacing: '-0.6%', color: '#0A0D14' }}>
-            Showing items by name
+          <h2 className="font-medium text-sm text-black">
+            Showing items by category ({products.length} products)
           </h2>
         </div>
         <div className="border-t border-gray-200 mb-6"></div>
 
-        <div className={`grid gap-8 justify-items-center ${(showCart || showCheckout) ? 'grid-cols-4' : 'grid-cols-5'}`}>
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden" style={getCardStyle(showCart || showCheckout)}>
-              <div className={`mb-3 flex items-center justify-center bg-gray-50 ${(showCart || showCheckout) ? 'h-32' : 'h-48'}`}>
-                <Image src={product.image} alt={product.name} width={(showCart || showCheckout) ? 120 : 160} height={(showCart || showCheckout) ? 120 : 160} className="object-contain max-h-full" />
-              </div>
-              <div className="px-2 mb-3">
-                <h3 className="text-left" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '14px', lineHeight: '20px', color: '#0A0D14' }}>
-                  {product.name}
-                </h3>
-              </div>
-              <div className="px-2">
-                <button onClick={() => handleSelectProduct(product.id)} 
-                        className="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
-                        style={{ width: '57px', height: '28px', padding: '6px', backgroundColor: '#FFFFFF' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: '12px', lineHeight: '16px', color: '#0A0D14' }}>
-                    Select
-                  </span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
+        {/* Products grouped by category */}
+        {Object.keys(groupedProducts).length === 0 ? (
           <div className="text-center py-12">
-            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: '#525866' }}>
-              No products found matching your search.
+            <p className="text-gray-600">
+              {searchQuery ? 'No products found matching your search.' : 'No products available. Please check back later.'}
             </p>
           </div>
+        ) : (
+          Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+            <div key={category} className="mb-8">
+              <h3 className="mb-4 font-semibold text-black">
+                {category} ({categoryProducts.length})
+              </h3>
+              
+              <div className={`grid gap-8 justify-items-center ${(showCart || showCheckout) ? 'grid-cols-4' : 'grid-cols-5'}`}>
+                {categoryProducts.map((product) => {
+                  const isOutOfStock = product.stockLeft === 0;
+                  
+                  return (
+                    <div key={product.id} className={`border rounded-lg overflow-hidden transition-all ${isOutOfStock ? 'border-red-200 bg-red-50' : 'border-gray-200'}`} style={getCardStyle(showCart || showCheckout)}>
+                      <div className={`mb-3 flex items-center justify-center bg-gray-50 relative ${(showCart || showCheckout) ? 'h-32' : 'h-48'}`}>
+                        <Image 
+                          src={product.image} 
+                          alt={product.name} 
+                          width={(showCart || showCheckout) ? 120 : 160} 
+                          height={(showCart || showCheckout) ? 120 : 160} 
+                          className={`object-contain max-h-full ${isOutOfStock ? 'opacity-50' : ''}`} 
+                        />
+                        
+                        {/* Stock indicator */}
+                        <div className="absolute top-2 right-2">
+                          {isOutOfStock ? (
+                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">Out of Stock</span>
+                          ) : product.stockLeft <= 5 ? (
+                            <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs font-medium">Low ({product.stockLeft})</span>
+                          ) : (
+                            <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">{product.stockLeft} left</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="px-2 mb-3">
+                        <h3 className={`text-left font-medium text-sm ${isOutOfStock ? 'text-gray-500' : 'text-black'}`}>
+                          {product.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">₦{product.basePrice.toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="px-2">
+                        <button 
+                          onClick={() => handleSelectProduct(product.id)} 
+                          disabled={isOutOfStock}
+                          className={`border rounded-lg transition-colors flex items-center justify-center w-14 h-7 text-xs font-medium ${
+                            isOutOfStock 
+                              ? 'border-red-200 bg-red-50 cursor-not-allowed text-gray-400' 
+                              : 'border-gray-200 hover:bg-gray-50 text-black'
+                          }`}
+                        >
+                          {isOutOfStock ? 'N/A' : 'Select'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
