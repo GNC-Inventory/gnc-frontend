@@ -3,7 +3,7 @@
 'use client';
 
 import Image from 'next/image';
-import { type Product } from '../hooks/useInventory';
+import { type Product } from '../../hooks/useInventory';
 
 interface ProductCardProps {
   product: Product;

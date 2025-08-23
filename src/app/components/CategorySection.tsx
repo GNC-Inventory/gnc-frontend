@@ -2,7 +2,7 @@
 
 'use client';
 
-import { type Product } from '../hooks/useInventory';
+import { type Product } from '../../hooks/useInventory';
 import ProductCard from './ProductCard';
 
 interface CategorySectionProps {

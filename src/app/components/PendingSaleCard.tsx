@@ -2,7 +2,7 @@
 
 'use client';
 
-import { type PendingSale } from '../utils/storage';
+import { type PendingSale } from '../../utils/storage';
 
 interface PendingSaleCardProps {
   sale: PendingSale;
