@@ -11,8 +11,25 @@ import PendingSaleCard from '../components/PendingSaleCard';
 import { useInventory, type Product } from '../../hooks/useInventory';
 import { useCart } from '../../hooks/useCart';
 import { usePendingSales } from '../../hooks/usePendingSales';
-import { createTransaction, saveTransaction } from '../../utils/transactionUtils';
 import { showToast } from '../../utils/toast';
+
+interface CartItem {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
+}
+
+interface CompletedTransaction {
+  id: string;
+  items: CartItem[];
+  customer: string;
+  paymentMethod: string;
+  total: number;
+  createdAt: string;
+  status: 'Successful';
+}
 
 export default function ProductsPage() {
   // Local UI state
@@ -20,6 +37,8 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isProcessingSale, setIsProcessingSale] = useState(false);
+  const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
 
   // Custom hooks
   const { products, loading, error, refetch } = useInventory();
@@ -59,6 +78,34 @@ export default function ProductsPage() {
     }, {} as Record<string, Product[]>);
   }, [filteredProducts]);
 
+  // API call to process sale and deduct inventory
+  const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
+    try {
+      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: items,
+          customer: customer,
+          paymentMethod: paymentMethod
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to process sale');
+      }
+
+      return result.transaction;
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  };
+
   // Memoized handlers
   const handleSelectProduct = useCallback((productId: string) => {
     const product = products.find(p => p.id === productId);
@@ -81,9 +128,52 @@ export default function ProductsPage() {
     setSelectedProduct(null);
   }, []);
 
-  const handleCompleteSale = useCallback(() => {
-    setShowCheckout(true);
-  }, []);
+  // Updated: Process sale and deduct inventory when "Complete Sale" is clicked
+  const handleCompleteSale = useCallback(async () => {
+    if (cart.cartItems.length === 0) {
+      showToast('Cart is empty', 'error');
+      return;
+    }
+
+    setIsProcessingSale(true);
+    
+    try {
+      // For now, use default customer and payment method for the API call
+      // We'll collect the real customer info in the checkout view
+      const defaultCustomer = 'Customer'; // Temporary
+      const defaultPaymentMethod = 'Cash'; // Temporary
+      
+      // Process sale and deduct inventory
+      const transaction = await processSaleAPI(cart.cartItems, defaultCustomer, defaultPaymentMethod);
+      
+      // Store the completed transaction for the checkout view
+      setCompletedTransaction(transaction);
+      
+      // Show success message
+      showToast('Sale processed successfully! Inventory updated.', 'success');
+      
+      // Refresh inventory to show updated stock levels
+      refetch();
+      
+      // Show checkout view for customer details and receipt printing
+      setShowCheckout(true);
+      
+    } catch (error: any) {
+      console.error('Error processing sale:', error);
+      
+      // Handle specific error cases
+      if (error.message?.includes('Insufficient stock')) {
+        showToast('Insufficient stock for some items. Please check inventory.', 'error');
+      } else if (error.message?.includes('not found')) {
+        showToast('Some products are no longer available. Please refresh and try again.', 'error');
+        refetch(); // Refresh to get latest inventory
+      } else {
+        showToast('Failed to process sale. Please try again.', 'error');
+      }
+    } finally {
+      setIsProcessingSale(false);
+    }
+  }, [cart, refetch]);
 
   const handleHoldSale = useCallback(() => {
     pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
@@ -97,40 +187,56 @@ export default function ProductsPage() {
   const handleResumeSale = useCallback((saleId: string) => {
     const resumedItems = pendingSales.resumeSale(saleId);
     if (resumedItems) {
-      // We need to restore the cart items
-      // This would require modifying the useCart hook to have a setCartItems method
-      // For now, we'll show a message
       showToast('Sale resumed - please re-add items to cart', 'info');
     }
   }, [pendingSales]);
 
   const handleBackToCart = useCallback(() => {
-    setShowCheckout(false);
-  }, []);
+    // If we have a completed transaction, clear cart and go back to products
+    if (completedTransaction) {
+      cart.clearCart();
+      setCompletedTransaction(null);
+      setShowCheckout(false);
+    } else {
+      // If sale wasn't processed yet, just go back to cart
+      setShowCheckout(false);
+    }
+  }, [completedTransaction, cart]);
 
+  // Updated: Just handle receipt printing (no inventory changes)
   const handlePrintReceipt = useCallback((customerName: string, paymentMethod: string) => {
     try {
-      const transaction = createTransaction(cart.cartItems, customerName, paymentMethod);
-      saveTransaction(transaction);
-      
-      console.log('Transaction created:', {
-        id: transaction.id,
-        customer: customerName,
-        paymentMethod,
-        total: transaction.total,
-        items: cart.cartItems
-      });
+      if (!completedTransaction) {
+        showToast('No completed transaction to print', 'error');
+        return;
+      }
 
-      showToast(`Transaction ${transaction.id} completed successfully!`, 'success');
+      // Update transaction with final customer details
+      const finalTransaction = {
+        ...completedTransaction,
+        customer: customerName,
+        paymentMethod: paymentMethod
+      };
+
+      // Save to local storage for transaction history
+      const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      existingTransactions.push(finalTransaction);
+      localStorage.setItem('transactions', JSON.stringify(existingTransactions));
+
+      console.log('Receipt printed for transaction:', finalTransaction);
       
+      showToast(`Receipt printed for ${customerName}!`, 'success');
+      
+      // Clear everything and return to products
       cart.clearCart();
+      setCompletedTransaction(null);
       setShowCheckout(false);
       
     } catch (error) {
-      console.error('Error processing transaction:', error);
-      showToast('Error processing transaction. Please try again.', 'error');
+      console.error('Error printing receipt:', error);
+      showToast('Error printing receipt. Please try again.', 'error');
     }
-  }, [cart]);
+  }, [cart, completedTransaction]);
 
   // Render loading state
   if (loading) {
@@ -269,6 +375,16 @@ export default function ProductsPage() {
           onBack={handleBackToCart}
           onPrintReceipt={handlePrintReceipt}
         />
+      )}
+
+      {/* Processing Sale Loading Overlay */}
+      {isProcessingSale && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+          <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-gray-700">Processing sale...</span>
+          </div>
+        </div>
       )}
     </div>
   );
