@@ -32,7 +32,7 @@ interface CompletedTransaction {
 }
 
 export default function ProductsPage() {
-  // Local UI state
+  // State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,34 +40,20 @@ export default function ProductsPage() {
   const [isProcessingSale, setIsProcessingSale] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
 
-  // Custom hooks
+  // Hooks
   const { products, loading, error, refetch } = useInventory();
   const cart = useCart(products);
   const pendingSales = usePendingSales();
 
-  // Derived state
-  const showCart = useMemo(() => 
-    cart.cartItems.length > 0 && !showCheckout, 
-    [cart.cartItems.length, showCheckout]
-  );
-
-  const showPendingSales = useMemo(() => 
-    pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout,
-    [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]
-  );
-
+  // Computed
+  const showCart = useMemo(() => cart.cartItems.length > 0 && !showCheckout, [cart.cartItems.length, showCheckout]);
+  const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
   const isCompact = showCart || showCheckout;
 
-  // Memoized filtered and grouped products
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return products;
-    
     const query = searchQuery.toLowerCase();
-    return products.filter(p => 
-      [p.name, p.sku, p.category].some(field => 
-        field?.toLowerCase().includes(query)
-      )
-    );
+    return products.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
   }, [products, searchQuery]);
 
   const groupedProducts = useMemo(() => {
@@ -78,35 +64,20 @@ export default function ProductsPage() {
     }, {} as Record<string, Product[]>);
   }, [filteredProducts]);
 
-  // API call to process sale and deduct inventory
+  // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
-    try {
-      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory/transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: items,
-          customer: customer,
-          paymentMethod: paymentMethod
-        })
-      });
+    const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, customer, paymentMethod })
+    });
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to process sale');
-      }
-
-      return result.transaction;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Failed to process sale');
+    return result.transaction;
   };
 
-  // Memoized handlers
+  // Handlers
   const handleSelectProduct = useCallback((productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
@@ -115,8 +86,8 @@ export default function ProductsPage() {
     }
   }, [products]);
 
-  const handleAddToCart = useCallback((product: Product, price: number) => {
-    const success = cart.addToCart(product, price);
+  const handleAddToCart = useCallback((product: Product, price: number, quantity: number) => {
+    const success = cart.addToCart(product, price, quantity);
     if (success) {
       setIsModalOpen(false);
       setSelectedProduct(null);
@@ -128,7 +99,6 @@ export default function ProductsPage() {
     setSelectedProduct(null);
   }, []);
 
-  // Updated: Process sale and deduct inventory when "Complete Sale" is clicked
   const handleCompleteSale = useCallback(async () => {
     if (cart.cartItems.length === 0) {
       showToast('Cart is empty', 'error');
@@ -138,35 +108,19 @@ export default function ProductsPage() {
     setIsProcessingSale(true);
     
     try {
-      // For now, use default customer and payment method for the API call
-      // We'll collect the real customer info in the checkout view
-      const defaultCustomer = 'Customer'; // Temporary
-      const defaultPaymentMethod = 'Cash'; // Temporary
-      
-      // Process sale and deduct inventory
-      const transaction = await processSaleAPI(cart.cartItems, defaultCustomer, defaultPaymentMethod);
-      
-      // Store the completed transaction for the checkout view
+      const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
       setCompletedTransaction(transaction);
-      
-      // Show success message
       showToast('Sale processed successfully! Inventory updated.', 'success');
-      
-      // Refresh inventory to show updated stock levels
       refetch();
-      
-      // Show checkout view for customer details and receipt printing
       setShowCheckout(true);
-      
     } catch (error: any) {
       console.error('Error processing sale:', error);
       
-      // Handle specific error cases
       if (error.message?.includes('Insufficient stock')) {
         showToast('Insufficient stock for some items. Please check inventory.', 'error');
       } else if (error.message?.includes('not found')) {
         showToast('Some products are no longer available. Please refresh and try again.', 'error');
-        refetch(); // Refresh to get latest inventory
+        refetch();
       } else {
         showToast('Failed to process sale. Please try again.', 'error');
       }
@@ -180,30 +134,23 @@ export default function ProductsPage() {
     cart.clearCart();
   }, [pendingSales, cart]);
 
-  const handleCancelSale = useCallback(() => {
-    cart.clearCart();
-  }, [cart]);
+  const handleCancelSale = useCallback(() => cart.clearCart(), [cart]);
 
   const handleResumeSale = useCallback((saleId: string) => {
     const resumedItems = pendingSales.resumeSale(saleId);
-    if (resumedItems) {
-      showToast('Sale resumed - please re-add items to cart', 'info');
-    }
+    if (resumedItems) showToast('Sale resumed - please re-add items to cart', 'info');
   }, [pendingSales]);
 
   const handleBackToCart = useCallback(() => {
-    // If we have a completed transaction, clear cart and go back to products
     if (completedTransaction) {
       cart.clearCart();
       setCompletedTransaction(null);
       setShowCheckout(false);
     } else {
-      // If sale wasn't processed yet, just go back to cart
       setShowCheckout(false);
     }
   }, [completedTransaction, cart]);
 
-  // Updated: Just handle receipt printing (no inventory changes)
   const handlePrintReceipt = useCallback((customerName: string, paymentMethod: string) => {
     try {
       if (!completedTransaction) {
@@ -211,34 +158,23 @@ export default function ProductsPage() {
         return;
       }
 
-      // Update transaction with final customer details
-      const finalTransaction = {
-        ...completedTransaction,
-        customer: customerName,
-        paymentMethod: paymentMethod
-      };
-
-      // Save to local storage for transaction history
+      const finalTransaction = { ...completedTransaction, customer: customerName, paymentMethod };
       const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
       existingTransactions.push(finalTransaction);
       localStorage.setItem('transactions', JSON.stringify(existingTransactions));
 
       console.log('Receipt printed for transaction:', finalTransaction);
-      
       showToast(`Receipt printed for ${customerName}!`, 'success');
       
-      // Clear everything and return to products
       cart.clearCart();
       setCompletedTransaction(null);
       setShowCheckout(false);
-      
     } catch (error) {
       console.error('Error printing receipt:', error);
       showToast('Error printing receipt. Please try again.', 'error');
     }
   }, [cart, completedTransaction]);
 
-  // Render loading state
   if (loading) {
     return (
       <div className="p-8 max-w-7xl mx-auto">
@@ -248,20 +184,12 @@ export default function ProductsPage() {
   }
 
   return (
-    <div 
-      className={`
-        p-8 transition-all duration-300
-        ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}
-      `}
-    >
+    <div className={`p-8 transition-all duration-300 ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}`}>
       {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-700 mb-2">Failed to load products: {error}</p>
-          <button 
-            onClick={refetch} 
-            className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-          >
+          <button onClick={refetch} className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
             Retry
           </button>
         </div>
@@ -270,9 +198,7 @@ export default function ProductsPage() {
       {/* Search Bar & Refresh */}
       {!showCheckout && (
         <div className="mb-6 flex items-center gap-4 w-full max-w-2xl">
-          <div 
-            className="bg-white rounded-lg flex items-center flex-1 max-w-[540px] h-9 px-2 gap-2"
-          >
+          <div className="bg-white rounded-lg flex items-center flex-1 max-w-[540px] h-9 px-2 gap-2">
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
             <input
               type="text"
@@ -296,12 +222,7 @@ export default function ProductsPage() {
       {showPendingSales && (
         <div className="mb-6 flex gap-6 overflow-x-auto pb-2">
           {pendingSales.pendingSales.map((sale, index) => (
-            <PendingSaleCard
-              key={sale.id}
-              sale={sale}
-              index={index}
-              onResume={handleResumeSale}
-            />
+            <PendingSaleCard key={sale.id} sale={sale} index={index} onResume={handleResumeSale} />
           ))}
         </div>
       )}
@@ -310,16 +231,13 @@ export default function ProductsPage() {
       <div 
         className={`
           bg-white rounded-[32px] p-8 transition-all
-          ${isCompact ? 'fixed overflow-y-auto' : 'relative'}
-          ${isCompact ? 'w-[728px] h-[716px] top-[172px]' : 'w-full min-h-[728px]'}
+          ${isCompact ? 'fixed overflow-y-auto w-[728px] h-[716px] top-[172px]' : 'relative w-full min-h-[728px]'}
           ${isCompact && typeof window !== 'undefined' && window.innerWidth > 1440 
             ? `left-[${(window.innerWidth - 1440) / 2 + 304}px]` 
             : isCompact ? 'left-[304px]' : ''
           }
         `}
-        style={{
-          backgroundColor: 'var(--bg-white-0, #FFFFFF)',
-        }}
+        style={{ backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}
       >
         <div className="mb-4">
           <h2 className="font-medium text-sm text-black">
