@@ -338,15 +338,17 @@ export default function ProductsPage() {
             <EmptyState type="no-products" onRetry={refetch} />
           )
         ) : (
-          Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-            <CategorySection
-              key={category}
-              category={category}
-              products={categoryProducts}
-              isCompact={isCompact}
-              onSelectProduct={handleSelectProduct}
-            />
-          ))
+          <div className={`grid gap-8 ${isCompact ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+              <CategorySection
+                key={category}
+                category={category}
+                products={categoryProducts}
+                isCompact={isCompact}
+                onSelectProduct={handleSelectProduct}
+              />
+            ))}
+          </div>
         )}
       </div>
 
