@@ -36,11 +36,37 @@ export default function ProductDetailModal({
   onAddToCart 
 }: ProductDetailModalProps) {
   const [price, setPrice] = useState('');
+  const [displayPrice, setDisplayPrice] = useState('');
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString();
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    // Remove all non-numeric characters except decimal point
+    const numericValue = input.replace(/[^\d.]/g, '');
+    
+    // Prevent multiple decimal points
+    const decimalCount = numericValue.split('.').length - 1;
+    if (decimalCount > 1) return;
+    
+    setPrice(numericValue);
+    
+    // Format for display if there's a valid number
+    if (numericValue && !isNaN(parseFloat(numericValue))) {
+      const number = parseFloat(numericValue);
+      setDisplayPrice(`₦ ${formatCurrency(number)}`);
+    } else {
+      setDisplayPrice('₦ ');
+    }
+  };
 
   const handleAddItem = () => {
     if (product && price && onAddToCart) {
       onAddToCart(product, parseFloat(price));
       setPrice(''); // Reset price after adding
+      setDisplayPrice(''); // Reset display price
     }
   };
 
@@ -170,8 +196,8 @@ export default function ProductDetailModal({
               <div>
                 <h3 className="mb-3 text-base font-semibold text-black">Product Information</h3>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-medium">Base Price:</span> ₦{product.basePrice.toLocaleString()}</p>
-                  <p><span className="font-medium">Unit Cost:</span> ₦{product.unitCost.toLocaleString()}</p>
+                  <p><span className="font-medium">Base Price:</span> ₦{formatCurrency(product.basePrice)}</p>
+                  <p><span className="font-medium">Unit Cost:</span> ₦{formatCurrency(product.unitCost)}</p>
                   <p><span className="font-medium">Date Added:</span> {product.dateAdded}</p>
                 </div>
               </div>
@@ -185,15 +211,22 @@ export default function ProductDetailModal({
                 Enter price
               </label>
               
-              <input
-                type="number"
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder={`₦${product.basePrice.toLocaleString()}`}
-                disabled={product.stockLeft === 0}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="price"
+                  value={displayPrice || '₦ '}
+                  onChange={handlePriceChange}
+                  placeholder={`₦${formatCurrency(product.basePrice)}`}
+                  disabled={product.stockLeft === 0}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+                {/* Hidden input to store the raw numeric value */}
+                <input
+                  type="hidden"
+                  value={price}
+                />
+              </div>
               
               {product.stockLeft === 0 && (
                 <p className="mt-2 text-sm text-red-600">This item is out of stock and cannot be added to cart.</p>
