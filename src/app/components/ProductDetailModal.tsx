@@ -26,7 +26,7 @@ interface ProductDetailModalProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart?: (product: Product, price: number) => void;
+  onAddToCart?: (product: Product, price: number, quantity: number) => void;
 }
 
 export default function ProductDetailModal({ 
@@ -37,6 +37,7 @@ export default function ProductDetailModal({
 }: ProductDetailModalProps) {
   const [price, setPrice] = useState('');
   const [displayPrice, setDisplayPrice] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString();
@@ -62,15 +63,23 @@ export default function ProductDetailModal({
     }
   };
 
-  const handleAddItem = () => {
-    if (product && price && onAddToCart) {
-      onAddToCart(product, parseFloat(price));
-      setPrice(''); // Reset price after adding
-      setDisplayPrice(''); // Reset display price
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1;
+    if (value >= 1 && value <= (product?.stockLeft || 1)) {
+      setQuantity(value);
     }
   };
 
-  const isAddButtonActive = price.trim() !== '' && product && product.stockLeft > 0;
+  const handleAddItem = () => {
+    if (product && price && onAddToCart) {
+      onAddToCart(product, parseFloat(price), quantity);
+      setPrice(''); // Reset price after adding
+      setDisplayPrice(''); // Reset display price
+      setQuantity(1); // Reset quantity
+    }
+  };
+
+  const isAddButtonActive = price.trim() !== '' && product && product.stockLeft > 0 && quantity > 0 && quantity <= product.stockLeft;
 
   if (!isOpen || !product) return null;
 
@@ -192,19 +201,18 @@ export default function ProductDetailModal({
                 </div>
               </div>
 
-              {/* Product Info */}
+              {/* Product Info - Removed Unit Cost */}
               <div>
                 <h3 className="mb-3 text-base font-semibold text-black">Product Information</h3>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><span className="font-medium">Base Price:</span> ₦{formatCurrency(product.basePrice)}</p>
-                  <p><span className="font-medium">Unit Cost:</span> ₦{formatCurrency(product.unitCost)}</p>
                   <p><span className="font-medium">Date Added:</span> {product.dateAdded}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Side - Price Input and Add Button */}
+          {/* Right Side - Price Input, Quantity Input and Add Button */}
           <div className="w-80">
             <div className="mb-6">
               <label htmlFor="price" className="block mb-3 text-sm font-medium text-black">
@@ -227,9 +235,30 @@ export default function ProductDetailModal({
                   value={price}
                 />
               </div>
+            </div>
+
+            {/* Product Quantity Input */}
+            <div className="mb-6">
+              <label htmlFor="quantity" className="block mb-3 text-sm font-medium text-black">
+                Product Quantity
+              </label>
+              
+              <input
+                type="number"
+                id="quantity"
+                min="1"
+                max={product.stockLeft}
+                value={quantity}
+                onChange={handleQuantityChange}
+                disabled={product.stockLeft === 0}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-center"
+              />
               
               {product.stockLeft === 0 && (
                 <p className="mt-2 text-sm text-red-600">This item is out of stock and cannot be added to cart.</p>
+              )}
+              {quantity > product.stockLeft && (
+                <p className="mt-2 text-sm text-red-600">Quantity exceeds available stock ({product.stockLeft} available).</p>
               )}
             </div>
 
