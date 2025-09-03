@@ -7,7 +7,7 @@ import { showToast } from '../utils/toast';
 
 interface UseCartReturn {
   cartItems: CartItem[];
-  addToCart: (product: Product, price: number) => boolean;
+  addToCart: (product: Product, price: number, quantity?: number) => boolean;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -29,7 +29,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
     storage.cart.save(cartItems);
   }, [cartItems]);
 
-  const addToCart = useCallback((product: Product, price: number): boolean => {
+  const addToCart = useCallback((product: Product, price: number, quantity: number = 1): boolean => {
     // Check stock availability
     if (product.stockLeft <= 0) {
       showToast('Product is out of stock', 'error');
@@ -38,9 +38,10 @@ export const useCart = (products: Product[]): UseCartReturn => {
 
     const existingItem = cartItems.find(item => item.id === product.id);
     const currentQuantity = existingItem?.quantity || 0;
+    const totalQuantityNeeded = currentQuantity + quantity;
 
-    // Check if adding one more would exceed stock
-    if (currentQuantity + 1 > product.stockLeft) {
+    // Check if adding the specified quantity would exceed stock
+    if (totalQuantityNeeded > product.stockLeft) {
       showToast(`Only ${product.stockLeft} items available in stock`, 'error');
       return false;
     }
@@ -49,7 +50,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
       if (existingItem) {
         return current.map(item => 
           item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1, price }
+            ? { ...item, quantity: item.quantity + quantity, price }
             : item
         );
       } else {
@@ -58,12 +59,13 @@ export const useCart = (products: Product[]): UseCartReturn => {
           name: product.name,
           image: product.image,
           price,
-          quantity: 1
+          quantity
         }];
       }
     });
 
-    showToast(`${product.name} added to cart`, 'success');
+    const quantityText = quantity === 1 ? '' : ` (${quantity})`;
+    showToast(`${product.name}${quantityText} added to cart`, 'success');
     return true;
   }, [cartItems]);
 
@@ -88,9 +90,9 @@ export const useCart = (products: Product[]): UseCartReturn => {
   }, [products]);
 
   const removeItem = useCallback((id: string): void => {
+    const item = cartItems.find(item => item.id === id);
     setCartItems(current => current.filter(item => item.id !== id));
     
-    const item = cartItems.find(item => item.id === id);
     if (item) {
       showToast(`${item.name} removed from cart`, 'info');
     }
