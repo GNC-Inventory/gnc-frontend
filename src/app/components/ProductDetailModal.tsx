@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import { toast } from '@/utils/toast';
 
 // Updated interface - removed unitCost completely
 interface Product {
@@ -24,17 +25,20 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart?: (product: Product, price: number, quantity: number) => void;
+  onInventoryUpdate?: (productId: string, newStockLeft: number) => void;
 }
 
 export default function ProductDetailModal({ 
   product, 
   isOpen, 
   onClose,
-  onAddToCart 
+  onAddToCart,
+  onInventoryUpdate
 }: ProductDetailModalProps) {
   const [price, setPrice] = useState('');
   const [displayPrice, setDisplayPrice] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString();
@@ -67,16 +71,89 @@ export default function ProductDetailModal({
     }
   };
 
-  const handleAddItem = () => {
-    if (product && price && onAddToCart) {
-      onAddToCart(product, parseFloat(price), quantity);
-      setPrice(''); // Reset price after adding
-      setDisplayPrice(''); // Reset display price
-      setQuantity(1); // Reset quantity
+  const deductInventory = async (productId: string, quantityToDeduct: number) => {
+    try {
+      const response = await fetch('/.netlify/functions/inventory', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: productId,
+          action: 'deduct',
+          quantity: quantityToDeduct
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update inventory');
+      }
+
+      return result.data; // Returns updated inventory item
+    } catch (error) {
+      console.error('Error deducting inventory:', error);
+      throw error;
     }
   };
 
-  const isAddButtonActive = price.trim() !== '' && product && product.stockLeft > 0 && quantity > 0 && quantity <= product.stockLeft;
+  const handleAddItem = async () => {
+    if (!product || !price || !onAddToCart) return;
+    
+    // Validate quantity against current stock
+    if (quantity > product.stockLeft) {
+      toast.error(`Only ${product.stockLeft} items available in stock`);
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    // Show processing toast (your toast system doesn't have loading, so we'll use info)
+    toast.info(`Adding ${quantity} item(s) to cart...`);
+
+    try {
+      // Step 1: Deduct inventory first
+      const updatedInventoryItem = await deductInventory(product.id, quantity);
+      
+      // Step 2: Update local product state
+      const updatedProduct = {
+        ...product,
+        stockLeft: updatedInventoryItem.stockLeft
+      };
+
+      // Step 3: Update parent component's inventory state
+      if (onInventoryUpdate) {
+        onInventoryUpdate(product.id, updatedInventoryItem.stockLeft);
+      }
+
+      // Step 4: Add to cart only after successful inventory deduction
+      onAddToCart(updatedProduct, parseFloat(price), quantity);
+
+      // Step 5: Show success and reset form
+      toast.success(`${product.name} (${quantity}) added to cart`);
+      
+      setPrice('');
+      setDisplayPrice('');
+      setQuantity(1);
+
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.message.includes('insufficient stock')) {
+        const match = error.message.match(/only (\d+) available/i);
+        const availableStock = match ? match[1] : 'limited';
+        toast.error(`Insufficient stock! Only ${availableStock} items available. Another rep may be processing this item.`);
+      } else if (error.message.includes('not found')) {
+        toast.error('Product not found in inventory');
+      } else {
+        toast.error(`Failed to add item: ${error.message}`);
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const isAddButtonActive = price.trim() !== '' && product && product.stockLeft > 0 && quantity > 0 && quantity <= product.stockLeft && !isProcessing;
 
   if (!isOpen || !product) return null;
 
@@ -223,7 +300,7 @@ export default function ProductDetailModal({
                   value={displayPrice || '₦ '}
                   onChange={handlePriceChange}
                   placeholder={`₦${formatCurrency(product.basePrice)}`}
-                  disabled={product.stockLeft === 0}
+                  disabled={product.stockLeft === 0 || isProcessing}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 {/* Hidden input to store the raw numeric value */}
@@ -247,7 +324,7 @@ export default function ProductDetailModal({
                 max={product.stockLeft}
                 value={quantity}
                 onChange={handleQuantityChange}
-                disabled={product.stockLeft === 0}
+                disabled={product.stockLeft === 0 || isProcessing}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-center"
               />
               
@@ -269,10 +346,19 @@ export default function ProductDetailModal({
                   : 'bg-gray-300 cursor-not-allowed'
               }`}
             >
-              <ShoppingCartIcon className={`w-4 h-4 ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`} />
-              <span className={`text-sm font-medium ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`}>
-                Add item
-              </span>
+              {isProcessing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm font-medium text-white ml-1">Processing...</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingCartIcon className={`w-4 h-4 ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`} />
+                  <span className={`text-sm font-medium ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`}>
+                    Add item
+                  </span>
+                </>
+              )}
             </button>
           </div>
         </div>
