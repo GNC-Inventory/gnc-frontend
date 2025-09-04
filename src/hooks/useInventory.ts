@@ -41,7 +41,7 @@ const transformProduct = (item: any): Product => ({
   image: item.image || '/products/default.png',
   category: item.category || extractCategory(item.product), 
   sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
-  basePrice: item.unitCost,
+  basePrice: item.basePrice, 
   stockLeft: item.stockLeft,
   unitCost: item.unitCost,
   dateAdded: item.dateAdded,
