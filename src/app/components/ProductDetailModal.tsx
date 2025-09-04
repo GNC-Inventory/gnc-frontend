@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
-// Updated interface to match the products page
+// Updated interface - removed unitCost completely
 interface Product {
   id: string;
   name: string;
@@ -12,11 +12,8 @@ interface Product {
   category: string;
   sku: string;
   basePrice: number;
-  // New properties from admin inventory
   stockLeft: number;
-  unitCost: number;
   dateAdded: string;
-  // Keep existing properties for compatibility
   types?: string[];
   brands?: string[];
   sizes?: string[];
@@ -201,7 +198,7 @@ export default function ProductDetailModal({
                 </div>
               </div>
 
-              {/* Product Info - Removed Unit Cost */}
+              {/* Product Info - Only Base Price and Date Added */}
               <div>
                 <h3 className="mb-3 text-base font-semibold text-black">Product Information</h3>
                 <div className="space-y-2 text-sm text-gray-600">
