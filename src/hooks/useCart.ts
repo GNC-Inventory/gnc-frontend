@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { storage, type CartItem } from '../utils/storage';
 import { type Product } from './useInventory';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 
 interface UseCartReturn {
   cartItems: CartItem[];
@@ -29,22 +29,43 @@ export const useCart = (products: Product[]): UseCartReturn => {
     storage.cart.save(cartItems);
   }, [cartItems]);
 
-  const addToCart = useCallback((product: Product, price: number, quantity: number = 1): boolean => {
-    // Check stock availability
-    if (product.stockLeft <= 0) {
-      showToast('Product is out of stock', 'error');
+  // Function to restore inventory when items are removed
+  const restoreInventory = async (productId: string, quantity: number) => {
+    try {
+      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: productId,
+          action: 'restore',
+          quantity: quantity
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error('Failed to restore inventory:', result.error);
+        // Don't throw error here as cart removal should still proceed
+        toast.warning('Item removed from cart, but inventory restoration failed');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error restoring inventory:', error);
+      toast.warning('Item removed from cart, but inventory restoration failed');
       return false;
     }
+  };
+
+  const addToCart = useCallback((product: Product, price: number, quantity: number = 1): boolean => {
+    // Note: Inventory deduction is now handled in ProductDetailModal before this function is called
+    // This function now just adds to cart assuming inventory was already deducted
 
     const existingItem = cartItems.find(item => item.id === product.id);
-    const currentQuantity = existingItem?.quantity || 0;
-    const totalQuantityNeeded = currentQuantity + quantity;
-
-    // Check if adding the specified quantity would exceed stock
-    if (totalQuantityNeeded > product.stockLeft) {
-      showToast(`Only ${product.stockLeft} items available in stock`, 'error');
-      return false;
-    }
 
     setCartItems(current => {
       if (existingItem) {
@@ -64,22 +85,53 @@ export const useCart = (products: Product[]): UseCartReturn => {
       }
     });
 
-    const quantityText = quantity === 1 ? '' : ` (${quantity})`;
-    showToast(`${product.name}${quantityText} added to cart`, 'success');
     return true;
   }, [cartItems]);
 
-  const updateQuantity = useCallback((id: string, quantity: number): void => {
+  const updateQuantity = useCallback(async (id: string, quantity: number): Promise<void> => {
     if (quantity <= 0) {
       removeItem(id);
       return;
     }
 
-    // Find the product to check stock
-    const product = products.find(p => p.id === id);
-    if (product && quantity > product.stockLeft) {
-      showToast(`Only ${product.stockLeft} items available in stock`, 'error');
-      return;
+    const currentItem = cartItems.find(item => item.id === id);
+    if (!currentItem) return;
+
+    const quantityDifference = quantity - currentItem.quantity;
+    
+    if (quantityDifference > 0) {
+      // Increasing quantity - need to deduct more from inventory
+      const product = products.find(p => p.id === id);
+      if (product && quantity > product.stockLeft + currentItem.quantity) {
+        toast.error(`Only ${product.stockLeft + currentItem.quantity} items available in stock`);
+        return;
+      }
+
+      try {
+        const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: id,
+            action: 'deduct',
+            quantity: quantityDifference
+          })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+          toast.error('Failed to update inventory');
+          return;
+        }
+      } catch (error) {
+        toast.error('Failed to update inventory');
+        return;
+      }
+    } else if (quantityDifference < 0) {
+      // Decreasing quantity - need to restore to inventory
+      await restoreInventory(id, Math.abs(quantityDifference));
     }
 
     setCartItems(current => 
@@ -87,21 +139,36 @@ export const useCart = (products: Product[]): UseCartReturn => {
         item.id === id ? { ...item, quantity } : item
       )
     );
-  }, [products]);
+  }, [products, cartItems]);
 
-  const removeItem = useCallback((id: string): void => {
+  const removeItem = useCallback(async (id: string): Promise<void> => {
     const item = cartItems.find(item => item.id === id);
-    setCartItems(current => current.filter(item => item.id !== id));
     
     if (item) {
-      showToast(`${item.name} removed from cart`, 'info');
+      // Restore inventory before removing from cart
+      await restoreInventory(item.id, item.quantity);
+      
+      setCartItems(current => current.filter(item => item.id !== id));
+      toast.success(`${item.name} removed from cart and inventory restored`);
     }
   }, [cartItems]);
 
-  const clearCart = useCallback((): void => {
+  const clearCart = useCallback(async (): Promise<void> => {
+    // Restore inventory for all items when clearing cart
+    const restorePromises = cartItems.map(item => 
+      restoreInventory(item.id, item.quantity)
+    );
+    
+    try {
+      await Promise.all(restorePromises);
+      toast.success('Cart cleared and inventory restored');
+    } catch (error) {
+      toast.warning('Cart cleared, but some inventory restoration failed');
+    }
+    
     setCartItems([]);
     storage.cart.clear();
-  }, []);
+  }, [cartItems]);
 
   const getTotalAmount = useCallback((): number => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
