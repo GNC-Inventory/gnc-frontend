@@ -1,17 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import ProductDetailModal from '../components/ProductDetailModal';
-import CartSidebar from '../components/CartSidebar';
-import CheckoutView from '../components/CheckoutView';
-import CategorySection from '../components/CategorySection';
-import EmptyState from '../components/EmptyState';
-import PendingSaleCard from '../components/PendingSaleCard';
-import { useInventory, type Product } from '../../hooks/useInventory';
-import { useCart } from '../../hooks/useCart';
-import { usePendingSales } from '../../hooks/usePendingSales';
-import { showToast } from '../../utils/toast';
+import { useState } from 'react';
+import { ArrowLeftIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
   id: string;
@@ -21,312 +11,161 @@ interface CartItem {
   quantity: number;
 }
 
-interface CompletedTransaction {
-  id: string;
-  items: CartItem[];
-  customer: string;
-  paymentMethod: string;
-  total: number;
-  createdAt: string;
-  status: 'Successful';
+interface CustomerDetails {
+  name: string;
+  address: string;
+  phone: string;
 }
 
-export default function ProductsPage() {
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [isProcessingSale, setIsProcessingSale] = useState(false);
-  const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
-  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+interface CheckoutViewProps {
+  cartItems: CartItem[];
+  onBack: () => void;
+  onPrintReceipt: (customerDetails: CustomerDetails, paymentMethod: string) => void;
+}
 
-  // Hooks
-  const { products, loading, error, refetch } = useInventory();
-  
-  // Update local products when products change
-  useEffect(() => {
-    setLocalProducts(products);
-  }, [products]);
+const paymentMethods = ['POS', 'Transfer', 'Cash in hand'];
 
-  const cart = useCart(localProducts);
-  const pendingSales = usePendingSales();
+export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: CheckoutViewProps) {
+  const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
+    name: 'Joseph Okoye',
+    address: '',
+    phone: ''
+  });
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false);
 
-  // Computed - use localProducts instead of products for real-time updates
-  const showCart = useMemo(() => cart.cartItems.length > 0 && !showCheckout, [cart.cartItems.length, showCheckout]);
-  const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
-  const isCompact = showCart || showCheckout;
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return localProducts;
-    const query = searchQuery.toLowerCase();
-    return localProducts.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
-  }, [localProducts, searchQuery]);
-
-  const groupedProducts = useMemo(() => {
-    return filteredProducts.reduce((acc, product) => {
-      if (!acc[product.category]) acc[product.category] = [];
-      acc[product.category].push(product);
-      return acc;
-    }, {} as Record<string, Product[]>);
-  }, [filteredProducts]);
-
-  // API call
-  const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
-    const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items, customer, paymentMethod })
-    });
-
-    const result = await response.json();
-    if (!result.success) throw new Error(result.error || 'Failed to process sale');
-    return result.transaction;
+  const updateCustomerField = (field: keyof CustomerDetails, value: string) => {
+    setCustomerDetails(prev => ({ ...prev, [field]: value }));
   };
 
-  // New handler for inventory updates from ProductDetailModal
-  const handleInventoryUpdate = useCallback((productId: string, newStockLeft: number) => {
-    setLocalProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, stockLeft: newStockLeft }
-          : product
-      )
-    );
-  }, []);
-
-  // Handlers
-  const handleSelectProduct = useCallback((productId: string) => {
-    const product = localProducts.find(p => p.id === productId);
-    if (product && product.stockLeft > 0) {
-      setSelectedProduct(product);
-      setIsModalOpen(true);
-    } else if (product && product.stockLeft === 0) {
-      showToast('Product is out of stock', 'error');
+  const handlePrintReceipt = () => {
+    if (customerDetails.name.trim() && customerDetails.address.trim() && customerDetails.phone.trim() && paymentMethod) {
+      onPrintReceipt(customerDetails, paymentMethod);
     }
-  }, [localProducts]);
+  };
 
-  const handleAddToCart = useCallback((product: Product, price: number, quantity: number) => {
-    const success = cart.addToCart(product, price, quantity);
-    if (success) {
-      setIsModalOpen(false);
-      setSelectedProduct(null);
-    }
-  }, [cart]);
+  const isFormValid = customerDetails.name.trim() && customerDetails.address.trim() && customerDetails.phone.trim() && paymentMethod;
 
-  const handleCloseModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
-  }, []);
-
-  const handleCompleteSale = useCallback(async () => {
-    if (cart.cartItems.length === 0) {
-      showToast('Cart is empty', 'error');
-      return;
-    }
-
-    setIsProcessingSale(true);
-    
-    try {
-      const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
-      setCompletedTransaction(transaction);
-      showToast('Sale processed successfully! Inventory updated.', 'success');
-      refetch();
-      setShowCheckout(true);
-    } catch (error: any) {
-      console.error('Error processing sale:', error);
-      
-      if (error.message?.includes('Insufficient stock')) {
-        showToast('Insufficient stock for some items. Please check inventory.', 'error');
-      } else if (error.message?.includes('not found')) {
-        showToast('Some products are no longer available. Please refresh and try again.', 'error');
-        refetch();
-      } else {
-        showToast('Failed to process sale. Please try again.', 'error');
-      }
-    } finally {
-      setIsProcessingSale(false);
-    }
-  }, [cart, refetch]);
-
-  const handleHoldSale = useCallback(() => {
-    pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
-    cart.clearCart();
-  }, [pendingSales, cart]);
-
-  const handleCancelSale = useCallback(() => cart.clearCart(), [cart]);
-
-  const handleResumeSale = useCallback((saleId: string) => {
-    const resumedItems = pendingSales.resumeSale(saleId);
-    if (resumedItems) showToast('Sale resumed - please re-add items to cart', 'info');
-  }, [pendingSales]);
-
-  const handleBackToCart = useCallback(() => {
-    if (completedTransaction) {
-      cart.clearCart();
-      setCompletedTransaction(null);
-      setShowCheckout(false);
-    } else {
-      setShowCheckout(false);
-    }
-  }, [completedTransaction, cart]);
-
-  const handlePrintReceipt = useCallback((customerName: string, paymentMethod: string) => {
-    try {
-      if (!completedTransaction) {
-        showToast('No completed transaction to print', 'error');
-        return;
-      }
-
-      const finalTransaction = { ...completedTransaction, customer: customerName, paymentMethod };
-      const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-      existingTransactions.push(finalTransaction);
-      localStorage.setItem('transactions', JSON.stringify(existingTransactions));
-
-      console.log('Receipt printed for transaction:', finalTransaction);
-      showToast(`Receipt printed for ${customerName}!`, 'success');
-      
-      cart.clearCart();
-      setCompletedTransaction(null);
-      setShowCheckout(false);
-    } catch (error) {
-      console.error('Error printing receipt:', error);
-      showToast('Error printing receipt. Please try again.', 'error');
-    }
-  }, [cart, completedTransaction]);
-
-  if (loading) {
-    return (
-      <div className="p-8 max-w-7xl mx-auto">
-        <EmptyState type="loading" />
-      </div>
-    );
-  }
+  const inputStyle = "w-[304px] h-10 border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
+  const labelStyle = "block mb-3 text-sm font-medium text-gray-900";
 
   return (
-    <div className={`p-8 transition-all duration-300 ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}`}>
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 mb-2">Failed to load products: {error}</p>
-          <button onClick={refetch} className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Search Bar & Refresh */}
-      {!showCheckout && (
-        <div className="mb-6 flex items-center gap-4 w-full max-w-2xl">
-          <div className="bg-white rounded-lg flex items-center flex-1 max-w-[540px] h-9 px-2 gap-2">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Search items by name or SKU or category"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none bg-transparent text-sm min-w-0"
-            />
-          </div>
-          <button 
-            onClick={refetch}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm flex-shrink-0"
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-      )}
-
-      {/* Pending Sales */}
-      {showPendingSales && (
-        <div className="mb-6 flex gap-6 overflow-x-auto pb-2">
-          {pendingSales.pendingSales.map((sale, index) => (
-            <PendingSaleCard key={sale.id} sale={sale} index={index} onResume={handleResumeSale} />
-          ))}
-        </div>
-      )}
-
-      {/* Products Container */}
-      <div 
-        className={`
-          bg-white rounded-[32px] p-8 transition-all
-          ${isCompact ? 'fixed overflow-y-auto w-[728px] h-[716px] top-[172px]' : 'relative w-full min-h-[728px]'}
-          ${isCompact && typeof window !== 'undefined' && window.innerWidth > 1440 
-            ? `left-[${(window.innerWidth - 1440) / 2 + 304}px]` 
-            : isCompact ? 'left-[304px]' : ''
-          }
-        `}
-        style={{ backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}
-      >
-        <div className="mb-4">
-          <h2 className="font-medium text-sm text-black">
-            Showing items by category ({localProducts.length} products)
-          </h2>
-        </div>
-        <div className="border-t border-gray-200 mb-6"></div>
-
-        {/* Products Content */}
-        {Object.keys(groupedProducts).length === 0 ? (
-          error ? (
-            <EmptyState type="error" error={error} onRetry={refetch} />
-          ) : searchQuery ? (
-            <EmptyState type="no-search-results" searchQuery={searchQuery} />
-          ) : (
-            <EmptyState type="no-products" onRetry={refetch} />
-          )
-        ) : (
-          <div className={`grid gap-8 ${isCompact ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
-            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-              <CategorySection
-                key={category}
-                category={category}
-                products={categoryProducts}
-                isCompact={isCompact}
-                onSelectProduct={handleSelectProduct}
-              />
-            ))}
-          </div>
-        )}
+    <div className="fixed bg-white z-50 w-[352px] h-[716px] top-[172px] rounded-[32px] shadow-lg"
+         style={{ left: typeof window !== 'undefined' && window.innerWidth > 1440 ? `${(window.innerWidth - 1440) / 2 + 1056}px` : '1056px' }}>
+      
+      {/* Header */}
+      <div className="p-6 pb-4">
+        <button onClick={onBack} className="flex items-center space-x-2 mb-4 hover:opacity-80 transition-opacity">
+          <ArrowLeftIcon className="w-4 h-4 text-gray-500" />
+          <span className="text-sm text-gray-600">Return to Product Sales</span>
+        </button>
+        <h2 className="text-sm font-medium text-gray-900 mb-2">Checkout</h2>
+        <p className="text-xs text-gray-500">{totalItems} item{totalItems !== 1 ? 's' : ''}</p>
       </div>
 
-      {/* Modals & Sidebar */}
-      <ProductDetailModal 
-        product={selectedProduct} 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        onAddToCart={handleAddToCart}
-        onInventoryUpdate={handleInventoryUpdate}
-      />
-      
-      {showCart && (
-        <CartSidebar
-          cartItems={cart.cartItems}
-          onUpdateQuantity={cart.updateQuantity}
-          onRemoveItem={cart.removeItem}
-          onCompleteSale={handleCompleteSale}
-          onHoldTransaction={handleHoldSale}
-          onCancel={handleCancelSale}
-        />
-      )}
+      <div className="border-t border-gray-200 mx-6 mb-6"></div>
 
-      {showCheckout && (
-        <CheckoutView
-          cartItems={cart.cartItems}
-          onBack={handleBackToCart}
-          onPrintReceipt={handlePrintReceipt}
-        />
-      )}
+      {/* Form Content */}
+      <div className="px-6 space-y-6 overflow-y-auto h-[400px]">
+        {/* Customer Name */}
+        <div>
+          <label htmlFor="customerName" className={labelStyle}>Customer name</label>
+          <input
+            type="text"
+            id="customerName"
+            value={customerDetails.name}
+            onChange={(e) => updateCustomerField('name', e.target.value)}
+            placeholder="Enter customer name"
+            className={inputStyle}
+          />
+        </div>
 
-      {/* Processing Sale Loading Overlay */}
-      {isProcessingSale && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-gray-700">Processing sale...</span>
+        {/* Customer Address */}
+        <div>
+          <label htmlFor="customerAddress" className={labelStyle}>Customer address</label>
+          <textarea
+            id="customerAddress"
+            value={customerDetails.address}
+            onChange={(e) => updateCustomerField('address', e.target.value)}
+            placeholder="Enter customer address"
+            rows={3}
+            className="w-[304px] border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+          />
+        </div>
+
+        {/* Customer Phone */}
+        <div>
+          <label htmlFor="customerPhone" className={labelStyle}>Customer phone number</label>
+          <input
+            type="tel"
+            id="customerPhone"
+            value={customerDetails.phone}
+            onChange={(e) => updateCustomerField('phone', e.target.value)}
+            placeholder="Enter phone number"
+            className={inputStyle}
+          />
+        </div>
+
+        {/* Payment Method */}
+        <div>
+          <label className={labelStyle}>Method of Payment</label>
+          <div className="relative">
+            <button
+              onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
+              className="w-[304px] h-10 border border-gray-300 rounded-lg px-3 py-2.5 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <span className={`text-sm ${paymentMethod ? 'text-gray-900' : 'text-gray-400'}`}>
+                {paymentMethod || 'Select one...'}
+              </span>
+              <ChevronDownIcon className={`w-4 h-4 transition-transform ${isPaymentDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isPaymentDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => {
+                      setPaymentMethod(method);
+                      setIsPaymentDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                      paymentMethod === method ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
+        <div className="flex justify-between items-center mb-6">
+          <span className="text-sm font-semibold text-gray-900">Total</span>
+          <span className="text-sm font-semibold text-gray-900">₦ {totalAmount.toLocaleString()}</span>
+        </div>
+
+        <button
+          onClick={handlePrintReceipt}
+          disabled={!isFormValid}
+          className={`w-[304px] h-9 rounded-lg mb-3 flex items-center justify-center transition-opacity ${
+            isFormValid ? 'bg-blue-600 hover:opacity-90 cursor-pointer' : 'bg-gray-300 cursor-not-allowed'
+          }`}
+        >
+          <span className="text-sm font-medium text-white">Print receipt</span>
+        </button>
+
+        <button onClick={onBack} className="w-full text-center hover:opacity-80 transition-opacity">
+          <span className="text-sm font-medium text-blue-600">Back</span>
+        </button>
+      </div>
     </div>
   );
 }
