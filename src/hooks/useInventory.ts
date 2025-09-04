@@ -10,7 +10,6 @@ export interface Product {
   sku: string;
   basePrice: number;
   stockLeft: number;
-  unitCost: number;
   dateAdded: string;
   types?: string[];
   brands?: string[];
@@ -41,9 +40,8 @@ const transformProduct = (item: any): Product => ({
   image: item.image || '/products/default.png',
   category: item.category || extractCategory(item.product), 
   sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
-  basePrice: item.basePrice, 
+  basePrice: item.basePrice || item.unitCost, // Use basePrice if available, fallback to unitCost
   stockLeft: item.stockLeft,
-  unitCost: item.unitCost,
   dateAdded: item.dateAdded,
   types: ['Standard'],
   brands: ['Generic'],

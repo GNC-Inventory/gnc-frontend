@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
@@ -39,22 +39,29 @@ export default function ProductsPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [isProcessingSale, setIsProcessingSale] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
-  const cart = useCart(products);
+  
+  // Update local products when products change
+  useEffect(() => {
+    setLocalProducts(products);
+  }, [products]);
+
+  const cart = useCart(localProducts);
   const pendingSales = usePendingSales();
 
-  // Computed
+  // Computed - use localProducts instead of products for real-time updates
   const showCart = useMemo(() => cart.cartItems.length > 0 && !showCheckout, [cart.cartItems.length, showCheckout]);
   const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
   const isCompact = showCart || showCheckout;
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
+    if (!searchQuery.trim()) return localProducts;
     const query = searchQuery.toLowerCase();
-    return products.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
-  }, [products, searchQuery]);
+    return localProducts.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
+  }, [localProducts, searchQuery]);
 
   const groupedProducts = useMemo(() => {
     return filteredProducts.reduce((acc, product) => {
@@ -77,14 +84,27 @@ export default function ProductsPage() {
     return result.transaction;
   };
 
+  // New handler for inventory updates from ProductDetailModal
+  const handleInventoryUpdate = useCallback((productId: string, newStockLeft: number) => {
+    setLocalProducts(prev => 
+      prev.map(product => 
+        product.id === productId 
+          ? { ...product, stockLeft: newStockLeft }
+          : product
+      )
+    );
+  }, []);
+
   // Handlers
   const handleSelectProduct = useCallback((productId: string) => {
-    const product = products.find(p => p.id === productId);
+    const product = localProducts.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
       setSelectedProduct(product);
       setIsModalOpen(true);
+    } else if (product && product.stockLeft === 0) {
+      showToast('Product is out of stock', 'error');
     }
-  }, [products]);
+  }, [localProducts]);
 
   const handleAddToCart = useCallback((product: Product, price: number, quantity: number) => {
     const success = cart.addToCart(product, price, quantity);
@@ -241,7 +261,7 @@ export default function ProductsPage() {
       >
         <div className="mb-4">
           <h2 className="font-medium text-sm text-black">
-            Showing items by category ({products.length} products)
+            Showing items by category ({localProducts.length} products)
           </h2>
         </div>
         <div className="border-t border-gray-200 mb-6"></div>
@@ -275,7 +295,8 @@ export default function ProductsPage() {
         product={selectedProduct} 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onAddToCart={handleAddToCart} 
+        onAddToCart={handleAddToCart}
+        onInventoryUpdate={handleInventoryUpdate}
       />
       
       {showCart && (
