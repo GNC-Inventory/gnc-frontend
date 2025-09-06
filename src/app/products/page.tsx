@@ -27,7 +27,6 @@ interface CustomerDetails {
   phone: string;
 }
 
-
 interface CompletedTransaction {
   id: string;
   items: CartItem[];
@@ -211,19 +210,54 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 max-w-7xl mx-auto">
+      <div style={{ 
+        padding: '32px', 
+        maxWidth: '1280px', 
+        margin: '0 auto' 
+      }}>
         <EmptyState type="loading" />
       </div>
     );
   }
 
   return (
-    <div className={`p-8 transition-all duration-300 ${showCart ? 'ml-4' : 'max-w-7xl mx-auto'}`}>
+    <div style={{
+      padding: '32px',
+      transition: 'all 0.3s',
+      marginLeft: showCart ? '16px' : '0',
+      maxWidth: showCart ? 'none' : '1280px',
+      margin: showCart ? '0 0 0 16px' : '0 auto'
+    }}>
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 mb-2">Failed to load products: {error}</p>
-          <button onClick={refetch} className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
+        <div style={{
+          marginBottom: '16px',
+          padding: '16px',
+          backgroundColor: '#FEF2F2',
+          border: '1px solid #FECACA',
+          borderRadius: '8px'
+        }}>
+          <p style={{ 
+            color: '#B91C1C', 
+            marginBottom: '8px',
+            margin: '0 0 8px 0'
+          }}>
+            Failed to load products: {error}
+          </p>
+          <button 
+            onClick={refetch} 
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#FEE2E2',
+              color: '#B91C1C',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FECACA'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+          >
             Retry
           </button>
         </div>
@@ -231,21 +265,66 @@ export default function ProductsPage() {
 
       {/* Search Bar & Refresh */}
       {!showCheckout && (
-        <div className="mb-6 flex items-center gap-4 w-full max-w-2xl">
-          <div className="bg-white rounded-lg flex items-center flex-1 max-w-[540px] h-9 px-2 gap-2">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <div style={{
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          width: '100%',
+          maxWidth: '672px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            maxWidth: '540px',
+            height: '36px',
+            padding: '0 8px',
+            gap: '8px'
+          }}>
+            <MagnifyingGlassIcon style={{
+              width: '20px',
+              height: '20px',
+              color: '#9CA3AF',
+              flexShrink: 0
+            }} />
             <input
               type="text"
               placeholder="Search items by name or SKU or category"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none bg-transparent text-sm min-w-0"
+              style={{
+                flex: 1,
+                outline: 'none',
+                backgroundColor: 'transparent',
+                fontSize: '14px',
+                minWidth: 0,
+                border: 'none'
+              }}
             />
           </div>
           <button 
             onClick={refetch}
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm flex-shrink-0"
+            style={{
+              padding: '8px 16px',
+              backgroundColor: loading ? '#93C5FD' : '#2563EB',
+              color: 'white',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+              fontSize: '14px',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = '#1D4ED8';
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = '#2563EB';
+            }}
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -254,7 +333,13 @@ export default function ProductsPage() {
 
       {/* Pending Sales */}
       {showPendingSales && (
-        <div className="mb-6 flex gap-6 overflow-x-auto pb-2">
+        <div style={{
+          marginBottom: '24px',
+          display: 'flex',
+          gap: '24px',
+          overflowX: 'auto',
+          paddingBottom: '8px'
+        }}>
           {pendingSales.pendingSales.map((sale, index) => (
             <PendingSaleCard key={sale.id} sale={sale} index={index} onResume={handleResumeSale} />
           ))}
@@ -263,22 +348,36 @@ export default function ProductsPage() {
 
       {/* Products Container */}
       <div 
-        className={`
-          bg-white rounded-[32px] p-8 transition-all
-          ${isCompact ? 'fixed overflow-y-auto w-[728px] h-[716px] top-[172px]' : 'relative w-full min-h-[728px]'}
-          ${isCompact && typeof window !== 'undefined' && window.innerWidth > 1440 
-            ? `left-[${(window.innerWidth - 1440) / 2 + 304}px]` 
-            : isCompact ? 'left-[304px]' : ''
-          }
-        `}
-        style={{ backgroundColor: 'var(--bg-white-0, #FFFFFF)' }}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '32px',
+          padding: '32px',
+          transition: 'all 0.3s',
+          position: isCompact ? 'fixed' : 'relative',
+          overflow: isCompact ? 'auto' : 'visible',
+          width: isCompact ? '728px' : '100%',
+          height: isCompact ? '716px' : 'auto',
+          minHeight: isCompact ? 'auto' : '728px',
+          top: isCompact ? '172px' : 'auto',
+          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
+            ? `${(window.innerWidth - 1440) / 2 + 304}px` 
+            : '304px') : 'auto'
+        }}
       >
-        <div className="mb-4">
-          <h2 className="font-medium text-sm text-black">
+        <div style={{ marginBottom: '16px' }}>
+          <h2 style={{
+            fontWeight: 500,
+            fontSize: '14px',
+            color: 'black',
+            margin: 0
+          }}>
             Showing items by category ({localProducts.length} products)
           </h2>
         </div>
-        <div className="border-t border-gray-200 mb-6"></div>
+        <div style={{
+          borderTop: '1px solid #E5E7EB',
+          marginBottom: '24px'
+        }}></div>
 
         {/* Products Content */}
         {Object.keys(groupedProducts).length === 0 ? (
@@ -290,7 +389,11 @@ export default function ProductsPage() {
             <EmptyState type="no-products" onRetry={refetch} />
           )
         ) : (
-          <div className={`grid gap-8 ${isCompact ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+          <div style={{
+            display: 'grid',
+            gap: '32px',
+            gridTemplateColumns: isCompact ? '1fr' : 'repeat(auto-fit, minmax(400px, 1fr))'
+          }}>
             {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
               <CategorySection
                 key={category}
@@ -333,13 +436,46 @@ export default function ProductsPage() {
 
       {/* Processing Sale Loading Overlay */}
       {isProcessingSale && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-gray-700">Processing sale...</span>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '2px solid #E5E7EB',
+              borderTop: '2px solid #2563EB',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <span style={{ color: '#374151' }}>Processing sale...</span>
           </div>
         </div>
       )}
+
+      {/* Add keyframes for loading spinner */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
