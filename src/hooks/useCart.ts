@@ -90,7 +90,13 @@ export const useCart = (products: Product[]): UseCartReturn => {
 
   const updateQuantity = useCallback(async (id: string, quantity: number): Promise<void> => {
     if (quantity <= 0) {
-      removeItem(id);
+      // Remove item directly instead of calling removeItem to avoid circular dependency
+      const item = cartItems.find(item => item.id === id);
+      if (item) {
+        await restoreInventory(item.id, item.quantity);
+        setCartItems(current => current.filter(item => item.id !== id));
+        toast.success(`${item.name} removed from cart and inventory restored`);
+      }
       return;
     }
 
@@ -163,6 +169,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
       await Promise.all(restorePromises);
       toast.success('Cart cleared and inventory restored');
     } catch (error) {
+      console.error('Error clearing cart:', error);
       toast.warning('Cart cleared, but some inventory restoration failed');
     }
     
