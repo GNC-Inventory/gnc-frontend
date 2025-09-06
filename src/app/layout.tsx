@@ -18,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${geist.variable} antialiased`}>
-        <div className="max-w-[1440px] mx-auto"> {children}</div>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+          {children}
+        </div>
       </body>
     </html>
   );
