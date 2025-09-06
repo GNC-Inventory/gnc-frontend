@@ -137,16 +137,18 @@ export default function ProductDetailModal({
       setDisplayPrice('');
       setQuantity(1);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific error cases
-      if (error.message.includes('insufficient stock')) {
-        const match = error.message.match(/only (\d+) available/i);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (errorMessage.includes('insufficient stock')) {
+        const match = errorMessage.match(/only (\d+) available/i);
         const availableStock = match ? match[1] : 'limited';
         toast.error(`Insufficient stock! Only ${availableStock} items available. Another rep may be processing this item.`);
-      } else if (error.message.includes('not found')) {
+      } else if (errorMessage.includes('not found')) {
         toast.error('Product not found in inventory');
       } else {
-        toast.error(`Failed to add item: ${error.message}`);
+        toast.error(`Failed to add item: ${errorMessage}`);
       }
     } finally {
       setIsProcessing(false);
