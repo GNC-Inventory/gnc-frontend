@@ -65,10 +65,15 @@ export const getTransactions = (): Transaction[] => {
     if (savedTransactions) {
       const parsed = JSON.parse(savedTransactions);
       // Convert date strings back to Date objects
-      return parsed.map((transaction: any) => ({
-        ...transaction,
-        createdAt: new Date(transaction.createdAt)
-      }));
+      return parsed.map((transaction: unknown) => {
+        if (transaction && typeof transaction === 'object' && 'createdAt' in transaction) {
+          return {
+            ...(transaction as Record<string, unknown>),
+            createdAt: new Date((transaction as { createdAt: string }).createdAt)
+          } as Transaction;
+        }
+        return transaction as Transaction;
+      });
     }
     return [];
   } catch (error) {
