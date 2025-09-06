@@ -86,18 +86,23 @@ export default function TransactionsPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const baseClasses = "px-3 py-1 rounded-full text-xs font-medium";
+  const getStatusBadgeStyle = (status: string) => {
+    const baseStyle = {
+      padding: '4px 12px',
+      borderRadius: '9999px',
+      fontSize: '12px',
+      fontWeight: 500
+    };
     
     switch (status) {
       case 'Successful':
-        return `${baseClasses} bg-green-100 text-green-700`;
+        return { ...baseStyle, backgroundColor: '#DCFCE7', color: '#15803D' };
       case 'Ongoing':
-        return `${baseClasses} bg-orange-100 text-orange-700`;
+        return { ...baseStyle, backgroundColor: '#FED7AA', color: '#C2410C' };
       case 'Failed':
-        return `${baseClasses} bg-red-100 text-red-700`;
+        return { ...baseStyle, backgroundColor: '#FEE2E2', color: '#DC2626' };
       default:
-        return `${baseClasses} bg-gray-100 text-gray-700`;
+        return { ...baseStyle, backgroundColor: '#F3F4F6', color: '#374151' };
     }
   };
 
@@ -110,12 +115,20 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: '#F9FAFB'
+    }}>
       {/* Sidebar */}
       <Sidebar />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         {/* Navbar */}
         <Navbar 
           title="Transactions" 
@@ -124,33 +137,56 @@ export default function TransactionsPage() {
         />
         
         {/* Content */}
-        <div className="flex-1 p-8">
+        <div style={{ flex: 1, padding: '32px' }}>
           {/* Filters and Search */}
-          <div className="mb-6 flex items-center justify-between">
+          <div style={{
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
             {/* Date Filter */}
-            <div className="flex items-center space-x-4">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
               <span 
-                className="text-gray-600"
                 style={{
-                  fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
                   fontWeight: 400,
                   fontSize: '14px',
                   lineHeight: '20px',
+                  color: '#6B7280'
                 }}
               >
                 Showing
               </span>
               
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
-                    fontWeight: 400,
+                    appearance: 'none',
+                    backgroundColor: 'white',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    padding: '8px 32px 8px 16px',
                     fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontWeight: 400,
                     lineHeight: '20px',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3B82F6';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#E5E7EB';
+                    e.target.style.boxShadow = 'none';
                   }}
                 >
                   <option value="Today">Today</option>
@@ -159,16 +195,37 @@ export default function TransactionsPage() {
                   <option value="This Month">This Month</option>
                   <option value="All Time">All Time</option>
                 </select>
-                <ChevronDownIcon className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDownIcon style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '16px',
+                  height: '16px',
+                  color: '#9CA3AF',
+                  pointerEvents: 'none'
+                }} />
               </div>
             </div>
           </div>
 
           {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              position: 'relative',
+              maxWidth: '448px'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                paddingLeft: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                pointerEvents: 'none'
+              }}>
+                <svg style={{ width: '20px', height: '20px', color: '#9CA3AF' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -177,93 +234,131 @@ export default function TransactionsPage() {
                 placeholder="Search items by name or SKU"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 style={{
-                  fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  display: 'block',
+                  width: '100%',
+                  paddingLeft: '40px',
+                  paddingRight: '12px',
+                  paddingTop: '8px',
+                  paddingBottom: '8px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
                   fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3B82F6';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E5E7EB';
+                  e.target.style.boxShadow = 'none';
                 }}
               />
             </div>
           </div>
 
           {/* Transactions Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+            border: '1px solid #E5E7EB',
+            overflow: 'hidden'
+          }}>
             {/* Table Header */}
-            <div className="border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-7 gap-4 px-6 py-4">
+            <div style={{
+              borderBottom: '1px solid #E5E7EB',
+              backgroundColor: '#F9FAFB'
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: '16px',
+                padding: '16px 24px'
+              }}>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   ID
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Product
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Time
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Price
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Customer
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Status
                 </div>
                 <div 
-                  className="text-left font-medium text-gray-600"
                   style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    textAlign: 'left',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
+                    color: '#6B7280'
                   }}
                 >
                   Action
@@ -272,14 +367,17 @@ export default function TransactionsPage() {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-200">
+            <div>
               {filteredTransactions.length === 0 ? (
-                <div className="px-6 py-12 text-center">
+                <div style={{
+                  padding: '48px 24px',
+                  textAlign: 'center'
+                }}>
                   <p 
-                    className="text-gray-500"
                     style={{
-                      fontFamily: 'var(--font-inter), Inter, sans-serif',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
                       fontSize: '14px',
+                      color: '#6B7280'
                     }}
                   >
                     {transactions.length === 0 
@@ -288,39 +386,67 @@ export default function TransactionsPage() {
                   </p>
                 </div>
               ) : (
-                filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="grid grid-cols-7 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                filteredTransactions.map((transaction, index) => (
+                  <div 
+                    key={transaction.id} 
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '16px',
+                      padding: '16px 24px',
+                      borderTop: index > 0 ? '1px solid #E5E7EB' : 'none',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
                     {/* ID */}
                     <div 
-                      className="text-gray-900"
                       style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
                         fontWeight: 500,
                         fontSize: '14px',
                         lineHeight: '20px',
+                        color: '#111827'
                       }}
                     >
                       {transaction.id}
                     </div>
 
                     {/* Product */}
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 relative flex-shrink-0">
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        position: 'relative',
+                        flexShrink: 0
+                      }}>
                         <Image
                           src={transaction.items[0].image}
                           alt={transaction.items[0].name}
                           width={40}
                           height={40}
-                          className="object-contain rounded bg-gray-50"
+                          style={{
+                            objectFit: 'contain',
+                            borderRadius: '4px',
+                            backgroundColor: '#F9FAFB'
+                          }}
                         />
                       </div>
                       <div 
-                        className="text-gray-900 truncate"
                         style={{
-                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 400,
                           fontSize: '14px',
                           lineHeight: '20px',
+                          color: '#111827',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         {getProductDisplayText(transaction.items)}
@@ -329,12 +455,12 @@ export default function TransactionsPage() {
 
                     {/* Time */}
                     <div 
-                      className="text-gray-600"
                       style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
                         fontWeight: 400,
                         fontSize: '14px',
                         lineHeight: '20px',
+                        color: '#6B7280'
                       }}
                     >
                       {formatTime(transaction.createdAt)}
@@ -342,12 +468,12 @@ export default function TransactionsPage() {
 
                     {/* Price */}
                     <div 
-                      className="text-gray-900"
                       style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
                         fontWeight: 500,
                         fontSize: '14px',
                         lineHeight: '20px',
+                        color: '#111827'
                       }}
                     >
                       ₦ {transaction.total.toLocaleString()}
@@ -355,12 +481,12 @@ export default function TransactionsPage() {
 
                     {/* Customer */}
                     <div 
-                      className="text-gray-900"
                       style={{
-                        fontFamily: 'var(--font-inter), Inter, sans-serif',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
                         fontWeight: 400,
                         fontSize: '14px',
                         lineHeight: '20px',
+                        color: '#111827'
                       }}
                     >
                       {transaction.customer}
@@ -368,7 +494,7 @@ export default function TransactionsPage() {
 
                     {/* Status */}
                     <div>
-                      <span className={getStatusBadge(transaction.status)}>
+                      <span style={getStatusBadgeStyle(transaction.status)}>
                         {transaction.status}
                       </span>
                     </div>
@@ -377,13 +503,19 @@ export default function TransactionsPage() {
                     <div>
                       <button
                         onClick={() => handleViewReceipt(transaction)}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
                         style={{
-                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
                           lineHeight: '20px',
+                          color: '#2563EB',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'color 0.2s'
                         }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
                       >
                         View receipt
                       </button>
