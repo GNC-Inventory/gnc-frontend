@@ -32,25 +32,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen w-full flex items-center justify-center"
-      style={{
-        backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-      }}
-    >
-      <div className="w-full max-w-md mx-4">
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px',
+      boxSizing: 'border-box'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px'
+      }}>
         <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-2xl p-8 shadow-xl">
-            <h1 className="text-4xl font-medium text-center mb-2 text-gray-900">
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <h1 style={{
+              fontSize: '36px',
+              fontWeight: '500',
+              textAlign: 'center',
+              marginBottom: '8px',
+              color: '#111827',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
               Welcome Back
             </h1>
             
-            <p className="text-center mb-8 text-gray-600">
+            <p style={{
+              textAlign: 'center',
+              marginBottom: '32px',
+              color: '#6B7280',
+              fontSize: '14px',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
               Continue from where you left off
             </p>
             
-            <div className="mb-6">
-              <label htmlFor="email" className="block mb-2 font-medium text-gray-900">
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="email" style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#111827',
+                fontSize: '14px',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
                 Email Address/Username
               </label>
               <input
@@ -58,33 +90,77 @@ export default function LoginPage() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
                 placeholder="joseph@example.com"
+                onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
               />
             </div>
             
-            <div className="mb-8">
-              <label htmlFor="password" className="block mb-2 font-medium text-gray-900">
+            <div style={{ marginBottom: '32px' }}>
+              <label htmlFor="password" style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#111827',
+                fontSize: '14px',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
                 Password
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{
+                    width: '100%',
+                    padding: '12px 48px 12px 16px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                   placeholder="Enter your password"
+                  onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
+                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
                 />
                 <button
                   type="button"
                   onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#9CA3AF',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#6B7280'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" />
+                    <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
                   ) : (
-                    <EyeIcon className="h-5 w-5" />
+                    <EyeIcon style={{ width: '20px', height: '20px' }} />
                   )}
                 </button>
               </div>
@@ -93,9 +169,25 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full h-10 bg-blue-600 text-white rounded-lg font-medium transition-opacity ${
-                isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
-              }`}
+              style={{
+                width: '100%',
+                height: '40px',
+                backgroundColor: isLoading ? '#93C5FD' : '#3B82F6',
+                color: 'white',
+                borderRadius: '8px',
+                fontWeight: '500',
+                fontSize: '14px',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                border: 'none',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) e.currentTarget.style.backgroundColor = '#2563EB';
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) e.currentTarget.style.backgroundColor = '#3B82F6';
+              }}
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
