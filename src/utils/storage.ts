@@ -77,11 +77,13 @@ export const storage = {
 
   pendingSales: {
     load: (): PendingSale[] => {
-      const sales = storage.load<any[]>('pending-sales', []);
+      const sales = storage.load<Array<Record<string, unknown>>>('pending-sales', []);
       // Convert date strings back to Date objects
       return sales.map(sale => ({
-        ...sale,
-        createdAt: new Date(sale.createdAt)
+        id: String(sale.id),
+        items: Array.isArray(sale.items) ? sale.items as CartItem[] : [],
+        total: typeof sale.total === 'number' ? sale.total : 0,
+        createdAt: new Date(sale.createdAt as string)
       }));
     },
     save: (sales: PendingSale[]) => storage.save('pending-sales', sales),
@@ -90,11 +92,16 @@ export const storage = {
 
   transactions: {
     load: (): Transaction[] => {
-      const transactions = storage.load<any[]>('transactions', []);
+      const transactions = storage.load<Array<Record<string, unknown>>>('transactions', []);
       // Convert date strings back to Date objects
       return transactions.map(transaction => ({
-        ...transaction,
-        createdAt: new Date(transaction.createdAt)
+        id: String(transaction.id),
+        items: Array.isArray(transaction.items) ? transaction.items as CartItem[] : [],
+        customer: String(transaction.customer),
+        paymentMethod: String(transaction.paymentMethod),
+        total: typeof transaction.total === 'number' ? transaction.total : 0,
+        createdAt: new Date(transaction.createdAt as string),
+        status: (transaction.status as 'Successful' | 'Ongoing' | 'Failed') || 'Failed'
       }));
     },
     save: (transactions: Transaction[]) => storage.save('transactions', transactions),
