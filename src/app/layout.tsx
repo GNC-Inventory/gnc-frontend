@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${geist.variable} antialiased`}>
-        {children}
+        <div className="max-w-[1440px] mx-auto"> {children}</div>
       </body>
     </html>
   );

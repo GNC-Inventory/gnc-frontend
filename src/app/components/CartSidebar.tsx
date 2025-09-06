@@ -13,7 +13,6 @@ interface CartItem {
 
 interface CartSidebarProps {
   cartItems: CartItem[];
-  onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
   onCompleteSale: () => void;
   onHoldTransaction: () => void;
@@ -22,7 +21,6 @@ interface CartSidebarProps {
 
 export default function CartSidebar({
   cartItems,
-  onUpdateQuantity,
   onRemoveItem,
   onCompleteSale,
   onHoldTransaction,
