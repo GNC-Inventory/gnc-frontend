@@ -38,10 +38,15 @@ export default function TransactionsPage() {
         if (savedTransactions) {
           const parsed = JSON.parse(savedTransactions);
           // Convert date strings back to Date objects
-          const transactionsWithDates = parsed.map((transaction: any) => ({
-            ...transaction,
-            createdAt: new Date(transaction.createdAt)
-          }));
+          const transactionsWithDates = parsed.map((transaction: unknown) => {
+            if (transaction && typeof transaction === 'object' && 'createdAt' in transaction) {
+              return {
+                ...transaction,
+                createdAt: new Date((transaction as { createdAt: string }).createdAt)
+              } as Transaction;
+            }
+            return transaction as Transaction;
+          });
           setTransactions(transactionsWithDates);
         }
       } catch (error) {
@@ -185,7 +190,7 @@ export default function TransactionsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Header */}
             <div className="border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-6 gap-4 px-6 py-4">
+              <div className="grid grid-cols-7 gap-4 px-6 py-4">
                 <div 
                   className="text-left font-medium text-gray-600"
                   style={{
@@ -284,7 +289,7 @@ export default function TransactionsPage() {
                 </div>
               ) : (
                 filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div key={transaction.id} className="grid grid-cols-7 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
                     {/* ID */}
                     <div 
                       className="text-gray-900"
