@@ -42,44 +42,53 @@ export default function Sidebar() {
   const companyContext = getCompanyContext(pathname);
 
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
+    <div style={{
+      width: '256px',
+      height: '100vh',
+      backgroundColor: 'white',
+      borderRight: '1px solid #E5E7EB',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       {/* Logo and Company Info */}
-      <div className="p-6">
-        <div className="flex items-center space-x-3">
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Logo */}
-          <div className="w-10 h-10 relative">
+          <div style={{ width: '40px', height: '40px', position: 'relative' }}>
             <Image
               src={companyContext.logoPath}
               alt={`${companyContext.companyName} Logo`}
               width={40}
               height={40}
-              className="rounded-full"
+              style={{ borderRadius: '50%' }}
             />
           </div>
           
           {/* Company Name and Department */}
           <div>
             <h1 
-              className="uppercase"
               style={{
-                fontFamily: 'var(--font-geist), Geist, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontWeight: 500,
                 fontSize: '14px',
                 lineHeight: '20px',
                 letterSpacing: '-0.6%',
-                color: 'var(--text-main-900, #0A0D14)',
+                color: '#0A0D14',
+                textTransform: 'uppercase',
+                margin: 0
               }}
             >
               {companyContext.companyName}
             </h1>
             <p 
               style={{
-                fontFamily: 'Sora, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontWeight: 400,
                 fontSize: '12px',
                 lineHeight: '16px',
                 letterSpacing: '0%',
-                color: 'var(--text-sub-500, #525866)',
+                color: '#525866',
+                margin: 0
               }}
             >
               {companyContext.department}
@@ -89,53 +98,82 @@ export default function Sidebar() {
       </div>
 
       {/* Divider */}
-      <div className="mx-6 border-t border-gray-200"></div>
+      <div style={{ 
+        marginLeft: '24px', 
+        marginRight: '24px', 
+        borderTop: '1px solid #E5E7EB' 
+      }}></div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-6 py-6 space-y-8">
+      <nav style={{ 
+        flex: 1, 
+        padding: '24px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '32px' 
+      }}>
         {/* MAIN Section */}
         <div>
           <h2 
-            className="mb-4 uppercase tracking-wider"
             style={{
-              fontFamily: 'var(--font-inter), Inter, sans-serif',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
               fontWeight: 500,
               fontSize: '11px',
               lineHeight: '16px',
-              color: 'var(--text-sub-500, #525866)',
+              color: '#525866',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '16px',
+              margin: '0 0 16px 0'
             }}
           >
             MAIN
           </h2>
           
-          <ul className="space-y-2">
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {mainMenuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                      backgroundColor: isActive ? '#EBF8FF' : 'transparent',
+                      color: isActive ? '#1D4ED8' : '#374151'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = '#F9FAFB';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-5 h-5 relative">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '20px', height: '20px', position: 'relative' }}>
                         <Image
                           src={item.iconPath}
                           alt={`${item.name} icon`}
                           width={20}
                           height={20}
-                          className={`${
-                            isActive ? 'opacity-100' : 'opacity-60'
-                          }`}
+                          style={{ opacity: isActive ? 1 : 0.6 }}
                         />
                       </div>
                       <span
                         style={{
-                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
                           lineHeight: '20px',
@@ -146,7 +184,7 @@ export default function Sidebar() {
                       </span>
                     </div>
                     {isActive && (
-                      <ChevronRightIcon className="w-4 h-4 text-blue-700" />
+                      <ChevronRightIcon style={{ width: '16px', height: '16px', color: '#1D4ED8' }} />
                     )}
                   </Link>
                 </li>
@@ -158,46 +196,65 @@ export default function Sidebar() {
         {/* OTHER Section */}
         <div>
           <h2 
-            className="mb-4 uppercase tracking-wider"
             style={{
-              fontFamily: 'var(--font-inter), Inter, sans-serif',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
               fontWeight: 500,
               fontSize: '11px',
               lineHeight: '16px',
-              color: 'var(--text-sub-500, #525866)',
+              color: '#525866',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '16px',
+              margin: '0 0 16px 0'
             }}
           >
             OTHER
           </h2>
           
-          <ul className="space-y-2">
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {otherMenuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                      backgroundColor: isActive ? '#EBF8FF' : 'transparent',
+                      color: isActive ? '#1D4ED8' : '#374151'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = '#F9FAFB';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-5 h-5 relative">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '20px', height: '20px', position: 'relative' }}>
                         <Image
                           src={item.iconPath}
                           alt={`${item.name} icon`}
                           width={20}
                           height={20}
-                          className={`${
-                            isActive ? 'opacity-100' : 'opacity-60'
-                          }`}
+                          style={{ opacity: isActive ? 1 : 0.6 }}
                         />
                       </div>
                       <span
                         style={{
-                          fontFamily: 'var(--font-inter), Inter, sans-serif',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
                           lineHeight: '20px',
@@ -208,7 +265,7 @@ export default function Sidebar() {
                       </span>
                     </div>
                     {isActive && (
-                      <ChevronRightIcon className="w-4 h-4 text-blue-700" />
+                      <ChevronRightIcon style={{ width: '16px', height: '16px', color: '#1D4ED8' }} />
                     )}
                   </Link>
                 </li>
@@ -219,38 +276,50 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile at Bottom */}
-      <div className="p-6 border-t border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 relative">
+      <div style={{ 
+        padding: '24px', 
+        borderTop: '1px solid #E5E7EB' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '32px', height: '32px', position: 'relative' }}>
             <Image
               src="/user-avatar.jpg" // Replace with actual user avatar
               alt="Arthur Taylor"
               width={32}
               height={32}
-              className="rounded-full object-cover"
+              style={{ 
+                borderRadius: '50%', 
+                objectFit: 'cover' 
+              }}
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p 
-              className="truncate"
               style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontWeight: 500,
                 fontSize: '14px',
                 lineHeight: '20px',
-                color: 'var(--text-main-900, #0A0D14)',
+                color: '#0A0D14',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
               Arthur Taylor
             </p>
             <p 
-              className="truncate"
               style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontWeight: 400,
                 fontSize: '12px',
                 lineHeight: '16px',
-                color: 'var(--text-sub-500, #525866)',
+                color: '#525866',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
               arthur@allignul.com
