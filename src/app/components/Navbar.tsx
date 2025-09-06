@@ -30,8 +30,12 @@ export default function Navbar({
 
   return (
     <nav 
-      className="bg-white border-b border-gray-200 flex items-center justify-between"
       style={{
+        backgroundColor: 'white',
+        borderBottom: '1px solid #E5E7EB',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         height: '88px',
         paddingTop: '20px',
         paddingRight: '32px',
@@ -41,28 +45,34 @@ export default function Navbar({
       }}
     >
       {/* Left side - Title and subtitle */}
-      <div className="flex flex-col justify-center">
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center' 
+      }}>
         <h1 
           style={{
-            fontFamily: 'var(--font-geist), Geist, sans-serif',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
             fontWeight: 500,
             fontSize: '18px',
             lineHeight: '24px',
             letterSpacing: '-1.5%',
-            color: 'var(--text-main-900, #0A0D14)',
+            color: '#0A0D14',
             marginBottom: '2px',
+            margin: '0 0 2px 0'
           }}
         >
           {title}
         </h1>
         <p 
           style={{
-            fontFamily: 'Sora, sans-serif',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
             fontWeight: 400,
             fontSize: '14px',
             lineHeight: '20px',
             letterSpacing: '-0.6%',
-            color: 'var(--text-sub-500, #525866)',
+            color: '#525866',
+            margin: 0
           }}
         >
           {subtitle}
@@ -70,50 +80,99 @@ export default function Navbar({
       </div>
 
       {/* Right side - Search, Notifications, New Sale Button */}
-      <div className="flex items-center space-x-4">
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '16px' 
+      }}>
         {/* Search Icon */}
         <button
           onClick={handleSearch}
-          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          style={{
+            padding: '8px',
+            color: '#9CA3AF',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
           aria-label="Search"
+          onMouseEnter={(e) => e.currentTarget.style.color = '#6B7280'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
         >
-          <MagnifyingGlassIcon className="w-6 h-6" />
+          <MagnifyingGlassIcon style={{ width: '24px', height: '24px' }} />
         </button>
 
         {/* Notification Bell Icon */}
         <button
           onClick={handleNotifications}
-          className="p-2 text-gray-400 hover:text-gray-600 transition-colors relative"
+          style={{
+            padding: '8px',
+            color: '#9CA3AF',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
           aria-label="Notifications"
+          onMouseEnter={(e) => e.currentTarget.style.color = '#6B7280'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
         >
-          <BellIcon className="w-6 h-6" />
+          <BellIcon style={{ width: '24px', height: '24px' }} />
           {/* Optional: Add notification badge */}
-          {/* <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span> */}
+          {/* <span style={{
+            position: 'absolute',
+            top: '4px',
+            right: '4px',
+            width: '8px',
+            height: '8px',
+            backgroundColor: '#EF4444',
+            borderRadius: '50%'
+          }}></span> */}
         </button>
 
         {/* New Sale Button */}
         {showNewSaleButton && (
           <button
             onClick={handleNewSale}
-            className="flex items-center hover:opacity-90 transition-opacity"
             style={{
+              display: 'flex',
+              alignItems: 'center',
               width: '114px',
               height: '40px',
               gap: '4px',
               borderRadius: '10px',
               padding: '10px',
-              backgroundColor: 'var(--primary-base, #375DFB)',
+              backgroundColor: '#375DFB',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'opacity 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
           >
-            <PlusIcon className="w-4 h-4 text-white" />
+            <PlusIcon style={{ 
+              width: '16px', 
+              height: '16px', 
+              color: 'white' 
+            }} />
             <span
               style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontWeight: 500,
                 fontSize: '14px',
                 lineHeight: '20px',
                 letterSpacing: '-0.6%',
-                color: 'var(--text-white-0, #FFFFFF)',
+                color: 'white',
               }}
             >
               New Sale
