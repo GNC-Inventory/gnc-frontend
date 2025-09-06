@@ -15,22 +15,27 @@ export default function StatsCard({
 }: StatsCardProps) {
   return (
     <div 
-      className="bg-white rounded-[32px] p-6"
       style={{
+        backgroundColor: 'white',
+        borderRadius: '32px',
+        padding: '24px',
         width: '258px',
         height: '128px',
         gap: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start'
       }}
     >
       {/* Title */}
       <p 
-        className="mb-2"
         style={{
-          fontFamily: 'var(--font-inter), Inter, sans-serif',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           fontWeight: 400,
           fontSize: '14px',
           lineHeight: '20px',
-          color: 'var(--text-sub-500, #525866)',
+          color: '#525866',
+          margin: '0 0 8px 0'
         }}
       >
         {title}
@@ -38,13 +43,13 @@ export default function StatsCard({
 
       {/* Value */}
       <h3 
-        className="mb-4"
         style={{
-          fontFamily: 'var(--font-geist), Geist, sans-serif',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           fontWeight: 600,
           fontSize: '24px',
           lineHeight: '32px',
-          color: 'var(--text-main-900, #0A0D14)',
+          color: '#0A0D14',
+          margin: '0 0 16px 0'
         }}
       >
         {value}
@@ -54,13 +59,21 @@ export default function StatsCard({
       {hasResumeLink && (
         <button
           onClick={onResumeClick}
-          className="text-blue-600 hover:text-blue-700 transition-colors"
           style={{
-            fontFamily: 'var(--font-inter), Inter, sans-serif',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
             fontWeight: 500,
             fontSize: '14px',
             lineHeight: '20px',
+            color: '#2563EB',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            textAlign: 'left',
+            transition: 'color 0.2s'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
         >
           {resumeLinkText}
         </button>
