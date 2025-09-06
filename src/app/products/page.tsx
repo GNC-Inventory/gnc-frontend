@@ -140,12 +140,13 @@ export default function ProductsPage() {
       showToast('Sale processed successfully! Inventory updated.', 'success');
       refetch();
       setShowCheckout(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error processing sale:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
-      if (error.message?.includes('Insufficient stock')) {
+      if (errorMessage.includes('Insufficient stock')) {
         showToast('Insufficient stock for some items. Please check inventory.', 'error');
-      } else if (error.message?.includes('not found')) {
+      } else if (errorMessage.includes('not found')) {
         showToast('Some products are no longer available. Please refresh and try again.', 'error');
         refetch();
       } else {
@@ -315,7 +316,6 @@ export default function ProductsPage() {
       {showCart && (
         <CartSidebar
           cartItems={cart.cartItems}
-          onUpdateQuantity={cart.updateQuantity}
           onRemoveItem={cart.removeItem}
           onCompleteSale={handleCompleteSale}
           onHoldTransaction={handleHoldSale}
