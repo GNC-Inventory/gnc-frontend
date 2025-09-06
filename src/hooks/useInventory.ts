@@ -34,15 +34,15 @@ const extractCategory = (name: string): string => {
   return 'General';
 };
 
-const transformProduct = (item: any): Product => ({
-  id: item.id,
-  name: item.product,
-  image: item.image || '/products/default.png',
-  category: item.category || extractCategory(item.product), 
-  sku: `SKU-${item.id.slice(-6).toUpperCase()}`,
-  basePrice: item.basePrice || item.unitCost, // Use basePrice if available, fallback to unitCost
-  stockLeft: item.stockLeft,
-  dateAdded: item.dateAdded,
+const transformProduct = (item: Record<string, unknown>): Product => ({
+  id: String(item.id),
+  name: String(item.product),
+  image: typeof item.image === 'string' ? item.image : '/products/default.png',
+  category: typeof item.category === 'string' ? item.category : extractCategory(String(item.product)), 
+  sku: `SKU-${String(item.id).slice(-6).toUpperCase()}`,
+  basePrice: typeof item.basePrice === 'number' ? item.basePrice : (typeof item.unitCost === 'number' ? item.unitCost : 0), // Use basePrice if available, fallback to unitCost
+  stockLeft: typeof item.stockLeft === 'number' ? item.stockLeft : 0,
+  dateAdded: typeof item.dateAdded === 'string' ? item.dateAdded : new Date().toISOString(),
   types: ['Standard'],
   brands: ['Generic'],
   sizes: ['Default']
