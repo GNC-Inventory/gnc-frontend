@@ -7,15 +7,27 @@ export default function ProductsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: '#F9FAFB'
+    }}>
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
         <Navbar 
           title="Products" 
           subtitle="View and sell available products."
           showNewSaleButton={false}
         />
-        <main className="flex-1 overflow-auto">
+        <main style={{
+          flex: 1,
+          overflow: 'auto'
+        }}>
           {children}
         </main>
       </div>
