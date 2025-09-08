@@ -94,8 +94,9 @@ export default function ProductCard({ product, isCompact, onSelect }: ProductCar
     onClick={handleSelect}
     disabled={isOutOfStock}
     style={{
-      width: '100%',
+      width: 'auto',
       height: '32px',
+      padding: '0 24px',
       backgroundColor: isOutOfStock ? '#f3f4f6' : '#2563eb',
       color: isOutOfStock ? '#9ca3af' : 'white',
       border: 'none',
