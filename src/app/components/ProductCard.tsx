@@ -93,14 +93,24 @@ export default function ProductCard({ product, isCompact, onSelect }: ProductCar
   <button 
     onClick={handleSelect}
     disabled={isOutOfStock}
-    className={`
-      rounded-lg transition-colors flex items-center justify-center 
-      w-full h-8 text-sm font-medium
-      ${isOutOfStock 
-        ? 'bg-gray-100 cursor-not-allowed text-gray-400 border border-gray-200' 
-        : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-      }
-    `}
+    style={{
+      width: '100%',
+      height: '32px',
+      backgroundColor: isOutOfStock ? '#f3f4f6' : '#2563eb',
+      color: isOutOfStock ? '#9ca3af' : 'white',
+      border: 'none',
+      borderRadius: '6px',
+      fontSize: '14px',
+      fontWeight: '500',
+      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+      transition: 'background-color 0.2s'
+    }}
+    onMouseEnter={(e) => {
+      if (!isOutOfStock) e.currentTarget.style.backgroundColor = '#1d4ed8';
+    }}
+    onMouseLeave={(e) => {
+      if (!isOutOfStock) e.currentTarget.style.backgroundColor = '#2563eb';
+    }}
   >
     {isOutOfStock ? 'Out of Stock' : 'Select'}
   </button>
