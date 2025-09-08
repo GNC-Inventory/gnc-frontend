@@ -5,7 +5,6 @@ import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { toast } from '@/utils/toast';
 
-// Updated interface - removed unitCost completely
 interface Product {
   id: string;
   name: string;
@@ -46,16 +45,10 @@ export default function ProductDetailModal({
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-    // Remove all non-numeric characters except decimal point
     const numericValue = input.replace(/[^\d.]/g, '');
-    
-    // Prevent multiple decimal points
     const decimalCount = numericValue.split('.').length - 1;
     if (decimalCount > 1) return;
-    
     setPrice(numericValue);
-    
-    // Format for display if there's a valid number
     if (numericValue && !isNaN(parseFloat(numericValue))) {
       const number = parseFloat(numericValue);
       setDisplayPrice(`₦ ${formatCurrency(number)}`);
@@ -75,9 +68,7 @@ export default function ProductDetailModal({
     try {
       const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: productId,
           action: 'deduct',
@@ -86,12 +77,8 @@ export default function ProductDetailModal({
       });
 
       const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update inventory');
-      }
-
-      return result.data; // Returns updated inventory item
+      if (!result.success) throw new Error(result.error || 'Failed to update inventory');
+      return result.data;
     } catch (error) {
       console.error('Error deducting inventory:', error);
       throw error;
@@ -100,47 +87,24 @@ export default function ProductDetailModal({
 
   const handleAddItem = async () => {
     if (!product || !price || !onAddToCart) return;
-    
-    // Validate quantity against current stock
     if (quantity > product.stockLeft) {
       toast.error(`Only ${product.stockLeft} items available in stock`);
       return;
     }
-
     setIsProcessing(true);
-    
-    // Show processing toast (your toast system doesn't have loading, so we'll use info)
     toast.info(`Adding ${quantity} item(s) to cart...`);
 
     try {
-      // Step 1: Deduct inventory first
       const updatedInventoryItem = await deductInventory(product.id, quantity);
-      
-      // Step 2: Update local product state
-      const updatedProduct = {
-        ...product,
-        stockLeft: updatedInventoryItem.stockLeft
-      };
-
-      // Step 3: Update parent component's inventory state
-      if (onInventoryUpdate) {
-        onInventoryUpdate(product.id, updatedInventoryItem.stockLeft);
-      }
-
-      // Step 4: Add to cart only after successful inventory deduction
+      const updatedProduct = { ...product, stockLeft: updatedInventoryItem.stockLeft };
+      if (onInventoryUpdate) onInventoryUpdate(product.id, updatedInventoryItem.stockLeft);
       onAddToCart(updatedProduct, parseFloat(price), quantity);
-
-      // Step 5: Show success and reset form
       toast.success(`${product.name} (${quantity}) added to cart`);
-      
       setPrice('');
       setDisplayPrice('');
       setQuantity(1);
-
     } catch (error: unknown) {
-      // Handle specific error cases
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
       if (errorMessage.includes('insufficient stock')) {
         const match = errorMessage.match(/only (\d+) available/i);
         const availableStock = match ? match[1] : 'limited';
@@ -155,28 +119,41 @@ export default function ProductDetailModal({
     }
   };
 
-  const isAddButtonActive = price.trim() !== '' && product && product.stockLeft > 0 && quantity > 0 && quantity <= product.stockLeft && !isProcessing;
+  const isAddButtonActive =
+    price.trim() !== '' &&
+    product &&
+    product.stockLeft > 0 &&
+    quantity > 0 &&
+    quantity <= product.stockLeft &&
+    !isProcessing;
 
   if (!isOpen || !product) return null;
 
   return (
     <>
-      {/* Custom overlay with blur */}
-      <div 
-        className="fixed z-40 bg-black bg-opacity-60 backdrop-blur-sm"
+      {/* Overlay */}
+      <div
         style={{
+          position: 'fixed',
+          zIndex: 40,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
           top: 0,
           left: '256px',
           right: 0,
-          bottom: 0,
+          bottom: 0
         }}
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div 
-        className="fixed bg-white z-50 rounded-t-[32px]"
+      <div
         style={{
+          position: 'fixed',
+          backgroundColor: 'white',
+          zIndex: 50,
+          borderTopLeftRadius: '32px',
+          borderTopRightRadius: '32px',
           width: '1104px',
           top: '140px',
           bottom: '0px',
@@ -184,118 +161,176 @@ export default function ProductDetailModal({
           marginLeft: '128px',
           transform: 'translateX(-50%)',
           padding: '24px 32px',
-          gap: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px'
         }}
       >
-        {/* Header with Close Button and Stock Info */}
-        <div className="flex justify-between items-start mb-6">
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
-            <h2 className="text-2xl font-semibold text-black mb-2">
-              {product.name}
-            </h2>
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-600">SKU: {product.sku}</span>
-              <span className="text-gray-600">Category: {product.category}</span>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                product.stockLeft === 0 ? 'bg-red-100 text-red-700' :
-                product.stockLeft <= 5 ? 'bg-orange-100 text-orange-700' :
-                'bg-green-100 text-green-700'
-              }`}>
-                {product.stockLeft === 0 ? 'Out of Stock' : 
-                 product.stockLeft <= 5 ? `Low Stock (${product.stockLeft})` :
-                 `${product.stockLeft} in stock`}
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#000', marginBottom: '8px' }}>{product.name}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.875rem' }}>
+              <span style={{ color: '#4B5563' }}>SKU: {product.sku}</span>
+              <span style={{ color: '#4B5563' }}>Category: {product.category}</span>
+              <span
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  backgroundColor:
+                    product.stockLeft === 0 ? '#FEE2E2' : product.stockLeft <= 5 ? '#FFEDD5' : '#D1FAE5',
+                  color: product.stockLeft === 0 ? '#B91C1C' : product.stockLeft <= 5 ? '#C2410C' : '#047857'
+                }}
+              >
+                {product.stockLeft === 0
+                  ? 'Out of Stock'
+                  : product.stockLeft <= 5
+                  ? `Low Stock (${product.stockLeft})`
+                  : `${product.stockLeft} in stock`}
               </span>
             </div>
           </div>
-
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <XMarkIcon className="w-6 h-6 text-gray-500" />
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#F3F4F6')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <XMarkIcon style={{ width: '24px', height: '24px', color: '#6B7280' }} />
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex gap-8">
-          {/* Left Side - Product Image and Details */}
-          <div className="flex-1">
-            <div className="mb-8 bg-gray-50 rounded-lg p-8 flex items-center justify-center h-80">
+        {/* Content */}
+        <div style={{ display: 'flex', gap: '32px' }}>
+          {/* Left side */}
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                marginBottom: '32px',
+                backgroundColor: '#F9FAFB',
+                borderRadius: '8px',
+                padding: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '320px'
+              }}
+            >
               <Image
                 src={product.image}
                 alt={product.name}
                 width={250}
                 height={250}
-                className="object-contain max-h-full"
+                style={{ objectFit: 'contain', maxHeight: '100%' }}
               />
             </div>
 
-            {/* Product Specifications */}
-            <div className="space-y-6">
-              {/* Type */}
+            {/* Product Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Types */}
               <div>
-                <h3 className="mb-3 text-base font-semibold text-black">Type</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.types && product.types.length > 0 ? (
-                    product.types.map((type, index) => (
-                      <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Type</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {product.types?.length ? (
+                    product.types.map((type, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          padding: '4px 12px',
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '9999px',
+                          fontSize: '0.875rem',
+                          color: '#374151'
+                        }}
+                      >
                         {type}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">No types available</span>
+                    <span style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No types available</span>
                   )}
                 </div>
               </div>
 
-              {/* Brand */}
+              {/* Brands */}
               <div>
-                <h3 className="mb-3 text-base font-semibold text-black">Brand</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.brands && product.brands.length > 0 ? (
-                    product.brands.map((brand, index) => (
-                      <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Brand</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {product.brands?.length ? (
+                    product.brands.map((brand, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          padding: '4px 12px',
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '9999px',
+                          fontSize: '0.875rem',
+                          color: '#374151'
+                        }}
+                      >
                         {brand}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">No brands available</span>
+                    <span style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No brands available</span>
                   )}
                 </div>
               </div>
 
-              {/* Size */}
+              {/* Sizes */}
               <div>
-                <h3 className="mb-3 text-base font-semibold text-black">Size</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.sizes && product.sizes.length > 0 ? (
-                    product.sizes.map((size, index) => (
-                      <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Size</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {product.sizes?.length ? (
+                    product.sizes.map((size, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          padding: '4px 12px',
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '9999px',
+                          fontSize: '0.875rem',
+                          color: '#374151'
+                        }}
+                      >
                         {size}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">No sizes available</span>
+                    <span style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No sizes available</span>
                   )}
                 </div>
               </div>
 
-              {/* Product Info - Only Base Price and Date Added */}
+              {/* Info */}
               <div>
-                <h3 className="mb-3 text-base font-semibold text-black">Product Information</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-medium">Base Price:</span> ₦{formatCurrency(product.basePrice)}</p>
-                  <p><span className="font-medium">Date Added:</span> {product.dateAdded}</p>
+                <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Product Information</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
+                  <p>
+                    <span style={{ fontWeight: 500 }}>Base Price:</span> ₦{formatCurrency(product.basePrice)}
+                  </p>
+                  <p>
+                    <span style={{ fontWeight: 500 }}>Date Added:</span> {product.dateAdded}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Side - Price Input, Quantity Input and Add Button */}
-          <div className="w-80">
-            <div className="mb-6">
-              <label htmlFor="price" className="block mb-3 text-sm font-medium text-black">
+          {/* Right side */}
+          <div style={{ width: '320px' }}>
+            {/* Price Input */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="price" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
                 Enter price
               </label>
-              
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   id="price"
@@ -303,22 +338,26 @@ export default function ProductDetailModal({
                   onChange={handlePriceChange}
                   placeholder={`₦${formatCurrency(product.basePrice)}`}
                   disabled={product.stockLeft === 0 || isProcessing}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
+                    cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
+                    textAlign: 'left'
+                  }}
                 />
-                {/* Hidden input to store the raw numeric value */}
-                <input
-                  type="hidden"
-                  value={price}
-                />
+                <input type="hidden" value={price} />
               </div>
             </div>
 
-            {/* Product Quantity Input */}
-            <div className="mb-6">
-              <label htmlFor="quantity" className="block mb-3 text-sm font-medium text-black">
+            {/* Quantity Input */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="quantity" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
                 Product Quantity
               </label>
-              
               <input
                 type="number"
                 id="quantity"
@@ -327,36 +366,77 @@ export default function ProductDetailModal({
                 value={quantity}
                 onChange={handleQuantityChange}
                 disabled={product.stockLeft === 0 || isProcessing}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-center"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
+                  cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
+                  textAlign: 'center'
+                }}
               />
-              
               {product.stockLeft === 0 && (
-                <p className="mt-2 text-sm text-red-600">This item is out of stock and cannot be added to cart.</p>
+                <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#DC2626' }}>
+                  This item is out of stock and cannot be added to cart.
+                </p>
               )}
               {quantity > product.stockLeft && (
-                <p className="mt-2 text-sm text-red-600">Quantity exceeds available stock ({product.stockLeft} available).</p>
+                <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#DC2626' }}>
+                  Quantity exceeds available stock ({product.stockLeft} available).
+                </p>
               )}
             </div>
 
-            {/* Add Item Button */}
+            {/* Add Button */}
             <button
               onClick={handleAddItem}
               disabled={!isAddButtonActive}
-              className={`flex items-center justify-center w-40 h-10 rounded-lg transition-all gap-1 px-4 ${
-                isAddButtonActive
-                  ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-                  : 'bg-gray-300 cursor-not-allowed'
-              }`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '160px',
+                height: '40px',
+                borderRadius: '8px',
+                gap: '4px',
+                padding: '0 16px',
+                backgroundColor: isAddButtonActive ? '#2563EB' : '#D1D5DB',
+                cursor: isAddButtonActive ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s'
+              }}
             >
               {isProcessing ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium text-white ml-1">Processing...</span>
+                  <div
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid white',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'white', marginLeft: '4px' }}>Processing...</span>
                 </>
               ) : (
                 <>
-                  <ShoppingCartIcon className={`w-4 h-4 ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`} />
-                  <span className={`text-sm font-medium ${isAddButtonActive ? 'text-white' : 'text-gray-500'}`}>
+                  <ShoppingCartIcon
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      color: isAddButtonActive ? 'white' : '#6B7280'
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: isAddButtonActive ? 'white' : '#6B7280'
+                    }}
+                  >
                     Add item
                   </span>
                 </>
