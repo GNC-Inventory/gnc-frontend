@@ -58,7 +58,7 @@ export default function ProductDetailModal({
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1;
+    const value = parseInt(e.target.value) || 0;
     if (value >= 1 && value <= (product?.stockLeft || 1)) {
       setQuantity(value);
     }
@@ -363,7 +363,7 @@ export default function ProductDetailModal({
                 id="quantity"
                 min="1"
                 max={product.stockLeft}
-                value={quantity}
+                value={quantity === 0 ? '' : quantity}
                 onChange={handleQuantityChange}
                 disabled={product.stockLeft === 0 || isProcessing}
                 style={{
