@@ -19,7 +19,7 @@ interface Transaction {
   customer: string;
   paymentMethod: string;
   total: number;
-  createdAt: Date;
+  createdAt: Date | null; // Allow null for missing timestamps
   status: 'Successful' | 'Ongoing' | 'Failed';
 }
 
@@ -39,14 +39,19 @@ export default function TransactionsPage() {
           const parsed = JSON.parse(savedTransactions);
           // Convert date strings back to Date objects
           const transactionsWithDates = parsed.map((transaction: unknown) => {
-            if (transaction && typeof transaction === 'object' && 'createdAt' in transaction) {
-              return {
-                ...transaction,
-                createdAt: new Date((transaction as { createdAt: string }).createdAt)
-              } as Transaction;
-            }
-            return transaction as Transaction;
-          });
+  if (transaction && typeof transaction === 'object' && 'createdAt' in transaction) {
+    const dateValue = (transaction as { createdAt: string }).createdAt;
+    const parsedDate = new Date(dateValue);
+    return {
+      ...transaction,
+      createdAt: isNaN(parsedDate.getTime()) ? null : parsedDate
+    } as Transaction;
+  }
+  return {
+  ...(transaction as object),
+  createdAt: null // Mark as missing data instead of fake timestamp
+} as Transaction;
+});
           setTransactions(transactionsWithDates);
         }
       } catch (error) {
@@ -78,13 +83,17 @@ export default function TransactionsPage() {
     setShowReceiptModal(true);
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    });
-  };
+  const formatTime = (date: Date | null) => {
+  if (!date || isNaN(date.getTime())) {
+    return 'TIME MISSING'; // Clear indicator of data integrity issue
+  }
+  
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
+};
 
   const getStatusBadgeStyle = (status: string) => {
     const baseStyle = {
@@ -529,15 +538,15 @@ export default function TransactionsPage() {
       </div>
 
       {/* Receipt Modal */}
-      {showReceiptModal && selectedReceipt && (
-        <ReceiptModal
-          transaction={selectedReceipt}
-          onClose={() => {
-            setShowReceiptModal(false);
-            setSelectedReceipt(null);
-          }}
-        />
-      )}
+      {showReceiptModal && selectedReceipt && selectedReceipt.createdAt && (
+  <ReceiptModal
+    transaction={selectedReceipt as Transaction & { createdAt: Date }}
+    onClose={() => {
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+    }}
+  />
+)}
     </div>
   );
 }
