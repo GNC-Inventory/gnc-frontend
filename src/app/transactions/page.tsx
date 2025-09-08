@@ -39,19 +39,30 @@ export default function TransactionsPage() {
           const parsed = JSON.parse(savedTransactions);
           // Convert date strings back to Date objects
           const transactionsWithDates = parsed.map((transaction: unknown) => {
-  if (transaction && typeof transaction === 'object' && 'createdAt' in transaction) {
-    const dateValue = (transaction as { createdAt: string }).createdAt;
-    const parsedDate = new Date(dateValue);
-    return {
-      ...transaction,
-      createdAt: isNaN(parsedDate.getTime()) ? null : parsedDate
-    } as Transaction;
+  // Type guard to ensure we have a valid object
+  if (!transaction || typeof transaction !== 'object') {
+    return null;
   }
+  
+  const transactionObj = transaction as Record<string, unknown>;
+  
+  // Handle createdAt field
+  let createdAt: Date | null = null;
+  if ('createdAt' in transactionObj && transactionObj.createdAt) {
+    const dateValue = transactionObj.createdAt;
+    if (typeof dateValue === 'string' || typeof dateValue === 'number') {
+      const parsedDate = new Date(dateValue);
+      if (!isNaN(parsedDate.getTime())) {
+        createdAt = parsedDate;
+      }
+    }
+  }
+  
   return {
-  ...(transaction as object),
-  createdAt: null // Mark as missing data instead of fake timestamp
-} as Transaction;
-});
+    ...transactionObj,
+    createdAt
+  } as Transaction;
+}).filter(Boolean) as Transaction[]; // Remove any null entries
           setTransactions(transactionsWithDates);
         }
       } catch (error) {
