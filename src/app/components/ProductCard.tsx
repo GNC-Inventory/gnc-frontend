@@ -88,22 +88,23 @@ export default function ProductCard({ product, isCompact, onSelect }: ProductCar
       </div>
       
       {/* Select Button */}
-      <div className="px-2">
-        <button 
-          onClick={handleSelect}
-          disabled={isOutOfStock}
-          className={`
-            border rounded-lg transition-colors flex items-center justify-center 
-            w-14 h-7 text-xs font-medium
-            ${isOutOfStock 
-              ? 'border-red-200 bg-red-50 cursor-not-allowed text-gray-400' 
-              : 'border-gray-200 hover:bg-gray-50 text-black hover:border-blue-300'
-            }
-          `}
-        >
-          {isOutOfStock ? 'N/A' : 'Select'}
-        </button>
-      </div>
+      {/* Select Button */}
+<div className="px-2">
+  <button 
+    onClick={handleSelect}
+    disabled={isOutOfStock}
+    className={`
+      rounded-lg transition-colors flex items-center justify-center 
+      w-full h-8 text-sm font-medium
+      ${isOutOfStock 
+        ? 'bg-gray-100 cursor-not-allowed text-gray-400 border border-gray-200' 
+        : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+      }
+    `}
+  >
+    {isOutOfStock ? 'Out of Stock' : 'Select'}
+  </button>
+</div>
     </div>
   );
 }
