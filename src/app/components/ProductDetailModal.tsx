@@ -58,11 +58,16 @@ export default function ProductDetailModal({
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 0;
-    if (value >= 1 && value <= (product?.stockLeft || 1)) {
-      setQuantity(value);
+  const value = e.target.value;
+  if (value === '' || value === '0') {
+    setQuantity(0);
+  } else {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
+      setQuantity(numValue);
     }
-  };
+  }
+};
 
   const deductInventory = async (productId: string, quantityToDeduct: number) => {
     try {
