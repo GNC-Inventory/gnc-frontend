@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -29,23 +30,36 @@ export default function CartSidebar({
   const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  // Hover state replacements for Tailwind hover utilities
+  const [completeHover, setCompleteHover] = useState(false);
+  const [holdHover, setHoldHover] = useState(false);
+  const [cancelHover, setCancelHover] = useState(false);
+  const [deleteHover, setDeleteHover] = useState<Record<string, boolean>>({});
+
   return (
-    <div 
-      className="fixed bg-white shadow-lg z-50"
+    <div
       style={{
+        position: 'fixed',
+        backgroundColor: '#FFFFFF',
+        boxShadow:
+          '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+        zIndex: 50,
+
         width: '352px',
         height: '716px',
         top: '172px',
-        left: typeof window !== 'undefined' && window.innerWidth > 1440 
-          ? `${(window.innerWidth - 1440) / 2 + 1056}px` 
-          : '1056px',
+        left:
+          typeof window !== 'undefined' && window.innerWidth > 1440
+            ? `${(window.innerWidth - 1440) / 2 + 1056}px`
+            : '1056px',
         borderRadius: '32px',
-        backgroundColor: 'var(--bg-white-0, #FFFFFF)',
+        // keep your original var fallback
+        background: 'var(--bg-white-0, #FFFFFF)',
       }}
     >
       {/* Header */}
-      <div className="p-6 pb-4">
-        <h2 
+      <div style={{ padding: '24px', paddingBottom: '16px' }}>
+        <h2
           style={{
             fontFamily: 'var(--font-inter), Inter, sans-serif',
             fontWeight: 500,
@@ -57,9 +71,16 @@ export default function CartSidebar({
         >
           Product Sales
         </h2>
-        
-        <div className="flex justify-between items-center mt-2">
-          <p 
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '8px',
+          }}
+        >
+          <p
             style={{
               fontFamily: 'var(--font-inter), Inter, sans-serif',
               fontWeight: 500,
@@ -71,16 +92,22 @@ export default function CartSidebar({
           >
             {totalItems} item{totalItems !== 1 ? 's' : ''}
           </p>
-          
+
           <button
             onClick={onCancel}
-            className="text-blue-600 hover:text-blue-700"
             style={{
+              // Tailwind text-blue-600 + hover:text-blue-700 were present,
+              // but your inline color already forces this:
               fontFamily: 'var(--font-inter), Inter, sans-serif',
               fontWeight: 500,
               fontSize: '12px',
               lineHeight: '16px',
               color: 'var(--primary-base, #375DFB)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              transition: 'color 150ms ease',
             }}
           >
             Hide
@@ -89,15 +116,36 @@ export default function CartSidebar({
       </div>
 
       {/* Divider */}
-      <div className="border-t border-gray-200 mx-6"></div>
+      <div
+        style={{
+          borderTop: '1px solid #E5E7EB',
+          marginLeft: '24px',
+          marginRight: '24px',
+        }}
+      ></div>
 
       {/* Cart Items */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ maxHeight: '400px' }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          paddingTop: '16px',
+          paddingBottom: '16px',
+          maxHeight: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          rowGap: '16px', // replaces space-y-4
+        }}
+      >
         {cartItems.map((item) => (
-          <div 
-            key={item.id} 
-            className="flex items-center justify-between"
+          <div
+            key={item.id}
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               width: '304px',
               height: '90px',
               paddingTop: '12px',
@@ -105,21 +153,33 @@ export default function CartSidebar({
             }}
           >
             {/* Left Side - Quantity, Multiply, Image, Details */}
-            <div className="flex items-center space-x-3 flex-1">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                columnGap: '12px', // replaces space-x-3
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
               {/* Quantity Box */}
-              <div 
-                className="flex items-center justify-center border border-gray-300 rounded"
+              <div
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #D1D5DB', // gray-300
+                  borderRadius: '4px',
                   width: '24px',
                   height: '20px',
-                  borderRadius: '4px',
                   paddingTop: '2px',
                   paddingRight: '3px',
                   paddingBottom: '2px',
                   paddingLeft: '3px',
+                  boxSizing: 'border-box',
                 }}
               >
-                <span 
+                <span
                   style={{
                     fontFamily: 'var(--font-inter), Inter, sans-serif',
                     fontWeight: 500,
@@ -133,9 +193,10 @@ export default function CartSidebar({
               </div>
 
               {/* Multiplication Sign */}
-              <span 
-                className="text-gray-400"
+              <span
                 style={{
+                  // text-gray-400
+                  color: '#9CA3AF',
                   fontFamily: 'var(--font-inter), Inter, sans-serif',
                   fontSize: '12px',
                 }}
@@ -144,9 +205,9 @@ export default function CartSidebar({
               </span>
 
               {/* Product Image */}
-              <div 
-                className="flex-shrink-0"
+              <div
                 style={{
+                  flexShrink: 0,
                   width: '44px',
                   height: '44px',
                 }}
@@ -156,15 +217,27 @@ export default function CartSidebar({
                   alt={item.name}
                   width={44}
                   height={44}
-                  className="object-contain rounded bg-gray-50"
+                  style={{
+                    objectFit: 'contain',
+                    borderRadius: 4, // rounded
+                    background: '#F9FAFB', // bg-gray-50
+                    width: '44px',
+                    height: '44px',
+                    display: 'block',
+                  }}
                 />
               </div>
 
               {/* Product Details */}
-              <div className="flex-1 min-w-0">
-                <h3 
-                  className="truncate mb-1"
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3
                   style={{
+                    // truncate + mb-1
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginBottom: '4px',
+
                     fontFamily: 'Sora, sans-serif',
                     fontWeight: 400,
                     fontSize: '14px',
@@ -175,9 +248,8 @@ export default function CartSidebar({
                 >
                   {item.name}
                 </h3>
-                
-                <div 
-                  className="text-sm"
+
+                <div
                   style={{
                     fontFamily: 'var(--font-inter), Inter, sans-serif',
                     fontWeight: 500,
@@ -194,16 +266,34 @@ export default function CartSidebar({
             {/* Right Side - Delete Button */}
             <button
               onClick={() => onRemoveItem(item.id)}
-              className="p-1 text-red-500 hover:text-red-700 transition-colors ml-2"
+              onMouseEnter={() =>
+                setDeleteHover((prev) => ({ ...prev, [item.id]: true }))
+              }
+              onMouseLeave={() =>
+                setDeleteHover((prev) => ({ ...prev, [item.id]: false }))
+              }
+              style={{
+                padding: '4px', // p-1
+                color: deleteHover[item.id] ? '#B91C1C' : '#EF4444', // hover:text-red-700 : text-red-500
+                transition: 'color 150ms ease',
+                marginLeft: '8px', // ml-2
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Remove"
             >
-              <TrashIcon className="w-4 h-4" />
+              <TrashIcon style={{ width: '16px', height: '16px' }} />
             </button>
           </div>
         ))}
 
         {cartItems.length === 0 && (
-          <div className="text-center py-8">
-            <p 
+          <div style={{ textAlign: 'center', paddingTop: '32px', paddingBottom: '32px' }}>
+            <p
               style={{
                 fontFamily: 'var(--font-inter), Inter, sans-serif',
                 fontWeight: 400,
@@ -219,16 +309,25 @@ export default function CartSidebar({
       </div>
 
       {/* Footer */}
-      <div className="p-6 pt-4 border-t border-gray-200">
+      <div
+        style={{
+          padding: '24px',
+          paddingTop: '16px',
+          borderTop: '1px solid #E5E7EB',
+        }}
+      >
         {/* Total */}
-        <div 
-          className="flex justify-between items-center mb-4"
+        <div
           style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
             width: '304px',
             height: '20px',
           }}
         >
-          <span 
+          <span
             style={{
               fontFamily: 'var(--font-inter), Inter, sans-serif',
               fontWeight: 600,
@@ -239,7 +338,7 @@ export default function CartSidebar({
           >
             Total
           </span>
-          <span 
+          <span
             style={{
               fontFamily: 'var(--font-inter), Inter, sans-serif',
               fontWeight: 600,
@@ -255,14 +354,23 @@ export default function CartSidebar({
         {/* Complete Sale Button */}
         <button
           onClick={onCompleteSale}
-          className="w-full mb-3 hover:opacity-90 transition-opacity flex items-center justify-center"
+          onMouseEnter={() => setCompleteHover(true)}
+          onMouseLeave={() => setCompleteHover(false)}
           style={{
             width: '304px',
             height: '36px',
             borderRadius: '8px',
             gap: '4px',
             padding: '8px',
-            backgroundColor: 'var(--primary-base, #375DFB)',
+            background: 'var(--primary-base, #375DFB)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '12px',
+            opacity: completeHover ? 0.9 : 1, // hover:opacity-90
+            transition: 'opacity 150ms ease',
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
           <span
@@ -283,14 +391,23 @@ export default function CartSidebar({
         {/* Hold Transaction Button */}
         <button
           onClick={onHoldTransaction}
-          className="w-full mb-3 hover:opacity-90 transition-opacity flex items-center justify-center"
+          onMouseEnter={() => setHoldHover(true)}
+          onMouseLeave={() => setHoldHover(false)}
           style={{
             width: '304px',
             height: '36px',
             borderRadius: '8px',
             gap: '4px',
             padding: '8px',
-            backgroundColor: 'var(--primary-lighter, #EBF1FF)',
+            background: 'var(--primary-lighter, #EBF1FF)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '12px',
+            opacity: holdHover ? 0.9 : 1, // hover:opacity-90
+            transition: 'opacity 150ms ease',
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
           <span
@@ -311,7 +428,17 @@ export default function CartSidebar({
         {/* Cancel Button */}
         <button
           onClick={onCancel}
-          className="w-full text-center hover:opacity-80 transition-opacity"
+          onMouseEnter={() => setCancelHover(true)}
+          onMouseLeave={() => setCancelHover(false)}
+          style={{
+            width: '100%',
+            textAlign: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            opacity: cancelHover ? 0.8 : 1, // hover:opacity-80
+            transition: 'opacity 150ms ease',
+          }}
         >
           <span
             style={{
