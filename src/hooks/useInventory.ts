@@ -58,7 +58,11 @@ export const useInventory = (): UseInventoryReturn => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory');
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+  headers: {
+    'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+  }
+});
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
