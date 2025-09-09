@@ -32,45 +32,30 @@ export default function TransactionsPage() {
 
   // Load transactions from localStorage
   useEffect(() => {
-    const loadTransactions = () => {
-      try {
-        const savedTransactions = localStorage.getItem('transactions');
-        if (savedTransactions) {
-          const parsed = JSON.parse(savedTransactions);
-          // Convert date strings back to Date objects
-          const transactionsWithDates = parsed.map((transaction: unknown) => {
-  // Type guard to ensure we have a valid object
-  if (!transaction || typeof transaction !== 'object') {
-    return null;
-  }
-  
-  const transactionObj = transaction as Record<string, unknown>;
-  
-  // Handle createdAt field
-  let createdAt: Date | null = null;
-  if ('createdAt' in transactionObj && transactionObj.createdAt) {
-    const dateValue = transactionObj.createdAt;
-    if (typeof dateValue === 'string' || typeof dateValue === 'number') {
-      const parsedDate = new Date(dateValue);
-      if (!isNaN(parsedDate.getTime())) {
-        createdAt = parsedDate;
+    const loadTransactions = async () => {
+  try {
+    const response = await fetch('https://gnc-inventory-backend.onrender.com/api/sales', {
+      headers: { 
+        'x-api-key': 'bf018c04805d8c0a344d31c36a2538312b0af5f80ffa80eda39f985fed05e201' 
       }
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      const transactionsWithDates = result.data.map((transaction: any) => ({
+        ...transaction,
+        createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
+      }));
+      setTransactions(transactionsWithDates);
+    } else {
+      console.error('Failed to load transactions:', result.error);
+      setTransactions([]);
     }
+  } catch (error) {
+    console.error('Error loading transactions:', error);
+    setTransactions([]);
   }
-  
-  return {
-    ...transactionObj,
-    createdAt
-  } as Transaction;
-}).filter(Boolean) as Transaction[]; // Remove any null entries
-          setTransactions(transactionsWithDates);
-        }
-      } catch (error) {
-        console.error('Error loading transactions:', error);
-        setTransactions([]);
-      }
-    };
-
+};
     loadTransactions();
   }, []);
 
