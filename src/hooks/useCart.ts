@@ -82,6 +82,7 @@ const restoreInventory = async (productId: string, quantity: number) => {
 
     return true;
   } catch (error) {
+    console.error('Error occurred:', error);
     console.error('Error restoring inventory:', error);
     toast.warning('Item removed from cart, but inventory restoration failed');
     return false;
@@ -160,6 +161,7 @@ const restoreInventory = async (productId: string, quantity: number) => {
           return;
         }
       } catch (error) {
+        console.error('Error occurred:', error);
         toast.error('Failed to update inventory');
         return;
       }
@@ -197,6 +199,7 @@ const restoreInventory = async (productId: string, quantity: number) => {
       await Promise.all(restorePromises);
       toast.success('Cart cleared and inventory restored');
     } catch (error) {
+      console.error('Error occurred:', error);
       console.error('Error clearing cart:', error);
       toast.warning('Cart cleared, but some inventory restoration failed');
     }
