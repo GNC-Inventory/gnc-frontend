@@ -41,7 +41,13 @@ export default function RootLayout({
           />
         </>
 
-        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+        <div style={{ 
+          maxWidth: '1440px', 
+          margin: '0 auto',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          minHeight: '100vh',
+          position: 'relative'
+        }}>
           {children}
         </div>
       </body>
