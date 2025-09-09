@@ -71,25 +71,53 @@ export default function ProductDetailModal({
 
   const deductInventory = async (productId: string, quantityToDeduct: number) => {
   try {
-    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`, {
+    // Add debugging logs
+    console.log('=== DEDUCT INVENTORY DEBUG ===');
+    console.log('Product ID:', productId);
+    console.log('Quantity to deduct:', quantityToDeduct);
+    console.log('API Key exists:', !!process.env.NEXT_PUBLIC_API_KEY);
+    
+    const url = `https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`;
+    const requestBody = { quantity: quantityToDeduct };
+    
+    console.log('Request URL:', url);
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch(url, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
-      body: JSON.stringify({
-        quantity: quantityToDeduct
-      })
+      body: JSON.stringify(requestBody)
     });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Failed to update inventory');
-      return result.data;
-    } catch (error) {
-      console.error('Error deducting inventory:', error);
-      throw error;
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Raw response text:', responseText);
+
+    if (!response.ok) {
+      console.error('Response not OK, status:', response.status);
+      console.error('Response text:', responseText);
+      throw new Error(`HTTP ${response.status}: ${responseText}`);
     }
-  };
+
+    const result = JSON.parse(responseText);
+    console.log('Parsed response:', result);
+
+    if (!result.success) throw new Error(result.error || 'Failed to update inventory');
+    return result.data;
+  } catch (error) {
+    console.error('=== DEDUCT INVENTORY ERROR ===');
+    console.error('Error type:', error instanceof Error ? error.constructor.name : 'Unknown');
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Full error:', error);
+    console.error('================================');
+    throw error;
+  }
+};
 
   const handleAddItem = async () => {
     if (!product || !price || !onAddToCart) return;
