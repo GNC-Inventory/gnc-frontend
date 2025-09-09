@@ -23,6 +23,28 @@ interface Transaction {
   status: 'Successful' | 'Ongoing' | 'Failed';
 }
 
+interface ApiTransaction {
+  id: string;
+  items: Array<{
+    id: string;
+    name: string;
+    image: string;
+    price: number;
+    quantity: number;
+  }>;
+  customer: string;
+  paymentMethod: string;
+  total: number;
+  createdAt: string; // API returns string, we'll convert to Date
+  status: 'Successful' | 'Ongoing' | 'Failed';
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: ApiTransaction[];
+  error?: string;
+}
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,18 +62,18 @@ export default function TransactionsPage() {
   }
 });
     
-    const result = await response.json();
-    if (result.success) {
-      const transactionsWithDates = result.data.map((transaction: any) => ({
-  id: transaction.id,
-  items: transaction.items,
-  customer: transaction.customer,
-  paymentMethod: transaction.paymentMethod,
-  total: transaction.total,
-  status: transaction.status,
-  createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
-})) as Transaction[];
-      setTransactions(transactionsWithDates);
+    const result: ApiResponse = await response.json();
+if (result.success) {
+  const transactionsWithDates: Transaction[] = result.data.map((transaction: ApiTransaction) => ({
+    id: transaction.id,
+    items: transaction.items,
+    customer: transaction.customer,
+    paymentMethod: transaction.paymentMethod,
+    total: transaction.total,
+    status: transaction.status,
+    createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
+  }));
+  setTransactions(transactionsWithDates);
     } else {
       console.error('Failed to load transactions:', result.error);
       setTransactions([]);
