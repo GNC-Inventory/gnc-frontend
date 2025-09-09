@@ -70,16 +70,17 @@ export default function ProductDetailModal({
 };
 
   const deductInventory = async (productId: string, quantityToDeduct: number) => {
-    try {
-      const response = await fetch('/.netlify/functions/inventory', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: productId,
-          action: 'deduct',
-          quantity: quantityToDeduct
-        })
-      });
+  try {
+    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+      },
+      body: JSON.stringify({
+        quantity: quantityToDeduct
+      })
+    });
 
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to update inventory');
