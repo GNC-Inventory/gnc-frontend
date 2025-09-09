@@ -30,37 +30,63 @@ export const useCart = (products: Product[]): UseCartReturn => {
   }, [cartItems]);
 
   // Function to restore inventory when items are removed
-  const restoreInventory = async (productId: string, quantity: number) => {
-    try {
-      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-        },
-        body: JSON.stringify({
-          productId: productId,
-          action: 'restore',
-          quantity: quantity
-        })
+  // Function to restore inventory when items are removed
+const restoreInventory = async (productId: string, quantity: number) => {
+  try {
+    // ADD DEBUGGING LOGS HERE
+    console.log('Environment variables check:');
+    console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+    console.log('NEXT_PUBLIC_API_KEY:', process.env.NEXT_PUBLIC_API_KEY ? 'SET' : 'NOT SET');
+    console.log('Making restore inventory call for productId:', productId, 'quantity:', quantity);
+
+    const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+      },
+      body: JSON.stringify({
+        productId: productId,
+        action: 'restore',
+        quantity: quantity
+      })
+    });
+
+    // ADD MORE DEBUGGING LOGS HERE
+    console.log('Response status:', response.status);
+    console.log('Response URL:', response.url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Details:', errorText);
+      console.error('Request headers sent:', {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY
       });
+      console.error('Request body sent:', JSON.stringify({
+        productId: productId,
+        action: 'restore',
+        quantity: quantity
+      }));
+    }
 
-      const result = await response.json();
-      
-      if (!result.success) {
-        console.error('Failed to restore inventory:', result.error);
-        // Don't throw error here as cart removal should still proceed
-        toast.warning('Item removed from cart, but inventory restoration failed');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error restoring inventory:', error);
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    if (!result.success) {
+      console.error('Failed to restore inventory:', result.error);
+      // Don't throw error here as cart removal should still proceed
       toast.warning('Item removed from cart, but inventory restoration failed');
       return false;
     }
-  };
+
+    return true;
+  } catch (error) {
+    console.error('Error restoring inventory:', error);
+    toast.warning('Item removed from cart, but inventory restoration failed');
+    return false;
+  }
+};
 
   const addToCart = useCallback((product: Product, price: number, quantity: number = 1): boolean => {
     // Note: Inventory deduction is now handled in ProductDetailModal before this function is called
