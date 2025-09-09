@@ -43,9 +43,14 @@ export default function TransactionsPage() {
     const result = await response.json();
     if (result.success) {
       const transactionsWithDates = result.data.map((transaction: any) => ({
-        ...transaction,
-        createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
-      }));
+  id: transaction.id,
+  items: transaction.items,
+  customer: transaction.customer,
+  paymentMethod: transaction.paymentMethod,
+  total: transaction.total,
+  status: transaction.status,
+  createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
+})) as Transaction[];
       setTransactions(transactionsWithDates);
     } else {
       console.error('Failed to load transactions:', result.error);
