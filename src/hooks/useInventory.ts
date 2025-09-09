@@ -36,7 +36,14 @@ const extractCategory = (name: string): string => {
 
 const transformProduct = (item: Record<string, unknown>): Product => {
   // Handle the new nested structure from your backend
-  const product = item.product as any;
+  const product = item.product as {
+    id?: number;
+    name?: string;
+    imageUrl?: string;
+    category?: string;
+    basePrice?: string;
+    createdAt?: string;
+  };
   
   return {
     id: String(product?.id || item.id),
