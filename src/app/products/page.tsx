@@ -79,12 +79,12 @@ export default function ProductsPage() {
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
-  const response = await fetch('https://gnc-inventory-backend.onrender.com/api/sales', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'x-api-key': 'bf018c04805d8c0a344d31c36a2538312b0af5f80ffa80eda39f985fed05e201'
-    },
+  const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+  },
     body: JSON.stringify({ 
       items,
       customer: {
