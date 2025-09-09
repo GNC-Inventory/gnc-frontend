@@ -79,16 +79,27 @@ export default function ProductsPage() {
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
-    const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items, customer, paymentMethod })
-    });
+  const response = await fetch('https://gnc-inventory-backend.onrender.com/api/sales', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'x-api-key': 'bf018c04805d8c0a344d31c36a2538312b0af5f80ffa80eda39f985fed05e201'
+    },
+    body: JSON.stringify({ 
+      items,
+      customer: {
+        name: customer,
+        address: '',
+        phone: ''
+      },
+      paymentMethod 
+    })
+  });
 
-    const result = await response.json();
-    if (!result.success) throw new Error(result.error || 'Failed to process sale');
-    return result.transaction;
-  };
+  const result = await response.json();
+  if (!result.success) throw new Error(result.error || 'Failed to process sale');
+  return result.data;
+};
 
   // New handler for inventory updates from ProductDetailModal
   const handleInventoryUpdate = useCallback((productId: string, newStockLeft: number) => {
