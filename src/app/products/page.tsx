@@ -79,6 +79,7 @@ export default function ProductsPage() {
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
+     console.log('Items being sent to API:', items);
   const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
     method: 'POST',
     headers: { 
