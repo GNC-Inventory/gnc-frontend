@@ -203,9 +203,6 @@ export default function ProductsPage() {
         customerPhone: customerDetails.phone,
         paymentMethod 
       };
-      const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-      existingTransactions.push(finalTransaction);
-      localStorage.setItem('transactions', JSON.stringify(existingTransactions));
 
       console.log('Receipt printed for transaction:', finalTransaction);
       showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
