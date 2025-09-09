@@ -32,7 +32,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
   // Function to restore inventory when items are removed
   const restoreInventory = async (productId: string, quantity: number) => {
     try {
-      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
       }
 
       try {
-        const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
+        const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

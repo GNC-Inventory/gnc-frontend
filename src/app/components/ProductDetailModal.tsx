@@ -71,7 +71,7 @@ export default function ProductDetailModal({
 
   const deductInventory = async (productId: string, quantityToDeduct: number) => {
     try {
-      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory', {
+      const response = await fetch('/.netlify/functions/inventory', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

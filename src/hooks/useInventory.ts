@@ -58,7 +58,7 @@ export const useInventory = (): UseInventoryReturn => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('https://greatnabukoadmin.netlify.app/.netlify/functions/inventory');
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
