@@ -15,16 +15,6 @@ interface PendingSale {
   createdAt: Date;
 }
 
-interface Transaction {
-  id: string;
-  items: CartItem[];
-  customer: string;
-  paymentMethod: string;
-  total: number;
-  createdAt: Date;
-  status: 'Successful' | 'Ongoing' | 'Failed';
-}
-
 // Storage key prefix for POS system
 const POS_PREFIX = 'pos:';
 
@@ -90,29 +80,6 @@ export const storage = {
     clear: () => storage.remove('pending-sales'),
   },
 
-  transactions: {
-    load: (): Transaction[] => {
-      const transactions = storage.load<Array<Record<string, unknown>>>('transactions', []);
-      // Convert date strings back to Date objects
-      return transactions.map(transaction => ({
-        id: String(transaction.id),
-        items: Array.isArray(transaction.items) ? transaction.items as CartItem[] : [],
-        customer: String(transaction.customer),
-        paymentMethod: String(transaction.paymentMethod),
-        total: typeof transaction.total === 'number' ? transaction.total : 0,
-        createdAt: new Date(transaction.createdAt as string),
-        status: (transaction.status as 'Successful' | 'Ongoing' | 'Failed') || 'Failed'
-      }));
-    },
-    save: (transactions: Transaction[]) => storage.save('transactions', transactions),
-    clear: () => storage.remove('transactions'),
-    add: (transaction: Transaction) => {
-      const existing = storage.transactions.load();
-      const updated = [transaction, ...existing];
-      storage.transactions.save(updated);
-    }
-  },
-
   ui: {
     showCart: {
       load: (): boolean => storage.load('show-cart', false),
@@ -134,4 +101,4 @@ export const createStorageListener = (callback: (key: string) => void) => {
   return () => window.removeEventListener('storage', handleStorageChange);
 };
 
-export type { CartItem, PendingSale, Transaction };
+export type { CartItem, PendingSale };
