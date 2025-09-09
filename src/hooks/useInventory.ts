@@ -69,6 +69,8 @@ export const useInventory = (): UseInventoryReturn => {
       }
       
       const result = await response.json();
+
+      console.log('Raw API response:', result.data);
       
       if (!result.success || !result.data) {
         throw new Error('Invalid response format');
