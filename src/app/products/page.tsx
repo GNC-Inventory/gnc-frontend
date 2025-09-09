@@ -80,11 +80,11 @@ export default function ProductsPage() {
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
   const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
-  method: 'POST',
-  headers: { 
-    'Content-Type': 'application/json',
-    'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-  },
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+    },
     body: JSON.stringify({ 
       items,
       customer: {
@@ -97,8 +97,16 @@ export default function ProductsPage() {
   });
 
   const result = await response.json();
-  if (!result.success) throw new Error(result.error || 'Failed to process sale');
-  return result.data;
+  console.log('API Response:', result); // Add logging to debug
+  
+  if (!result.success) {
+    const errorMessage = typeof result.error === 'object' 
+      ? result.error.message || result.error.code || 'Failed to process sale'
+      : result.error || 'Failed to process sale';
+    throw new Error(errorMessage);
+  }
+  
+  return result.data; // Add this return statement
 };
 
   // New handler for inventory updates from ProductDetailModal
