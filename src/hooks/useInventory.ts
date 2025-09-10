@@ -5,6 +5,11 @@ import { useState, useEffect, useCallback } from 'react';
 export interface Product {
   id: string;
   name: string;
+  make?: string;        // Add this
+  model?: string;       // Add this
+  type?: string;        // Add this
+  capacity?: string;    // Add this
+  description?: string; // Add this
   image: string;
   category: string;
   sku: string;
@@ -35,10 +40,14 @@ const extractCategory = (name: string): string => {
 };
 
 const transformProduct = (item: Record<string, unknown>): Product => {
-  // Handle the new nested structure from your backend
   const product = item.product as {
     id?: number;
     name?: string;
+    make?: string;       // Add this
+    model?: string;      // Add this
+    type?: string;       // Add this
+    capacity?: string;   // Add this
+    description?: string; // Add this
     imageUrl?: string;
     category?: string;
     basePrice?: string;
@@ -48,6 +57,11 @@ const transformProduct = (item: Record<string, unknown>): Product => {
   return {
     id: String(product?.id || item.id),
     name: String(product?.name || 'Unknown Product'),
+    make: product?.make || undefined,        // Add this
+    model: product?.model || undefined,      // Add this
+    type: product?.type || undefined,        // Add this
+    capacity: product?.capacity || undefined, // Add this
+    description: product?.description || undefined, // Add this
     image: typeof product?.imageUrl === 'string' ? product.imageUrl : '/products/default.png',
     category: typeof product?.category === 'string' ? product.category : extractCategory(String(product?.name)), 
     sku: `SKU-${String(product?.id || item.id).slice(-6).toUpperCase()}`,
