@@ -12,6 +12,7 @@ import { useInventory, type Product } from '../../hooks/useInventory';
 import { useCart } from '../../hooks/useCart';
 import { usePendingSales } from '../../hooks/usePendingSales';
 import { showToast } from '../../utils/toast';
+import ReceiptModal from '../components/ReceiptModal';
 
 interface CartItem {
   id: string;
@@ -168,13 +169,29 @@ const handleCompleteSale = useCallback(async () => {
   
   try {
     const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
-    setCompletedTransaction(transaction);
+    
+    // CRITICAL: Store cart items BEFORE clearing the cart
+    const enhancedTransaction = {
+      ...transaction,
+      items: cart.cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        make: item.make,
+        model: item.model,
+        type: item.type,
+        capacity: item.capacity,
+        description: item.description,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity
+      }))
+    };
+    
+    setCompletedTransaction(enhancedTransaction);
     showToast('Sale processed successfully! Inventory updated.', 'success');
     refetch();
     
-    // Fix: Clear cart WITHOUT restoring inventory since sale was completed
-    await cart.clearCart(false); // Pass false to indicate "don't restore inventory"
-    
+    await cart.clearCart(false);
     setShowCheckout(true);
   } catch (error: unknown) {
     console.error('Error processing sale:', error);
@@ -219,42 +236,23 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
       return;
     }
 
-    // Fix: Include full product details from cart items
+    // Items are already preserved from handleCompleteSale
     const finalTransaction = { 
       ...completedTransaction, 
       customer: customerDetails.name,
       customerAddress: customerDetails.address,
       customerPhone: customerDetails.phone,
-      paymentMethod,
-      // Override items with full product details from cart
-      items: cart.cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        make: item.make,
-        model: item.model,
-        type: item.type,
-        capacity: item.capacity,
-        description: item.description,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity
-      }))
+      paymentMethod
     };
 
-    console.log('Receipt printed for transaction:', finalTransaction);
-    showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
-    
-    // You need to show the receipt modal here - add this state update
     setCompletedTransaction(finalTransaction);
-    
-    await cart.clearCart(false); // Don't restore - transaction completed
     setShowCheckout(false);
-    // Don't set completedTransaction to null yet - receipt modal needs it
+    showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
   } catch (error) {
     console.error('Error printing receipt:', error);
     showToast('Error printing receipt. Please try again.', 'error');
   }
-}, [cart, completedTransaction]);
+}, [completedTransaction]);
 
   if (loading) {
     return (
@@ -481,6 +479,17 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
           onPrintReceipt={handlePrintReceipt}
         />
       )}
+
+      {/* Add this after CheckoutView */}
+{completedTransaction && !showCheckout && (
+  <ReceiptModal 
+    transaction={{
+      ...completedTransaction,
+      createdAt: new Date(completedTransaction.createdAt)
+    }}
+    onClose={() => setCompletedTransaction(null)}
+  />
+)}
 
       {/* Processing Sale Loading Overlay */}
       {isProcessingSale && (
