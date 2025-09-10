@@ -150,85 +150,94 @@ export default function ProductsPage() {
     setSelectedProduct(null);
   }, []);
 
-  const handleCompleteSale = useCallback(async () => {
-    if (cart.cartItems.length === 0) {
-      showToast('Cart is empty', 'error');
+  // Add the missing handleResumeSale function
+  const handleResumeSale = useCallback((saleId: string) => {
+    const resumedItems = pendingSales.resumeSale(saleId);
+    if (resumedItems) {
+      showToast('Sale resumed - please re-add items to cart', 'info');
+    }
+  }, [pendingSales]);
+
+const handleCompleteSale = useCallback(async () => {
+  if (cart.cartItems.length === 0) {
+    showToast('Cart is empty', 'error');
+    return;
+  }
+
+  setIsProcessingSale(true);
+  
+  try {
+    const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
+    setCompletedTransaction(transaction);
+    showToast('Sale processed successfully! Inventory updated.', 'success');
+    refetch();
+    
+    // Fix: Clear cart WITHOUT restoring inventory since sale was completed
+    await cart.clearCart(false); // Pass false to indicate "don't restore inventory"
+    
+    setShowCheckout(true);
+  } catch (error: unknown) {
+    console.error('Error processing sale:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    if (errorMessage.includes('Insufficient stock')) {
+      showToast('Insufficient stock for some items. Please check inventory.', 'error');
+    } else if (errorMessage.includes('not found')) {
+      showToast('Some products are no longer available. Please refresh and try again.', 'error');
+      refetch();
+    } else {
+      showToast('Failed to process sale. Please try again.', 'error');
+    }
+  } finally {
+    setIsProcessingSale(false);
+  }
+}, [cart, refetch]);
+
+const handleHoldSale = useCallback(async () => {
+  pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
+  await cart.clearCart(true); // Restore inventory when holding sale
+}, [pendingSales, cart]);
+
+const handleCancelSale = useCallback(async () => {
+  await cart.clearCart(true); // Restore inventory when canceling
+}, [cart]);
+
+const handleBackToCart = useCallback(async () => {
+  if (completedTransaction) {
+    await cart.clearCart(false); // Don't restore - transaction completed
+    setCompletedTransaction(null);
+    setShowCheckout(false);
+  } else {
+    setShowCheckout(false);
+  }
+}, [completedTransaction, cart]);
+
+const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentMethod: string) => {
+  try {
+    if (!completedTransaction) {
+      showToast('No completed transaction to print', 'error');
       return;
     }
 
-    setIsProcessingSale(true);
+    const finalTransaction = { 
+      ...completedTransaction, 
+      customer: customerDetails.name,
+      customerAddress: customerDetails.address,
+      customerPhone: customerDetails.phone,
+      paymentMethod 
+    };
+
+    console.log('Receipt printed for transaction:', finalTransaction);
+    showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
     
-    try {
-      const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
-      setCompletedTransaction(transaction);
-      showToast('Sale processed successfully! Inventory updated.', 'success');
-      refetch();
-      setShowCheckout(true);
-    } catch (error: unknown) {
-      console.error('Error processing sale:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
-      if (errorMessage.includes('Insufficient stock')) {
-        showToast('Insufficient stock for some items. Please check inventory.', 'error');
-      } else if (errorMessage.includes('not found')) {
-        showToast('Some products are no longer available. Please refresh and try again.', 'error');
-        refetch();
-      } else {
-        showToast('Failed to process sale. Please try again.', 'error');
-      }
-    } finally {
-      setIsProcessingSale(false);
-    }
-  }, [cart, refetch]);
-
-  const handleHoldSale = useCallback(() => {
-    pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
-    cart.clearCart();
-  }, [pendingSales, cart]);
-
-  const handleCancelSale = useCallback(() => cart.clearCart(), [cart]);
-
-  const handleResumeSale = useCallback((saleId: string) => {
-    const resumedItems = pendingSales.resumeSale(saleId);
-    if (resumedItems) showToast('Sale resumed - please re-add items to cart', 'info');
-  }, [pendingSales]);
-
-  const handleBackToCart = useCallback(() => {
-    if (completedTransaction) {
-      cart.clearCart();
-      setCompletedTransaction(null);
-      setShowCheckout(false);
-    } else {
-      setShowCheckout(false);
-    }
-  }, [completedTransaction, cart]);
-
-  const handlePrintReceipt = useCallback((customerDetails: CustomerDetails, paymentMethod: string) => {
-    try {
-      if (!completedTransaction) {
-        showToast('No completed transaction to print', 'error');
-        return;
-      }
-
-      const finalTransaction = { 
-        ...completedTransaction, 
-        customer: customerDetails.name,
-        customerAddress: customerDetails.address,
-        customerPhone: customerDetails.phone,
-        paymentMethod 
-      };
-
-      console.log('Receipt printed for transaction:', finalTransaction);
-      showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
-      
-      cart.clearCart();
-      setCompletedTransaction(null);
-      setShowCheckout(false);
-    } catch (error) {
-      console.error('Error printing receipt:', error);
-      showToast('Error printing receipt. Please try again.', 'error');
-    }
-  }, [cart, completedTransaction]);
+    await cart.clearCart(false); // Don't restore - transaction completed
+    setCompletedTransaction(null);
+    setShowCheckout(false);
+  } catch (error) {
+    console.error('Error printing receipt:', error);
+    showToast('Error printing receipt. Please try again.', 'error');
+  }
+}, [cart, completedTransaction]);
 
   if (loading) {
     return (
