@@ -29,8 +29,7 @@ export const useCart = (products: Product[]): UseCartReturn => {
     storage.cart.save(cartItems);
   }, [cartItems]);
 
-  // Function to restore inventory when items are removed
-  // Function to restore inventory when items are removed
+// Function to restore inventory when items are removed
 const restoreInventory = async (productId: string, quantity: number) => {
   try {
     // ADD DEBUGGING LOGS HERE
@@ -39,16 +38,15 @@ const restoreInventory = async (productId: string, quantity: number) => {
     console.log('NEXT_PUBLIC_API_KEY:', process.env.NEXT_PUBLIC_API_KEY ? 'SET' : 'NOT SET');
     console.log('Making restore inventory call for productId:', productId, 'quantity:', quantity);
 
-    const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+    // Fix: Use the same endpoint format as deductInventory
+    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
       body: JSON.stringify({
-        productId: productId,
-        action: 'restore',
-        quantity: quantity
+        quantity: -quantity  // Use negative quantity to restore/add back
       })
     });
 
@@ -64,9 +62,7 @@ const restoreInventory = async (productId: string, quantity: number) => {
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY
       });
       console.error('Request body sent:', JSON.stringify({
-        productId: productId,
-        action: 'restore',
-        quantity: quantity
+        quantity: -quantity
       }));
     }
 
