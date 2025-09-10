@@ -146,8 +146,17 @@ const handleAddItem = async () => {
   try {
     const updatedInventoryItem = await deductInventory(product.id, quantity);
     
-    // Fix: Use 'quantity' field from API response instead of 'stockLeft'
-    const newStockLeft = updatedInventoryItem.quantity;
+    // Fix: Handle case where backend returns array instead of single item
+    let newStockLeft;
+    if (Array.isArray(updatedInventoryItem)) {
+      // Find the specific product in the returned array
+      const specificItem = updatedInventoryItem.find(item => item.productId === parseInt(product.id));
+      newStockLeft = specificItem ? specificItem.quantity : product.stockLeft - quantity;
+    } else {
+      // Handle case where single item is returned
+      newStockLeft = updatedInventoryItem.quantity;
+    }
+    
     const updatedProduct = { ...product, stockLeft: newStockLeft };
     
     if (onInventoryUpdate) onInventoryUpdate(product.id, newStockLeft);
