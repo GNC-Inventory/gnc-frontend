@@ -96,20 +96,35 @@ const restoreInventory = async (productId: string, quantity: number) => {
     const existingItem = cartItems.find(item => item.id === product.id);
 
     setCartItems(current => {
-      if (existingItem) {
-        return current.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + quantity, price }
-            : item
+if (existingItem) {
+  return current.map(item => 
+    item.id === product.id 
+      ? { 
+          ...item, 
+          quantity: item.quantity + quantity, 
+          price,
+          // Ensure we keep the product details
+          make: product.make,
+          model: product.model,
+          type: product.type,
+          capacity: product.capacity,
+          description: product.description
+        }
+      : item
         );
       } else {
-        return [...current, {
-          id: product.id,
-          name: product.name,
-          image: product.image,
-          price,
-          quantity
-        }];
+return [...current, {
+  id: product.id,
+  name: product.name,
+  make: product.make,        // Add this
+  model: product.model,      // Add this
+  type: product.type,        // Add this
+  capacity: product.capacity, // Add this
+  description: product.description, // Add this
+  image: product.image,
+  price,
+  quantity
+}];
       }
     });
 

@@ -7,6 +7,11 @@ import Image from 'next/image';
 interface CartItem {
   id: string;
   name: string;
+  make?: string;        // Add this
+  model?: string;       // Add this
+  type?: string;        // Add this
+  capacity?: string;    // Add this
+  description?: string; // Add this
   image: string;
   price: number;
   quantity: number;

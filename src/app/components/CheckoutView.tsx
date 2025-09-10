@@ -6,6 +6,11 @@ import { ArrowLeftIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 interface CartItem {
   id: string;
   name: string;
+  make?: string;        // Add this
+  model?: string;       // Add this
+  type?: string;        // Add this
+  capacity?: string;    // Add this
+  description?: string; // Add this
   image: string;
   price: number;
   quantity: number;
