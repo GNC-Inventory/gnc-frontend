@@ -111,8 +111,18 @@ export default function ProductDetailModal({
 
     const result = JSON.parse(responseText);
     console.log('Parsed response:', result);
+    console.log('result.success:', result.success);
+    console.log('result.data:', result.data);
+    console.log('typeof result.success:', typeof result.success);
 
-    if (!result.success) throw new Error(result.error || 'Failed to update inventory');
+    if (!result.success) {
+      console.log('THROWING ERROR: result.success is false');
+      console.log('result.error:', result.error);
+      throw new Error(result.error || 'Failed to update inventory');
+    }
+
+    console.log('SUCCESS: About to return result.data');
+    console.log('result.data structure:', result.data);
     return result.data;
   } catch (error) {
     console.error('=== DEDUCT INVENTORY ERROR ===');
