@@ -201,27 +201,21 @@ return [...current, {
   }, [cartItems]);
 
 const clearCart = useCallback(async (shouldRestoreInventory: boolean = true): Promise<void> => {
+  console.log('=== CLEAR CART DEBUG ===');
+  console.log('shouldRestoreInventory:', shouldRestoreInventory);
+  console.log('cartItems to process:', cartItems);
+  
   if (shouldRestoreInventory) {
-    // Restore inventory for all items when clearing cart
-    const restorePromises = cartItems.map(item => 
-      restoreInventory(item.id, item.quantity)
-    );
-    
-    try {
-      await Promise.all(restorePromises);
-      toast.success('Cart cleared and inventory restored');
-    } catch (error) {
-      console.error('Error occurred:', error);
-      console.error('Error clearing cart:', error);
-      toast.warning('Cart cleared, but some inventory restoration failed');
-    }
+    console.log('RESTORING inventory for', cartItems.length, 'items');
+    // ... restore logic
   } else {
-    // Just clear the cart without restoring inventory (for completed sales)
+    console.log('NOT restoring inventory (sale completed)');
     toast.success('Cart cleared');
   }
   
   setCartItems([]);
   storage.cart.clear();
+  console.log('=== CLEAR CART COMPLETE ===');
 }, [cartItems]);
 
   const getTotalAmount = useCallback((): number => {
