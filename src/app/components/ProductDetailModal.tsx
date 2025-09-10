@@ -8,6 +8,11 @@ import { toast } from '@/utils/toast';
 interface Product {
   id: string;
   name: string;
+  make?: string;        // Add this
+  model?: string;       // Add this
+  type?: string;        // Add this
+  capacity?: string;    // Add this
+  description?: string; // Add this
   image: string;
   category: string;
   sku: string;
@@ -267,6 +272,45 @@ export default function ProductDetailModal({
 
             {/* Product Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Make and Model */}
+  {(product.make || product.model) && (
+    <div>
+      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Make & Model</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
+        {product.make && (
+          <p><span style={{ fontWeight: 500 }}>Make:</span> {product.make}</p>
+        )}
+        {product.model && (
+          <p><span style={{ fontWeight: 500 }}>Model:</span> {product.model}</p>
+        )}
+      </div>
+    </div>
+  )}
+
+  {/* Type and Capacity */}
+  {(product.type || product.capacity) && (
+    <div>
+      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Specifications</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
+        {product.type && (
+          <p><span style={{ fontWeight: 500 }}>Type:</span> {product.type}</p>
+        )}
+        {product.capacity && (
+          <p><span style={{ fontWeight: 500 }}>Capacity:</span> {product.capacity}</p>
+        )}
+      </div>
+    </div>
+  )}
+
+  {/* Description */}
+  {product.description && (
+    <div>
+      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Description</h3>
+      <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: '1.5' }}>
+        {product.description}
+      </p>
+    </div>
+  )}
               {/* Types */}
               <div>
                 <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Type</h3>
