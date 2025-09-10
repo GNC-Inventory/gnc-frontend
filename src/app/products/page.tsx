@@ -189,7 +189,7 @@ const handleCompleteSale = useCallback(async () => {
     
     setCompletedTransaction(enhancedTransaction);
     showToast('Sale processed successfully! Inventory updated.', 'success');
-    refetch();
+    // REMOVED: refetch() - this was causing stale data to overwrite correct local state
     
     await cart.clearCart(false);
     setShowCheckout(true);
@@ -201,7 +201,7 @@ const handleCompleteSale = useCallback(async () => {
       showToast('Insufficient stock for some items. Please check inventory.', 'error');
     } else if (errorMessage.includes('not found')) {
       showToast('Some products are no longer available. Please refresh and try again.', 'error');
-      refetch();
+      refetch(); // Keep this refetch only in error cases
     } else {
       showToast('Failed to process sale. Please try again.', 'error');
     }
