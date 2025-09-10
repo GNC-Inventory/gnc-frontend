@@ -9,6 +9,11 @@ interface Transaction {
   items: Array<{
     id: string;
     name: string;
+    make?: string;        // Add this
+    model?: string;       // Add this
+    type?: string;        // Add this
+    capacity?: string;    // Add this
+    description?: string; // Add this
     image: string;
     price: number;
     quantity: number;
@@ -244,64 +249,100 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginBottom: '24px' }}>
             <h4 style={{ fontWeight: 500, color: '#111827', marginBottom: '16px' }}>Items Purchased</h4>
             <div style={{ display: 'flex', flexDirection: 'column', rowGap: '12px' }}>
-              {transaction.items.map((item, index) => (
-                <div
-                  key={index}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      columnGap: '12px',
-                      flex: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    <div style={{ width: '40px', height: '40px', position: 'relative', flexShrink: 0 }}>
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={40}
-                        height={40}
-                        style={{
-                          objectFit: 'contain',
-                          borderRadius: '4px',
-                          background: '#F9FAFB', // gray-50
-                          width: '40px',
-                          height: '40px',
-                          display: 'block',
-                        }}
-                      />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#111827',
-                          margin: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {item.name}
-                      </p>
-                      <p style={{ fontSize: '12px', color: '#4B5563', margin: 0 }}>
-                        ₦{item.price.toLocaleString()} × {item.quantity}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginLeft: '8px' }}>
-                    ₦{(item.price * item.quantity).toLocaleString()}
-                  </div>
-                </div>
-              ))}
+{transaction.items.map((item, index) => (
+  <div
+    key={index}
+    style={{
+      borderBottom: index < transaction.items.length - 1 ? '1px solid #F3F4F6' : 'none',
+      paddingBottom: '12px',
+      marginBottom: index < transaction.items.length - 1 ? '12px' : '0',
+    }}
+  >
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: '8px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          columnGap: '12px',
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <div style={{ width: '40px', height: '40px', position: 'relative', flexShrink: 0 }}>
+          <Image
+            src={item.image}
+            alt={item.name}
+            width={40}
+            height={40}
+            style={{
+              objectFit: 'contain',
+              borderRadius: '4px',
+              background: '#F9FAFB',
+              width: '40px',
+              height: '40px',
+              display: 'block',
+            }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p
+            style={{
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#111827',
+              margin: 0,
+              marginBottom: '4px',
+            }}
+          >
+            {item.name}
+          </p>
+          
+          {/* New product details */}
+          {(item.make || item.model) && (
+            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
+              {[item.make, item.model].filter(Boolean).join(' ')}
+            </p>
+          )}
+          
+          {item.type && (
+            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
+              Type: {item.type}
+            </p>
+          )}
+          
+          {item.capacity && (
+            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
+              Capacity: {item.capacity}
+            </p>
+          )}
+          
+          <p style={{ fontSize: '12px', color: '#4B5563', margin: 0, marginTop: '4px' }}>
+            ₦{item.price.toLocaleString()} × {item.quantity}
+          </p>
+        </div>
+      </div>
+      <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginLeft: '8px' }}>
+        ₦{(item.price * item.quantity).toLocaleString()}
+      </div>
+    </div>
+    
+    {/* Description on separate line if it exists */}
+    {item.description && (
+      <div style={{ paddingLeft: '52px' }}>
+        <p style={{ fontSize: '11px', color: '#6B7280', margin: 0, fontStyle: 'italic', lineHeight: '1.4' }}>
+          {item.description}
+        </p>
+      </div>
+    )}
+  </div>
+))}
             </div>
           </div>
 
