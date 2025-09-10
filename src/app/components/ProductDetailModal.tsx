@@ -134,39 +134,44 @@ export default function ProductDetailModal({
   }
 };
 
-  const handleAddItem = async () => {
-    if (!product || !price || !onAddToCart) return;
-    if (quantity > product.stockLeft) {
-      toast.error(`Only ${product.stockLeft} items available in stock`);
-      return;
-    }
-    setIsProcessing(true);
-    toast.info(`Adding ${quantity} item(s) to cart...`);
+const handleAddItem = async () => {
+  if (!product || !price || !onAddToCart) return;
+  if (quantity > product.stockLeft) {
+    toast.error(`Only ${product.stockLeft} items available in stock`);
+    return;
+  }
+  setIsProcessing(true);
+  toast.info(`Adding ${quantity} item(s) to cart...`);
 
-    try {
-      const updatedInventoryItem = await deductInventory(product.id, quantity);
-      const updatedProduct = { ...product, stockLeft: updatedInventoryItem.stockLeft };
-      if (onInventoryUpdate) onInventoryUpdate(product.id, updatedInventoryItem.stockLeft);
-      onAddToCart(updatedProduct, parseFloat(price), quantity);
-      toast.success(`${product.name} (${quantity}) added to cart`);
-      setPrice('');
-      setDisplayPrice('');
-      setQuantity(1);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      if (errorMessage.includes('insufficient stock')) {
-        const match = errorMessage.match(/only (\d+) available/i);
-        const availableStock = match ? match[1] : 'limited';
-        toast.error(`Insufficient stock! Only ${availableStock} items available. Another rep may be processing this item.`);
-      } else if (errorMessage.includes('not found')) {
-        toast.error('Product not found in inventory');
-      } else {
-        toast.error(`Failed to add item: ${errorMessage}`);
-      }
-    } finally {
-      setIsProcessing(false);
+  try {
+    const updatedInventoryItem = await deductInventory(product.id, quantity);
+    
+    // Fix: Use 'quantity' field from API response instead of 'stockLeft'
+    const newStockLeft = updatedInventoryItem.quantity;
+    const updatedProduct = { ...product, stockLeft: newStockLeft };
+    
+    if (onInventoryUpdate) onInventoryUpdate(product.id, newStockLeft);
+    onAddToCart(updatedProduct, parseFloat(price), quantity);
+    
+    toast.success(`${product.name} (${quantity}) added to cart`);
+    setPrice('');
+    setDisplayPrice('');
+    setQuantity(1);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    if (errorMessage.includes('insufficient stock')) {
+      const match = errorMessage.match(/only (\d+) available/i);
+      const availableStock = match ? match[1] : 'limited';
+      toast.error(`Insufficient stock! Only ${availableStock} items available. Another rep may be processing this item.`);
+    } else if (errorMessage.includes('not found')) {
+      toast.error('Product not found in inventory');
+    } else {
+      toast.error(`Failed to add item: ${errorMessage}`);
     }
-  };
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const isAddButtonActive =
     price.trim() !== '' &&
