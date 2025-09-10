@@ -219,20 +219,37 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
       return;
     }
 
+    // Fix: Include full product details from cart items
     const finalTransaction = { 
       ...completedTransaction, 
       customer: customerDetails.name,
       customerAddress: customerDetails.address,
       customerPhone: customerDetails.phone,
-      paymentMethod 
+      paymentMethod,
+      // Override items with full product details from cart
+      items: cart.cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        make: item.make,
+        model: item.model,
+        type: item.type,
+        capacity: item.capacity,
+        description: item.description,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity
+      }))
     };
 
     console.log('Receipt printed for transaction:', finalTransaction);
     showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
     
+    // You need to show the receipt modal here - add this state update
+    setCompletedTransaction(finalTransaction);
+    
     await cart.clearCart(false); // Don't restore - transaction completed
-    setCompletedTransaction(null);
     setShowCheckout(false);
+    // Don't set completedTransaction to null yet - receipt modal needs it
   } catch (error) {
     console.error('Error printing receipt:', error);
     showToast('Error printing receipt. Please try again.', 'error');
