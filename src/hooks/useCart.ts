@@ -10,7 +10,7 @@ interface UseCartReturn {
   addToCart: (product: Product, price: number, quantity?: number) => boolean;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
-  clearCart: () => void;
+  clearCart: (shouldRestoreInventory?: boolean) => Promise<void>; // Updated interface
   getTotalAmount: () => number;
   getTotalItems: () => number;
 }
@@ -242,4 +242,3 @@ const clearCart = useCallback(async (shouldRestoreInventory: boolean = true): Pr
     getTotalItems
   };
 };
-
