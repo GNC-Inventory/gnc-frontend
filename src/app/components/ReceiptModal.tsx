@@ -138,37 +138,76 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
         {/* Receipt Content */}
         <div style={{ padding: '24px' }} id="receipt-content">
           {/* Company Header */}
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                marginBottom: '12px',
-                position: 'relative',
-              }}
-            >
-              <Image
-                src="/logo.png"
-                alt="Company Logo"
-                width={64}
-                height={64}
-                style={{ borderRadius: '9999px', display: 'block' }}
-              />
-            </div>
-            <h3
-              style={{
-                fontWeight: 700,
-                fontSize: '18px',
-                marginBottom: '4px',
-                color: '#111827',
-              }}
-            >
-              GREAT NABUKO
-            </h3>
-            <p style={{ color: '#4B5563', fontSize: '14px', margin: 0 }}>Sales Receipt</p>
-          </div>
+<div style={{ marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '16px' }}>
+  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
+    <div style={{ marginRight: '16px', flexShrink: 0 }}>
+      <Image
+        src="/logo.png"
+        alt="GNC Logo"
+        width={50}
+        height={50}
+        style={{ display: 'block' }}
+      />
+    </div>
+    <div style={{ flex: 1 }}>
+      <h1 style={{ 
+        fontSize: '18px', 
+        fontWeight: 'bold', 
+        margin: 0, 
+        marginBottom: '2px',
+        letterSpacing: '0.5px',
+        color: '#000'
+      }}>
+        GREAT NABUKO COMPANY NIG. LTD.
+      </h1>
+      <p style={{ 
+        fontSize: '11px', 
+        margin: 0, 
+        marginBottom: '4px',
+        color: '#000'
+      }}>
+        (REGISTERED IN NIGERIA)
+      </p>
+      <p style={{ 
+        fontSize: '10px', 
+        margin: 0, 
+        marginBottom: '2px',
+        color: '#000',
+        lineHeight: '1.3'
+      }}>
+        Call For Your Industrial Electrical, Electronics Telecommunication,
+      </p>
+      <p style={{ 
+        fontSize: '10px', 
+        margin: 0, 
+        marginBottom: '8px',
+        color: '#000',
+        lineHeight: '1.3'
+      }}>
+        Building Materials, Chandelier Lights, Sales, Suppliers, and General Contractors
+      </p>
+    </div>
+    <div style={{ textAlign: 'right', fontSize: '10px', color: '#000' }}>
+      <div style={{ marginBottom: '2px' }}>📞 08188294545</div>
+      <div>08037075421</div>
+    </div>
+  </div>
+  
+  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#000' }}>
+    <div>
+      <div><strong>HEAD OFFICE:</strong> 23 Bassey Duke street, calabar</div>
+      <div><strong>Branch Office:</strong> 19c Bassey Duke street, calabar</div>
+      <div><strong>Branch Office:</strong> 4 Bassey Duke street, calabar</div>
+    </div>
+    <div style={{ alignSelf: 'flex-end', fontWeight: 'bold' }}>
+      1501
+    </div>
+  </div>
+  
+  <div style={{ textAlign: 'center', marginTop: '12px' }}>
+    <p style={{ color: '#4B5563', fontSize: '14px', margin: 0, fontWeight: '500' }}>Sales Receipt</p>
+  </div>
+</div>
 
           {/* Customer Information Section */}
           <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginBottom: '24px' }}>
