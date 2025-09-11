@@ -426,31 +426,137 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
         }}></div>
 
         {/* Products Content */}
-        {Object.keys(groupedProducts).length === 0 ? (
-          error ? (
-            <EmptyState type="error" error={error} onRetry={refetch} />
-          ) : searchQuery ? (
-            <EmptyState type="no-search-results" searchQuery={searchQuery} />
-          ) : (
-            <EmptyState type="no-products" onRetry={refetch} />
-          )
-        ) : (
-          <div style={{
-            display: 'grid',
-            gap: '32px',
-            gridTemplateColumns: isCompact ? '1fr' : 'repeat(auto-fit, minmax(400px, 1fr))'
+{Object.keys(groupedProducts).length === 0 ? (
+  error ? (
+    <EmptyState type="error" error={error} onRetry={refetch} />
+  ) : searchQuery ? (
+    <EmptyState type="no-search-results" searchQuery={searchQuery} />
+  ) : (
+    <EmptyState type="no-products" onRetry={refetch} />
+  )
+) : (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+      <div key={category} style={{ marginBottom: '24px' }}>
+        {/* Category Header */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '16px' 
+        }}>
+          <h3 style={{ 
+            fontSize: '18px', 
+            fontWeight: 600, 
+            color: '#000', 
+            margin: 0 
           }}>
-            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-              <CategorySection
-                key={category}
-                category={category}
-                products={categoryProducts}
-                isCompact={isCompact}
-                onSelectProduct={handleSelectProduct}
-              />
-            ))}
-          </div>
-        )}
+            {category} ({categoryProducts.length})
+          </h3>
+          <button style={{
+            color: '#2563EB',
+            fontSize: '14px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer'
+          }}>
+            See All →
+          </button>
+        </div>
+        
+        {/* Horizontal Scrolling Products */}
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          overflowX: 'auto',
+          paddingBottom: '8px',
+          scrollbarWidth: 'thin'
+        }}>
+          {categoryProducts.map((product) => (
+            <div
+              key={product.id}
+              onClick={() => handleSelectProduct(product.id)}
+              style={{
+                minWidth: '180px',
+                backgroundColor: 'white',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                padding: '12px',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {/* Product Image */}
+              <div style={{
+                width: '100%',
+                height: '120px',
+                backgroundColor: '#F9FAFB',
+                borderRadius: '6px',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+              
+              {/* Product Info */}
+              <div>
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#000',
+                  margin: '0 0 4px 0',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {product.name}
+                </h4>
+                
+                <p style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#000',
+                  margin: '0 0 4px 0'
+                }}>
+                  ₦{product.basePrice.toLocaleString()}
+                </p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
+                    fontWeight: 500
+                  }}>
+                    {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       </div>
 
       {/* Modals & Sidebar */}
