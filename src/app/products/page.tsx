@@ -13,6 +13,7 @@ import { useCart } from '../../hooks/useCart';
 import { usePendingSales } from '../../hooks/usePendingSales';
 import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
+import { useRouter } from 'next/navigation';
 
 interface CartItem {
   id: string;
@@ -55,6 +56,7 @@ export default function ProductsPage() {
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
+  const router = useRouter();
   
   // Update local products when products change
   useEffect(() => {
@@ -452,15 +454,18 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
           }}>
             {category} ({categoryProducts.length})
           </h3>
-          <button style={{
-            color: '#2563EB',
-            fontSize: '14px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer'
-          }}>
-            See All →
-          </button>
+          <button 
+  onClick={() => router.push(`/products/category/${encodeURIComponent(category.toLowerCase())}`)}
+  style={{
+    color: '#2563EB',
+    fontSize: '14px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer'
+  }}
+>
+  See All →
+</button>
         </div>
         
         {/* Horizontal Scrolling Products */}
