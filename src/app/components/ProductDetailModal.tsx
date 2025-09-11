@@ -80,11 +80,16 @@ export default function ProductDetailModal({
     console.log('=== DEDUCT INVENTORY DEBUG ===');
     console.log('Product ID:', productId);
     console.log('Quantity to deduct:', quantityToDeduct);
+    console.log('Current stock left:', product?.stockLeft);
     console.log('API Key exists:', !!process.env.NEXT_PUBLIC_API_KEY);
     
-    const url = `https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`;
-    const requestBody = { quantity: quantityToDeduct };
+    // Calculate the new quantity (remaining after deduction)
+    const newQuantity = (product?.stockLeft || 0) - quantityToDeduct;
     
+    const url = `https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`;
+    const requestBody = { quantity: newQuantity }; // Send remaining quantity, not deduction amount
+    
+    console.log('New quantity after deduction:', newQuantity);
     console.log('Request URL:', url);
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
