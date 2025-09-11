@@ -82,6 +82,10 @@ export default function ProductDetailModal({
     console.log('Quantity to deduct:', quantityToDeduct);
     console.log('Current stock left:', product?.stockLeft);
     console.log('API Key exists:', !!process.env.NEXT_PUBLIC_API_KEY);
+
+    console.log('Product object:', product);
+console.log('Product ID being used:', productId);
+console.log('Product ID type:', typeof productId);
     
     // Calculate the new quantity (remaining after deduction)
     const newQuantity = (product?.stockLeft || 0) - quantityToDeduct;
