@@ -54,8 +54,10 @@ const transformProduct = (item: Record<string, unknown>): Product => {
     createdAt?: string;
   };
   
+  console.log('Item transformation - inventory ID:', item.id, 'product ID:', product?.id);
+
   return {
-    id: String(product?.id || item.id),
+    id: String(item.id), // Use inventory item ID
     name: String(product?.name || 'Unknown Product'),
     make: product?.make || undefined,        // Add this
     model: product?.model || undefined,      // Add this
