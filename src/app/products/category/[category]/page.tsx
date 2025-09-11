@@ -1,20 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MagnifyingGlassIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useInventory, type Product } from '../../../../hooks/useInventory';
 import ProductDetailModal from '../../../components/ProductDetailModal';
 import EmptyState from '../../../components/EmptyState';
+import Image from 'next/image';
 
-interface CategoryPageProps {
-  params: {
-    category: string;
-  };
-}
-
-export default function CategoryPage({ params }: CategoryPageProps) {
+export default function CategoryPage() {
   const router = useRouter();
+  const params = useParams();
   const { products, loading, error, refetch } = useInventory();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -22,7 +18,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [filterBy, setFilterBy] = useState<'all' | 'low-stock' | 'in-stock'>('all');
 
-  const categoryName = decodeURIComponent(params.category);
+  const categoryName = typeof params.category === 'string' ? decodeURIComponent(params.category) : '';
   const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
 
   // Filter products by category
@@ -261,14 +257,14 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                position: 'relative'
               }}>
-                <img
+                <Image
                   src={product.image}
                   alt={product.name}
+                  fill
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
                     objectFit: 'contain'
                   }}
                 />

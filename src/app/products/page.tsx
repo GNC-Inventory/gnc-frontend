@@ -5,7 +5,6 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
 import CheckoutView from '../components/CheckoutView';
-import CategorySection from '../components/CategorySection';
 import EmptyState from '../components/EmptyState';
 import PendingSaleCard from '../components/PendingSaleCard';
 import { useInventory, type Product } from '../../hooks/useInventory';
