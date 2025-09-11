@@ -466,12 +466,13 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
         
         {/* Horizontal Scrolling Products */}
         <div style={{
-          display: 'flex',
-          gap: '16px',
-          overflowX: 'auto',
-          paddingBottom: '8px',
-          scrollbarWidth: 'thin'
-        }}>
+  display: 'flex',
+  gap: '16px',
+  overflowX: 'auto',
+  paddingBottom: '8px',
+  scrollbarWidth: 'thin',
+  scrollbarColor: '#CBD5E1 #F1F5F9'
+}}>
           {categoryProducts.map((product) => (
             <div
               key={product.id}
