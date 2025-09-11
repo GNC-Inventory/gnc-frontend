@@ -394,22 +394,21 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
 
       {/* Products Container */}
       <div 
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '32px',
-          padding: '32px',
-          transition: 'all 0.3s',
-          position: isCompact ? 'fixed' : 'relative',
-          overflow: isCompact ? 'auto' : 'visible',
-          width: isCompact ? '728px' : '100%',
-          height: isCompact ? '716px' : 'auto',
-          minHeight: isCompact ? 'auto' : '728px',
-          top: isCompact ? '172px' : 'auto',
-          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
-            ? `${(window.innerWidth - 1440) / 2 + 304}px` 
-            : '304px') : 'auto'
-        }}
-      >
+  style={{
+    backgroundColor: 'white',
+    borderRadius: '32px',
+    padding: '32px',
+    transition: 'all 0.3s',
+    position: isCompact ? 'fixed' : 'relative',
+    overflow: isCompact ? 'auto' : 'auto', // Change this from 'visible' to 'auto'
+    width: isCompact ? '728px' : '100%',
+    height: isCompact ? '716px' : '600px', // Add fixed height
+    top: isCompact ? '172px' : 'auto',
+    left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
+      ? `${(window.innerWidth - 1440) / 2 + 304}px` 
+      : '304px') : 'auto'
+  }}
+>
         <div style={{ marginBottom: '16px' }}>
           <h2 style={{
             fontWeight: 500,
