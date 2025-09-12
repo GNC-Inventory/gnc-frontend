@@ -321,40 +321,7 @@ export default function CartSidebar({
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        {/* Total */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px',
-            width: '304px',
-            height: '20px',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-inter), Inter, sans-serif',
-              fontWeight: 600,
-              fontSize: '14px',
-              lineHeight: '20px',
-              color: 'var(--text-main-900, #0A0D14)',
-            }}
-          >
-            Total
-          </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-inter), Inter, sans-serif',
-              fontWeight: 600,
-              fontSize: '14px',
-              lineHeight: '20px',
-              color: 'var(--text-main-900, #0A0D14)',
-            }}
-          >
-            ₦ {totalAmount.toLocaleString()}
-          </span>
-        </div>
+        
 
         {/* Complete Sale Button */}
         <button
