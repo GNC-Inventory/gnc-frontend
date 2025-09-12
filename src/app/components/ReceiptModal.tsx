@@ -1,9 +1,9 @@
 'use client';
-
 import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import PrinterSelection from './PrinterSelection';
+import { ClientSidePrinter, BrowserPrinter } from '../../utils/ClientSidePrinter';
 
 interface Transaction {
   id: string;
@@ -56,27 +56,33 @@ const handlePrinterSelect = (printer: string) => {
 
 const handleActualPrint = async () => {
   try {
-    const response = await fetch('https://gnc-inventory-backend.onrender.com/api/print-receipt', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    transaction,
-    printerName: selectedPrinter 
-  })
-});
-
-    const result = await response.json();
-    
-    if (response.ok) {
-      alert('Receipt printed successfully!');
-      setShowPrinterSelection(false);
-      onClose();
+    if (selectedPrinter.includes('XP-') || selectedPrinter.includes('Thermal')) {
+      // Option 1: Try Web Serial API for thermal printers (Chrome/Edge)
+      if (ClientSidePrinter.isSupported()) {
+        const printer = new ClientSidePrinter();
+        const connected = await printer.connect();
+        if (connected) {
+          await printer.printReceipt(transaction);
+          await printer.disconnect();
+          alert('Receipt printed successfully!');
+        } else {
+          // Fallback to browser print
+          BrowserPrinter.printReceipt(transaction);
+        }
+      } else {
+        // Fallback to browser print
+        BrowserPrinter.printReceipt(transaction);
+      }
     } else {
-      alert(`Print failed: ${result.error}`);
+      // Option 2: Browser print for regular printers
+      BrowserPrinter.printReceipt(transaction);
     }
+    
+    setShowPrinterSelection(false);
+    onClose();
   } catch (error) {
     console.error('Print error:', error);
-    alert('Failed to connect to printer');
+    alert('Print failed: ' + (error as Error).message);
   }
 };
 
