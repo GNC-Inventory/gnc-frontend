@@ -254,17 +254,6 @@ export default function CartSidebar({
                   {item.name}
                 </h3>
 
-                <div
-                  style={{
-                    fontFamily: 'var(--font-inter), Inter, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    lineHeight: '20px',
-                    color: 'var(--text-main-900, #0A0D14)',
-                  }}
-                >
-                  ₦ {(item.price * item.quantity).toLocaleString()}
-                </div>
               </div>
             </div>
 
