@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeftIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
   id: string;
   name: string;
-  make?: string;        // Add this
-  model?: string;       // Add this
-  type?: string;        // Add this
-  capacity?: string;    // Add this
-  description?: string; // Add this
+  make?: string;
+  model?: string;
+  type?: string;
+  capacity?: string;
+  description?: string;
   image: string;
   price: number;
   quantity: number;
@@ -22,13 +22,18 @@ interface CustomerDetails {
   phone: string;
 }
 
+interface PaymentBreakdown {
+  pos: number;
+  transfer: number;
+  cashInHand: number;
+  salesOnReturn: number;
+}
+
 interface CheckoutViewProps {
   cartItems: CartItem[];
   onBack: () => void;
-  onPrintReceipt: (customerDetails: CustomerDetails, paymentMethod: string) => void;
+  onPrintReceipt: (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => void;
 }
-
-const paymentMethods = ['POS', 'Transfer', 'Cash in hand'];
 
 export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: CheckoutViewProps) {
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
@@ -36,8 +41,14 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     address: '',
     phone: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false);
+  
+  // Payment amounts state
+  const [paymentAmounts, setPaymentAmounts] = useState<PaymentBreakdown>({
+    pos: 0,
+    transfer: 0,
+    cashInHand: 0,
+    salesOnReturn: 0,
+  });
 
   const [backHover, setBackHover] = useState(false);
   const [printHover, setPrintHover] = useState(false);
@@ -45,9 +56,17 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
 
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  
+  // Calculate running total of payment amounts
+  const paymentTotal = Object.values(paymentAmounts).reduce((sum, amount) => sum + amount, 0);
 
   const updateCustomerField = (field: keyof CustomerDetails, value: string) => {
     setCustomerDetails((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePaymentAmountChange = (field: keyof PaymentBreakdown, value: string) => {
+    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+    setPaymentAmounts((prev) => ({ ...prev, [field]: numericValue }));
   };
 
   const handlePrintReceipt = () => {
@@ -55,9 +74,9 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
       customerDetails.name.trim() &&
       customerDetails.address.trim() &&
       customerDetails.phone.trim() &&
-      paymentMethod
+      paymentTotal > 0
     ) {
-      onPrintReceipt(customerDetails, paymentMethod);
+      onPrintReceipt(customerDetails, paymentAmounts);
     }
   };
 
@@ -65,7 +84,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     customerDetails.name.trim() &&
     customerDetails.address.trim() &&
     customerDetails.phone.trim() &&
-    paymentMethod;
+    paymentTotal > 0;
 
   return (
     <div
@@ -229,16 +248,30 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           />
         </div>
 
-        {/* Payment Method */}
+        {/* Payment Methods */}
         <div>
           <label
             style={{ display: 'block', marginBottom: '12px', fontSize: '14px', fontWeight: 500, color: '#111827' }}
           >
             Method of Payment
           </label>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
+          
+          {/* POS Amount */}
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="posAmount"
+              style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 400, color: '#6B7280' }}
+            >
+              POS Amount
+            </label>
+            <input
+              type="number"
+              id="posAmount"
+              min="0"
+              step="0.01"
+              value={paymentAmounts.pos === 0 ? '' : paymentAmounts.pos}
+              onChange={(e) => handlePaymentAmountChange('pos', e.target.value)}
+              placeholder="₦ 0.00"
               style={{
                 width: '304px',
                 height: '40px',
@@ -249,74 +282,120 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
                 paddingTop: '10px',
                 paddingBottom: '10px',
                 fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
                 outline: 'none',
-                background: '#FFFFFF',
-                cursor: 'pointer',
               }}
-            >
-              <span style={{ fontSize: '14px', color: paymentMethod ? '#111827' : '#9CA3AF' }}>
-                {paymentMethod || 'Select one...'}
-              </span>
-              <ChevronDownIcon
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  transition: 'transform 150ms ease',
-                  transform: isPaymentDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
+            />
+          </div>
 
-            {isPaymentDropdownOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  marginTop: '4px',
-                  width: '100%',
-                  background: '#FFFFFF',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
-                  boxShadow:
-                    '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                  zIndex: 10,
-                }}
-              >
-                {paymentMethods.map((method, i) => (
-                  <button
-                    key={method}
-                    onClick={() => {
-                      setPaymentMethod(method);
-                      setIsPaymentDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      paddingLeft: '12px',
-                      paddingRight: '12px',
-                      paddingTop: '8px',
-                      paddingBottom: '8px',
-                      fontSize: '14px',
-                      background:
-                        paymentMethod === method ? '#EFF6FF' : '#FFFFFF',
-                      color:
-                        paymentMethod === method ? '#1D4ED8' : '#374151',
-                      borderTopLeftRadius: i === 0 ? '8px' : 0,
-                      borderTopRightRadius: i === 0 ? '8px' : 0,
-                      borderBottomLeftRadius: i === paymentMethods.length - 1 ? '8px' : 0,
-                      borderBottomRightRadius: i === paymentMethods.length - 1 ? '8px' : 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Transfer Amount */}
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="transferAmount"
+              style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 400, color: '#6B7280' }}
+            >
+              Transfer Amount
+            </label>
+            <input
+              type="number"
+              id="transferAmount"
+              min="0"
+              step="0.01"
+              value={paymentAmounts.transfer === 0 ? '' : paymentAmounts.transfer}
+              onChange={(e) => handlePaymentAmountChange('transfer', e.target.value)}
+              placeholder="₦ 0.00"
+              style={{
+                width: '304px',
+                height: '40px',
+                border: '1px solid #D1D5DB',
+                borderRadius: '8px',
+                paddingLeft: '12px',
+                paddingRight: '12px',
+                paddingTop: '10px',
+                paddingBottom: '10px',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Cash in Hand Amount */}
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="cashAmount"
+              style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 400, color: '#6B7280' }}
+            >
+              Cash in Hand Amount
+            </label>
+            <input
+              type="number"
+              id="cashAmount"
+              min="0"
+              step="0.01"
+              value={paymentAmounts.cashInHand === 0 ? '' : paymentAmounts.cashInHand}
+              onChange={(e) => handlePaymentAmountChange('cashInHand', e.target.value)}
+              placeholder="₦ 0.00"
+              style={{
+                width: '304px',
+                height: '40px',
+                border: '1px solid #D1D5DB',
+                borderRadius: '8px',
+                paddingLeft: '12px',
+                paddingRight: '12px',
+                paddingTop: '10px',
+                paddingBottom: '10px',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Sales on Return Amount */}
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="salesOnReturnAmount"
+              style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 400, color: '#6B7280' }}
+            >
+              Sales on Return Amount
+            </label>
+            <input
+              type="number"
+              id="salesOnReturnAmount"
+              min="0"
+              step="0.01"
+              value={paymentAmounts.salesOnReturn === 0 ? '' : paymentAmounts.salesOnReturn}
+              onChange={(e) => handlePaymentAmountChange('salesOnReturn', e.target.value)}
+              placeholder="₦ 0.00"
+              style={{
+                width: '304px',
+                height: '40px',
+                border: '1px solid #D1D5DB',
+                borderRadius: '8px',
+                paddingLeft: '12px',
+                paddingRight: '12px',
+                paddingTop: '10px',
+                paddingBottom: '10px',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Payment Total */}
+          <div
+            style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#F9FAFB',
+              borderRadius: '8px',
+              border: '1px solid #E5E7EB',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#374151' }}>Payment Total:</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                ₦ {paymentTotal.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -340,7 +419,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             marginBottom: '24px',
           }}
         >
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Total</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
             ₦ {totalAmount.toLocaleString()}
           </span>
