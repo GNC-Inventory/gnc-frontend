@@ -380,7 +380,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             />
           </div>
 
-          {/* Payment Total */}
+                   {/* Payment Total */}
           <div
             style={{
               marginTop: '16px',
@@ -412,18 +412,18 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
         }}
       >
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
-          }}
-        >
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            ₦ {totalAmount.toLocaleString()}
-          </span>
-        </div>
+  style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+  }}
+>
+  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
+  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+    ₦ {paymentTotal.toLocaleString()}
+  </span>
+</div>
 
         {/* Print Receipt */}
         <button
