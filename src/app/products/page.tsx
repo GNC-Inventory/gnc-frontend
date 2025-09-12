@@ -22,6 +22,7 @@ import {
   type SelectedProduct 
 } from '../../store/selectionSlice';
 import BulkCartModal from '../components/BulkCartModal';
+import Image from 'next/image';
 
 interface CartItem {
   id: string;
@@ -50,6 +51,17 @@ interface CompletedTransaction {
   total: number;
   createdAt: string;
   status: 'Successful';
+}
+
+interface ProductItem {
+  id: string;
+  name: string;
+  image: string;
+  category: string;
+  basePrice: number;
+  stockLeft: number;
+  make?: string;
+  model?: string;
 }
 
 export default function ProductsPage() {
@@ -212,7 +224,7 @@ const addSelectedToCart = useCallback(() => {
   setShowBulkCartModal(true);
 }, []);
 
-const handleBulkAddToCart = useCallback(async (items: Array<{product: any, price: number, quantity: number}>) => {
+const handleBulkAddToCart = useCallback(async (items: Array<{product: ProductItem, price: number, quantity: number}>) => {
   for (const item of items) {
     const success = cart.addToCart(item.product, item.price, item.quantity);
     if (!success) {
@@ -641,15 +653,15 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
                 justifyContent: 'center',
                 overflow: 'hidden'
               }}>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain'
-                  }}
-                />
+                <Image
+  src={product.image}
+  alt={product.name}
+  width={120}
+  height={120}
+  style={{
+    objectFit: 'contain'
+  }}
+/>
               </div>
 
               {/* Selection Checkbox */}
