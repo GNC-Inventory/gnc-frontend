@@ -23,7 +23,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
   const fetchPrinters = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/printers');
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/printers');
       const data = await response.json();
       
       if (data.success) {

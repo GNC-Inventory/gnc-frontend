@@ -56,14 +56,14 @@ const handlePrinterSelect = (printer: string) => {
 
 const handleActualPrint = async () => {
   try {
-    const response = await fetch('/api/print-receipt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        transaction,
-        printerName: selectedPrinter 
-      })
-    });
+    const response = await fetch('https://gnc-inventory-backend.onrender.com/api/print-receipt', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    transaction,
+    printerName: selectedPrinter 
+  })
+});
 
     const result = await response.json();
     
