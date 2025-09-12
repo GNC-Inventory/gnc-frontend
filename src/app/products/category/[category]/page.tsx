@@ -1,12 +1,21 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { MagnifyingGlassIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useRouter, useParams } from 'next/navigation';
 import { useInventory, type Product } from '../../../../hooks/useInventory';
 import ProductDetailModal from '../../../components/ProductDetailModal';
 import EmptyState from '../../../components/EmptyState';
-import Image from 'next/image';
+import NextImage from 'next/image';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { 
+  toggleProductSelection, 
+  selectAllProducts, 
+  setSelectionMode,
+  type SelectedProduct 
+} from '../../../../store/selectionSlice';
+import { showToast } from '../../../../utils/toast';
+import BulkCartModal from '../../../components/BulkCartModal';
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -17,6 +26,11 @@ export default function CategoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [filterBy, setFilterBy] = useState<'all' | 'low-stock' | 'in-stock'>('all');
+  const [showBulkCartModal, setShowBulkCartModal] = useState(false);
+
+  // Redux
+  const dispatch = useAppDispatch();
+  const { selectedProducts, isSelectionMode } = useAppSelector(state => state.selection);
 
   const categoryName = typeof params.category === 'string' ? decodeURIComponent(params.category) : '';
   const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
@@ -66,6 +80,8 @@ export default function CategoryPage() {
   }, [categoryProducts, searchQuery, sortBy, filterBy]);
 
   const handleSelectProduct = (productId: string) => {
+    if (isSelectionMode) return; // Prevent opening modal in selection mode
+    
     const product = products.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
       setSelectedProduct(product);
@@ -76,6 +92,49 @@ export default function CategoryPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
+  };
+
+  // Redux handlers
+  const handleToggleSelection = (product: Product) => {
+    const selectedProduct: SelectedProduct = {
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      category: product.category,
+      basePrice: product.basePrice,
+      stockLeft: product.stockLeft,
+      make: product.make,
+      model: product.model
+    };
+    dispatch(toggleProductSelection(selectedProduct));
+  };
+
+  const handleSelectAll = () => {
+    const allProducts: SelectedProduct[] = filteredProducts.map(product => ({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      category: product.category,
+      basePrice: product.basePrice,
+      stockLeft: product.stockLeft,
+      make: product.make,
+      model: product.model
+    }));
+    dispatch(selectAllProducts(allProducts));
+  };
+
+  const handleSetSelectionMode = (mode: boolean) => {
+    dispatch(setSelectionMode(mode));
+  };
+
+  const handleBulkAddToCart = (items: Array<{
+    product: { id: string; name: string; image: string; category: string; basePrice: number; stockLeft: number; make?: string; model?: string; };
+    price: number;
+    quantity: number;
+  }>) => {
+    // This would integrate with your cart system
+    showToast(`Added ${items.length} products to cart!`, 'success');
+    setShowBulkCartModal(false);
   };
 
   if (loading) {
@@ -132,7 +191,71 @@ export default function CategoryPage() {
           margin: 0
         }}>
           {filteredProducts.length} products available
+          {Object.keys(selectedProducts).length > 0 && (
+            <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+              • {Object.keys(selectedProducts).length} selected globally
+            </span>
+          )}
         </p>
+      </div>
+
+      {/* Selection Controls */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '16px',
+        alignItems: 'center'
+      }}>
+        <button
+          onClick={() => handleSetSelectionMode(!isSelectionMode)}
+          style={{
+            padding: '8px 16px',
+            fontSize: '14px',
+            backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          {isSelectionMode ? 'Exit Selection Mode' : 'Select Multiple'}
+        </button>
+        
+        {isSelectionMode && (
+          <>
+            <button
+              onClick={handleSelectAll}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                backgroundColor: '#10B981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Select All ({filteredProducts.length})
+            </button>
+            
+            {Object.keys(selectedProducts).length > 0 && (
+              <button
+                onClick={() => setShowBulkCartModal(true)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  backgroundColor: '#F59E0B',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Add Selected ({Object.keys(selectedProducts).length})
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -228,15 +351,22 @@ export default function CategoryPage() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              onClick={() => handleSelectProduct(product.id)}
+              onClick={() => {
+                if (isSelectionMode) {
+                  handleToggleSelection(product);
+                } else {
+                  handleSelectProduct(product.id);
+                }
+              }}
               style={{
                 backgroundColor: 'white',
-                border: '1px solid #E5E7EB',
+                border: selectedProducts[product.id] ? '2px solid #2563EB' : '1px solid #E5E7EB',
                 borderRadius: '12px',
                 padding: '16px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                position: 'relative'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
@@ -247,6 +377,29 @@ export default function CategoryPage() {
                 e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
               }}
             >
+              {/* Selection Checkbox */}
+              {isSelectionMode && (
+                <div style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  width: '24px',
+                  height: '24px',
+                  backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
+                  border: '2px solid #2563EB',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 1
+                }}>
+                  {selectedProducts[product.id] && (
+                    <span style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                  )}
+                </div>
+              )}
+
               {/* Product Image */}
               <div style={{
                 width: '100%',
@@ -260,7 +413,7 @@ export default function CategoryPage() {
                 overflow: 'hidden',
                 position: 'relative'
               }}>
-                <Image
+                <NextImage
                   src={product.image}
                   alt={product.name}
                   fill
@@ -337,6 +490,13 @@ export default function CategoryPage() {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         onAddToCart={() => {}} // You can implement this if needed
+      />
+
+      {/* Bulk Cart Modal */}
+      <BulkCartModal
+        isOpen={showBulkCartModal}
+        onClose={() => setShowBulkCartModal(false)}
+        onAddToCart={handleBulkAddToCart}
       />
     </div>
   );

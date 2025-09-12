@@ -199,7 +199,7 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
                     overflow: 'hidden',
                     flexShrink: 0
                   }}>
-                    <Image 
+                    <img 
                       src={product.image} 
                       alt={product.name} 
                       width={60}

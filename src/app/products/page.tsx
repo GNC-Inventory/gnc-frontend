@@ -62,6 +62,8 @@ interface ProductItem {
   stockLeft: number;
   make?: string;
   model?: string;
+  sku: string;          // Add this
+  dateAdded: string;    // Add this
 }
 
 export default function ProductsPage() {
