@@ -75,7 +75,7 @@ const deductInventory = async (productId: string, quantityToDeduct: number) => {
     }
     
     // Find the inventory item for this product
-    const inventoryItem = inventoryResult.data.find((item: any) => item.product.id.toString() === productId);
+    const inventoryItem = inventoryResult.data.find((item: { id: number; product: { id: number }; quantity: number }) => item.product.id.toString() === productId);
     if (!inventoryItem) {
       throw new Error(`Inventory item not found for product ${productId}`);
     }

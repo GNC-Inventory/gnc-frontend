@@ -57,19 +57,6 @@ interface CompletedTransaction {
   status: 'Successful';
 }
 
-interface ProductItem {
-  id: string;
-  name: string;
-  image: string;
-  category: string;
-  basePrice: number;
-  stockLeft: number;
-  make?: string;
-  model?: string;
-  sku: string;          // Add this
-  dateAdded: string;    // Add this
-}
-
 interface PaymentBreakdown {
   pos: number;
   transfer: number;
