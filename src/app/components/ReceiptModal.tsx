@@ -429,9 +429,14 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               </div>
               <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '18px' }}>
-                  <span style={{ color: '#111827' }}>Total</span>
-                  <span style={{ color: '#111827' }}>₦{transaction.total.toLocaleString()}</span>
-                </div>
+  <span style={{ color: '#111827' }}>Total</span>
+  <span style={{ color: '#111827' }}>
+    ₦{(transaction.paymentBreakdown ? 
+      Object.values(transaction.paymentBreakdown).reduce((sum, amount) => sum + amount, 0) : 
+      transaction.total
+    ).toLocaleString()}
+  </span>
+</div>
               </div>
             </div>
           </div>
