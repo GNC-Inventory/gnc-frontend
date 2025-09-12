@@ -379,24 +379,6 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               }}
             />
           </div>
-
-                   {/* Payment Total */}
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '12px',
-              backgroundColor: '#F9FAFB',
-              borderRadius: '8px',
-              border: '1px solid #E5E7EB',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#374151' }}>Payment Total:</span>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-                ₦ {paymentTotal.toLocaleString()}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
