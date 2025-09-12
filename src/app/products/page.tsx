@@ -52,6 +52,8 @@ export default function ProductsPage() {
   const [isProcessingSale, setIsProcessingSale] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
@@ -159,6 +161,34 @@ export default function ProductsPage() {
       showToast('Sale resumed - please re-add items to cart', 'info');
     }
   }, [pendingSales]);
+
+  const toggleProductSelection = useCallback((productId: string) => {
+  setSelectedProducts(prev => {
+    const newSet = new Set(prev);
+    if (newSet.has(productId)) {
+      newSet.delete(productId);
+    } else {
+      newSet.add(productId);
+    }
+    return newSet;
+  });
+}, []);
+
+const selectAllProducts = useCallback(() => {
+  const allProductIds = new Set(filteredProducts.map(p => p.id));
+  setSelectedProducts(allProductIds);
+}, [filteredProducts]);
+
+const clearSelection = useCallback(() => {
+  setSelectedProducts(new Set());
+  setIsSelectionMode(false);
+}, []);
+
+const addSelectedToCart = useCallback(() => {
+  // This opens a modal or component to set prices for selected products
+  // For now, we'll just show a toast with count
+  showToast(`${selectedProducts.size} products selected for cart`, 'info');
+}, [selectedProducts.size]);
 
 const handleCompleteSale = useCallback(async () => {
   if (cart.cartItems.length === 0) {
@@ -411,14 +441,74 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
   }}
 >
         <div style={{ marginBottom: '16px' }}>
-          <h2 style={{
-            fontWeight: 500,
-            fontSize: '14px',
-            color: 'black',
-            margin: 0
-          }}>
-            Showing items by category ({localProducts.length} products)
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <h2 style={{
+    fontWeight: 500,
+    fontSize: '14px',
+    color: 'black',
+    margin: 0
+  }}>
+    Showing items by category ({localProducts.length} products)
+    {selectedProducts.size > 0 && (
+      <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+        • {selectedProducts.size} selected
+      </span>
+    )}
+  </h2>
+  
+  <div style={{ display: 'flex', gap: '8px' }}>
+    <button
+      onClick={() => setIsSelectionMode(!isSelectionMode)}
+      style={{
+        padding: '6px 12px',
+        fontSize: '12px',
+        backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer'
+      }}
+    >
+      {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
+    </button>
+    
+    {isSelectionMode && (
+      <>
+        <button
+          onClick={selectAllProducts}
+          style={{
+            padding: '6px 12px',
+            fontSize: '12px',
+            backgroundColor: '#10B981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          Select All
+        </button>
+        
+        {selectedProducts.size > 0 && (
+          <button
+            onClick={addSelectedToCart}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              backgroundColor: '#F59E0B',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Add Selected ({selectedProducts.size})
+          </button>
+        )}
+      </>
+    )}
+  </div>
+</div>
         </div>
         <div style={{
           borderTop: '1px solid #E5E7EB',
@@ -479,7 +569,14 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
           {categoryProducts.map((product) => (
             <div
               key={product.id}
-              onClick={() => handleSelectProduct(product.id)}
+              onClick={(e) => {
+  if (isSelectionMode) {
+    e.stopPropagation();
+    toggleProductSelection(product.id);
+  } else {
+    handleSelectProduct(product.id);
+  }
+}}
               style={{
                 minWidth: '180px',
                 backgroundColor: 'white',
@@ -487,7 +584,8 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
                 borderRadius: '8px',
                 padding: '12px',
                 cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s'
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                position: 'relative'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -520,6 +618,28 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
                   }}
                 />
               </div>
+
+              {/* Selection Checkbox */}
+{isSelectionMode && (
+  <div style={{
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '20px',
+    height: '20px',
+    backgroundColor: selectedProducts.has(product.id) ? '#2563EB' : 'white',
+    border: '2px solid #2563EB',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer'
+  }}>
+    {selectedProducts.has(product.id) && (
+      <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
+    )}
+  </div>
+)}
               
               {/* Product Info */}
               <div>
