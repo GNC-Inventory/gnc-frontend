@@ -21,6 +21,7 @@ import {
   setSelectionMode,
   type SelectedProduct 
 } from '../../store/selectionSlice';
+import BulkCartModal from '../components/BulkCartModal';
 
 interface CartItem {
   id: string;
@@ -62,6 +63,7 @@ export default function ProductsPage() {
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
   const dispatch = useAppDispatch();
   const { selectedProducts, isSelectionMode } = useAppSelector(state => state.selection);
+  const [showBulkCartModal, setShowBulkCartModal] = useState(false);
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
@@ -207,8 +209,19 @@ const handleSetSelectionMode = useCallback((mode: boolean) => {
 }, [dispatch]);
 
 const addSelectedToCart = useCallback(() => {
-  showToast(`${Object.keys(selectedProducts).length} products selected for cart`, 'info');
-}, [selectedProducts]);
+  setShowBulkCartModal(true);
+}, []);
+
+const handleBulkAddToCart = useCallback(async (items: Array<{product: any, price: number, quantity: number}>) => {
+  for (const item of items) {
+    const success = cart.addToCart(item.product, item.price, item.quantity);
+    if (!success) {
+      showToast(`Failed to add ${item.product.name} to cart`, 'error');
+      return;
+    }
+  }
+  showToast(`Successfully added ${items.length} products to cart!`, 'success');
+}, [cart]);
 
 const handleCompleteSale = useCallback(async () => {
   if (cart.cartItems.length === 0) {
@@ -739,6 +752,13 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
     onClose={() => setCompletedTransaction(null)}
   />
 )}
+
+{/* Bulk Cart Modal */}
+<BulkCartModal
+  isOpen={showBulkCartModal}
+  onClose={() => setShowBulkCartModal(false)}
+  onAddToCart={handleBulkAddToCart}
+/>
 
       {/* Processing Sale Loading Overlay */}
       {isProcessingSale && (
