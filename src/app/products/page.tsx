@@ -123,23 +123,26 @@ export default function ProductsPage() {
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentBreakdown: PaymentBreakdown) => {
-     console.log('Items being sent to API:', items);
+  console.log('Items being sent to API:', items);
   const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
       'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
     },
-body: JSON.stringify({ 
-  items,
-  customer: {
-    name: customer,
-    address: '',
-    phone: ''
-  },
-  paymentBreakdown,
-  paymentMethod: 'Mixed' // Temporary fallback for backend compatibility
-})
+    body: JSON.stringify({ 
+      items: items.map(item => ({
+        ...item,
+        id: parseInt(item.id) // Convert string ID to number
+      })),
+      customer: {
+        name: customer,
+        address: '',
+        phone: ''
+      },
+      paymentBreakdown,
+      paymentMethod: 'Mixed' // Temporary fallback for backend compatibility
+    })
   });
 
   const result = await response.json();
