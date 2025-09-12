@@ -266,6 +266,7 @@ const success = cart.addToCart(fullProduct, item.price, item.quantity);
 }, [cart]);
 
 const handleCompleteSale = useCallback(async () => {
+  console.log('Cart items being sent:', JSON.stringify(cart.cartItems, null, 2));
   if (cart.cartItems.length === 0) {
     showToast('Cart is empty', 'error');
     return;
