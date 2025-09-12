@@ -29,15 +29,13 @@ export default function CartSidebar({
   cartItems,
   onRemoveItem,
   onCompleteSale,
-  onHoldTransaction,
   onCancel
 }: CartSidebarProps) {
-  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   // Hover state replacements for Tailwind hover utilities
   const [completeHover, setCompleteHover] = useState(false);
-  const [holdHover, setHoldHover] = useState(false);
   const [cancelHover, setCancelHover] = useState(false);
   const [deleteHover, setDeleteHover] = useState<Record<string, boolean>>({});
 

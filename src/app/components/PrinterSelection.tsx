@@ -19,7 +19,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
-  // Fetch available printers from backend
+// Fetch available printers from backend
   const fetchPrinters = async () => {
     try {
       setLoading(true);
@@ -40,6 +40,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
         setError(data.error || 'Failed to fetch printers');
       }
     } catch (err) {
+      console.error('Failed to fetch printers:', err); // <-- use the variable to satisfy no-unused-vars
       setError('Failed to connect to server');
     } finally {
       setLoading(false);

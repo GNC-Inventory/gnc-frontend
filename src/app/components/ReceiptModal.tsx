@@ -102,8 +102,7 @@ const handleActualPrint = async () => {
     });
   };
 
-  const subtotal = transaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
+  
   const statusStyles = (() => {
     if (transaction.status === 'Successful') {
       return { background: '#D1FAE5', color: '#047857' }; // bg-green-100 text-green-700

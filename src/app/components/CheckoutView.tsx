@@ -55,7 +55,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
   const [backFooterHover, setBackFooterHover] = useState(false);
 
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  
   
   // Calculate running total of payment amounts
   const paymentTotal = Object.values(paymentAmounts).reduce((sum, amount) => sum + amount, 0);

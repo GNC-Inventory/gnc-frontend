@@ -1,10 +1,22 @@
 // Add these type declarations at the very top
 declare global {
+  // Minimal Web Serial types to avoid `any`
+  interface SerialPortFilter {
+    usbVendorId?: number;
+    usbProductId?: number;
+  }
+
+  interface SerialRequestOptions {
+    filters?: SerialPortFilter[];
+  }
+
+  interface NavigatorSerial {
+    requestPort(options?: SerialRequestOptions): Promise<SerialPort>;
+    getPorts(): Promise<SerialPort[]>;
+  }
+
   interface Navigator {
-    serial: {
-      requestPort(options?: any): Promise<SerialPort>;
-      getPorts(): Promise<SerialPort[]>;
-    };
+    serial: NavigatorSerial;
   }
 }
 
@@ -59,7 +71,7 @@ export class ClientSidePrinter {
 
     try {
       // Request printer port (user selects from dialog)
-      const port = await (navigator as any).serial.requestPort({
+      const port = await navigator.serial.requestPort({
         filters: [
           { usbVendorId: 0x04b8 }, // Epson
           { usbVendorId: 0x0519 }, // Xprinter
