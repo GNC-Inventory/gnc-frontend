@@ -39,27 +39,11 @@ export default function ProductDetailModal({
   onAddToCart,
   onInventoryUpdate
 }: ProductDetailModalProps) {
-  const [price, setPrice] = useState('');
-  const [displayPrice, setDisplayPrice] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString();
-  };
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    const numericValue = input.replace(/[^\d.]/g, '');
-    const decimalCount = numericValue.split('.').length - 1;
-    if (decimalCount > 1) return;
-    setPrice(numericValue);
-    if (numericValue && !isNaN(parseFloat(numericValue))) {
-      const number = parseFloat(numericValue);
-      setDisplayPrice(`₦ ${formatCurrency(number)}`);
-    } else {
-      setDisplayPrice('₦ ');
-    }
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,7 +128,7 @@ console.log('Product ID type:', typeof productId);
 };
 
 const handleAddItem = async () => {
-  if (!product || !price || !onAddToCart) return;
+  if (!product || !onAddToCart) return;
   if (quantity > product.stockLeft) {
     toast.error(`Only ${product.stockLeft} items available in stock`);
     return;
@@ -169,11 +153,9 @@ const handleAddItem = async () => {
     const updatedProduct = { ...product, stockLeft: newStockLeft };
     
     if (onInventoryUpdate) onInventoryUpdate(product.id, newStockLeft);
-    onAddToCart(updatedProduct, parseFloat(price), quantity);
+        onAddToCart(updatedProduct, 0, quantity); // Price will be handled in checkout
     
     toast.success(`${product.name} (${quantity}) added to cart`);
-    setPrice('');
-    setDisplayPrice('');
     setQuantity(1);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -192,12 +174,11 @@ const handleAddItem = async () => {
 };
 
   const isAddButtonActive =
-    price.trim() !== '' &&
-    product &&
-    product.stockLeft > 0 &&
-    quantity > 0 &&
-    quantity <= product.stockLeft &&
-    !isProcessing;
+  product &&
+  product.stockLeft > 0 &&
+  quantity > 0 &&
+  quantity <= product.stockLeft &&
+  !isProcessing;
 
   if (!isOpen || !product) return null;
 
@@ -436,34 +417,7 @@ const handleAddItem = async () => {
 
           {/* Right side */}
           <div style={{ width: '320px' }}>
-            {/* Price Input */}
-            <div style={{ marginBottom: '24px' }}>
-              <label htmlFor="price" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
-                Enter price
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  id="price"
-                  value={displayPrice || '₦ '}
-                  onChange={handlePriceChange}
-                  placeholder={`₦${formatCurrency(product.basePrice)}`}
-                  disabled={product.stockLeft === 0 || isProcessing}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    outline: 'none',
-                    backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
-                    cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
-                    textAlign: 'left'
-                  }}
-                />
-                <input type="hidden" value={price} />
-              </div>
-            </div>
-
+            
             {/* Quantity Input */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="quantity" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
