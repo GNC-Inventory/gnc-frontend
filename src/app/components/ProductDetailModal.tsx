@@ -58,71 +58,50 @@ export default function ProductDetailModal({
   }
 };
 
-  const deductInventory = async (productId: string, quantityToDeduct: number) => {
+const deductInventory = async (productId: string, quantityToDeduct: number) => {
   try {
-    // Add debugging logs
     console.log('=== DEDUCT INVENTORY DEBUG ===');
     console.log('Product ID:', productId);
     console.log('Quantity to deduct:', quantityToDeduct);
-    console.log('Current stock left:', product?.stockLeft);
-    console.log('API Key exists:', !!process.env.NEXT_PUBLIC_API_KEY);
-
-    console.log('Product object:', product);
-console.log('Product ID being used:', productId);
-console.log('Product ID type:', typeof productId);
     
-    // Calculate the new quantity (remaining after deduction)
-    const newQuantity = (product?.stockLeft || 0) - quantityToDeduct;
+    // First, find the inventory item ID for this product
+    const inventoryResponse = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+      headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY! }
+    });
     
-    const url = `https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`;
-    const requestBody = { quantity: newQuantity }; // Send remaining quantity, not deduction amount
+    const inventoryResult = await inventoryResponse.json();
+    if (!inventoryResult.success) {
+      throw new Error('Failed to fetch inventory items');
+    }
     
-    console.log('New quantity after deduction:', newQuantity);
-    console.log('Request URL:', url);
-    console.log('Request body:', JSON.stringify(requestBody, null, 2));
-
-    const response = await fetch(url, {
+    // Find the inventory item for this product
+    const inventoryItem = inventoryResult.data.find((item: any) => item.product.id.toString() === productId);
+    if (!inventoryItem) {
+      throw new Error(`Inventory item not found for product ${productId}`);
+    }
+    
+    // Calculate new quantity
+    const newQuantity = inventoryItem.quantity - quantityToDeduct;
+    
+    // Update the inventory item using its inventory ID
+    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${inventoryItem.id}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({ quantity: newQuantity })
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    const responseText = await response.text();
-    console.log('Raw response text:', responseText);
-
-    if (!response.ok) {
-      console.error('Response not OK, status:', response.status);
-      console.error('Response text:', responseText);
-      throw new Error(`HTTP ${response.status}: ${responseText}`);
-    }
-
-    const result = JSON.parse(responseText);
-    console.log('Parsed response:', result);
-    console.log('result.success:', result.success);
-    console.log('result.data:', result.data);
-    console.log('typeof result.success:', typeof result.success);
-
+    const result = await response.json();
     if (!result.success) {
-      console.log('THROWING ERROR: result.success is false');
-      console.log('result.error:', result.error);
       throw new Error(result.error || 'Failed to update inventory');
     }
 
-    console.log('SUCCESS: About to return result.data');
-    console.log('result.data structure:', result.data);
-    return result.data;
+    return { quantity: newQuantity };
   } catch (error) {
     console.error('=== DEDUCT INVENTORY ERROR ===');
-    console.error('Error type:', error instanceof Error ? error.constructor.name : 'Unknown');
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    console.error('Full error:', error);
-    console.error('================================');
+    console.error('Error:', error);
     throw error;
   }
 };
