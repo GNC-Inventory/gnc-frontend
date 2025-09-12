@@ -16,8 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { 
   toggleProductSelection, 
-  selectAllProducts, 
-  clearAllSelections, 
+  selectAllProducts,  
   setSelectionMode,
   type SelectedProduct 
 } from '../../store/selectionSlice';
@@ -223,9 +222,28 @@ const addSelectedToCart = useCallback(() => {
   setShowBulkCartModal(true);
 }, []);
 
-const handleBulkAddToCart = useCallback(async (items: Array<{product: ProductItem, price: number, quantity: number}>) => {
+const handleBulkAddToCart = useCallback(async (items: Array<{
+  product: {
+    id: string;
+    name: string;
+    image: string;
+    category: string;
+    basePrice: number;
+    stockLeft: number;
+    make?: string;
+    model?: string;
+  };
+  price: number;
+  quantity: number;
+}>) => {
   for (const item of items) {
-    const success = cart.addToCart(item.product, item.price, item.quantity);
+    // Find the full product from your products array
+const fullProduct = localProducts.find(p => p.id === item.product.id);
+if (!fullProduct) {
+  showToast(`Product ${item.product.name} not found`, 'error');
+  return;
+}
+const success = cart.addToCart(fullProduct, item.price, item.quantity);
     if (!success) {
       showToast(`Failed to add ${item.product.name} to cart`, 'error');
       return;

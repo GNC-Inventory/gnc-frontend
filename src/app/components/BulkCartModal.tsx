@@ -10,7 +10,16 @@ interface BulkCartModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart: (items: Array<{
-    product: any;
+    product: {
+      id: string;
+      name: string;
+      image: string;
+      category: string;
+      basePrice: number;
+      stockLeft: number;
+      make?: string;
+      model?: string;
+    };
     price: number;
     quantity: number;
   }>) => void;
