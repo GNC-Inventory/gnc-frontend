@@ -321,8 +321,7 @@ export default function CartSidebar({
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        
-
+      
         {/* Complete Sale Button */}
         <button
           onClick={onCompleteSale}
@@ -357,43 +356,6 @@ export default function CartSidebar({
             }}
           >
             Complete sale
-          </span>
-        </button>
-
-        {/* Hold Transaction Button */}
-        <button
-          onClick={onHoldTransaction}
-          onMouseEnter={() => setHoldHover(true)}
-          onMouseLeave={() => setHoldHover(false)}
-          style={{
-            width: '304px',
-            height: '36px',
-            borderRadius: '8px',
-            gap: '4px',
-            padding: '8px',
-            background: 'var(--primary-lighter, #EBF1FF)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '12px',
-            opacity: holdHover ? 0.9 : 1, // hover:opacity-90
-            transition: 'opacity 150ms ease',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-inter), Inter, sans-serif',
-              fontWeight: 500,
-              fontSize: '14px',
-              lineHeight: '20px',
-              letterSpacing: '-0.6%',
-              textAlign: 'center',
-              color: 'var(--primary-base, #375DFB)',
-            }}
-          >
-            Hold transaction
           </span>
         </button>
 
