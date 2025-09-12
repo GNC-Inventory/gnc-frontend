@@ -28,54 +28,6 @@ interface UseInventoryReturn {
   refetch: () => Promise<void>;
 }
 
-const extractCategory = (name: string): string => {
-  const lower = name.toLowerCase();
-  if (lower.includes('generator') || lower.includes('inverter') || lower.includes('solar') || lower.includes('tv')) 
-    return 'Electronics';
-  if (lower.includes('washing') || lower.includes('refrigerator') || lower.includes('fan') || lower.includes('air conditioner')) 
-    return 'Appliances';
-  if (lower.includes('theatre') || lower.includes('sound')) 
-    return 'Audio & Video';
-  return 'General';
-};
-
-const transformProduct = (item: Record<string, unknown>): Product => {
-  const product = item.product as {
-    id?: number;
-    name?: string;
-    make?: string;       // Add this
-    model?: string;      // Add this
-    type?: string;       // Add this
-    capacity?: string;   // Add this
-    description?: string; // Add this
-    imageUrl?: string;
-    category?: string;
-    basePrice?: string;
-    createdAt?: string;
-  };
-  
-  console.log('Item transformation - inventory ID:', item.id, 'product ID:', product?.id);
-
-  return {
-    id: String(item.id), // Use inventory item ID
-    name: String(product?.name || 'Unknown Product'),
-    make: product?.make || undefined,        // Add this
-    model: product?.model || undefined,      // Add this
-    type: product?.type || undefined,        // Add this
-    capacity: product?.capacity || undefined, // Add this
-    description: product?.description || undefined, // Add this
-    image: typeof product?.imageUrl === 'string' ? product.imageUrl : '/products/default.png',
-    category: typeof product?.category === 'string' ? product.category : extractCategory(String(product?.name)), 
-    sku: `SKU-${String(product?.id || item.id).slice(-6).toUpperCase()}`,
-    basePrice: typeof product?.basePrice === 'string' ? parseFloat(product.basePrice) : 0,
-    stockLeft: typeof item.quantity === 'number' ? item.quantity : 0,
-    dateAdded: typeof product?.createdAt === 'string' ? product.createdAt : new Date().toISOString(),
-    types: ['Standard'],
-    brands: ['Generic'],
-    sizes: ['Default']
-  };
-};
-
 export const useInventory = (): UseInventoryReturn => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +38,7 @@ export const useInventory = (): UseInventoryReturn => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/products', {
   headers: {
     'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
   }
@@ -104,7 +56,7 @@ export const useInventory = (): UseInventoryReturn => {
         throw new Error('Invalid response format');
       }
       
-      const transformedProducts = result.data.map(transformProduct);
+      const transformedProducts = result.data;
       setProducts(transformedProducts);
       
     } catch (err) {
