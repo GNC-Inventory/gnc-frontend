@@ -419,14 +419,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           {/* Totals */}
           <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', rowGap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Subtotal</span>
-                <span style={{ color: '#111827' }}>₦{subtotal.toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Tax</span>
-                <span style={{ color: '#111827' }}>₦0</span>
-              </div>
+              
               <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '18px' }}>
   <span style={{ color: '#111827' }}>Total</span>
