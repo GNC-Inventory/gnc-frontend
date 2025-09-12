@@ -199,6 +199,7 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
                     overflow: 'hidden',
                     flexShrink: 0
                   }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={product.image} 
                       alt={product.name} 

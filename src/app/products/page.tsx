@@ -214,9 +214,6 @@ const handleSelectAll = useCallback(() => {
   dispatch(selectAllProducts(allProducts));
 }, [dispatch, filteredProducts]);
 
-const handleClearSelections = useCallback(() => {
-  dispatch(clearAllSelections());
-}, [dispatch]);
 
 const handleSetSelectionMode = useCallback((mode: boolean) => {
   dispatch(setSelectionMode(mode));
