@@ -21,7 +21,13 @@ interface Transaction {
   customer: string;
   customerAddress?: string;
   customerPhone?: string;
-  paymentMethod: string;
+  paymentBreakdown?: {
+  pos: number;
+  transfer: number;
+  cashInHand: number;
+  salesOnReturn: number;
+};
+paymentMethod?: string; // Keep for backward compatibility
   total: number;
   createdAt: Date;
   status: 'Successful' | 'Ongoing' | 'Failed';
@@ -257,12 +263,37 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
                 <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Time</p>
                 <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>{formatTime(transaction.createdAt)}</p>
               </div>
-              <div>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Payment Method</p>
-                <p style={{ fontWeight: 500, color: '#111827', textTransform: 'capitalize', margin: 0 }}>
-                  {transaction.paymentMethod}
-                </p>
-              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+  <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Payment Method</p>
+  {transaction.paymentBreakdown ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {transaction.paymentBreakdown.pos > 0 && (
+        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
+          POS: ₦{transaction.paymentBreakdown.pos.toLocaleString()}
+        </p>
+      )}
+      {transaction.paymentBreakdown.transfer > 0 && (
+        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
+          Transfer: ₦{transaction.paymentBreakdown.transfer.toLocaleString()}
+        </p>
+      )}
+      {transaction.paymentBreakdown.cashInHand > 0 && (
+        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
+          Cash in Hand: ₦{transaction.paymentBreakdown.cashInHand.toLocaleString()}
+        </p>
+      )}
+      {transaction.paymentBreakdown.salesOnReturn > 0 && (
+        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
+          Sales on Return: ₦{transaction.paymentBreakdown.salesOnReturn.toLocaleString()}
+        </p>
+      )}
+    </div>
+  ) : (
+    <p style={{ fontWeight: 500, color: '#111827', textTransform: 'capitalize', margin: 0 }}>
+      {transaction.paymentMethod || 'Not specified'}
+    </p>
+  )}
+</div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Status</p>
                 <span

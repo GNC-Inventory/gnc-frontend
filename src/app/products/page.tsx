@@ -46,7 +46,12 @@ interface CompletedTransaction {
   id: string;
   items: CartItem[];
   customer: string;
-  paymentMethod: string;
+   paymentBreakdown?: {
+    pos: number;
+    transfer: number;
+    cashInHand: number;
+    salesOnReturn: number;
+  };
   total: number;
   createdAt: string;
   status: 'Successful';
@@ -63,6 +68,13 @@ interface ProductItem {
   model?: string;
   sku: string;          // Add this
   dateAdded: string;    // Add this
+}
+
+interface PaymentBreakdown {
+  pos: number;
+  transfer: number;
+  cashInHand: number;
+  salesOnReturn: number;
 }
 
 export default function ProductsPage() {
@@ -110,7 +122,7 @@ export default function ProductsPage() {
   }, [filteredProducts]);
 
   // API call
-  const processSaleAPI = async (items: CartItem[], customer: string, paymentMethod: string) => {
+  const processSaleAPI = async (items: CartItem[], customer: string, paymentBreakdown: PaymentBreakdown) => {
      console.log('Items being sent to API:', items);
   const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
     method: 'POST',
@@ -118,15 +130,15 @@ export default function ProductsPage() {
       'Content-Type': 'application/json',
       'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
     },
-    body: JSON.stringify({ 
-      items,
-      customer: {
-        name: customer,
-        address: '',
-        phone: ''
-      },
-      paymentMethod 
-    })
+body: JSON.stringify({ 
+  items,
+  customer: {
+    name: customer,
+    address: '',
+    phone: ''
+  },
+  paymentBreakdown 
+})
   });
 
   const result = await response.json();
@@ -261,7 +273,12 @@ const handleCompleteSale = useCallback(async () => {
   setIsProcessingSale(true);
   
   try {
-    const transaction = await processSaleAPI(cart.cartItems, 'Customer', 'Cash');
+    const transaction = await processSaleAPI(cart.cartItems, 'Customer', {
+  pos: 0,
+  transfer: 0,
+  cashInHand: 0,
+  salesOnReturn: 0
+});
     
     // CRITICAL: Store cart items BEFORE clearing the cart
     const enhancedTransaction = {
@@ -322,7 +339,7 @@ const handleBackToCart = useCallback(async () => {
   }
 }, [completedTransaction, cart]);
 
-const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentMethod: string) => {
+const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
   try {
     if (!completedTransaction) {
       showToast('No completed transaction to print', 'error');
@@ -331,12 +348,12 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
 
     // Items are already preserved from handleCompleteSale
     const finalTransaction = { 
-      ...completedTransaction, 
-      customer: customerDetails.name,
-      customerAddress: customerDetails.address,
-      customerPhone: customerDetails.phone,
-      paymentMethod
-    };
+  ...completedTransaction, 
+  customer: customerDetails.name,
+  customerAddress: customerDetails.address,
+  customerPhone: customerDetails.phone,
+  paymentBreakdown
+};
 
     setCompletedTransaction(finalTransaction);
     setShowCheckout(false);

@@ -17,7 +17,12 @@ interface Transaction {
     quantity: number;
   }>;
   customer: string;
-  paymentMethod: string;
+  paymentBreakdown?: {
+    pos: number;
+    transfer: number;
+    cashInHand: number;
+    salesOnReturn: number;
+  };
   total: number;
   createdAt: Date | null; // Allow null for missing timestamps
   status: 'Successful' | 'Ongoing' | 'Failed';
@@ -33,7 +38,12 @@ interface ApiTransaction {
     quantity: number;
   }>;
   customer: string;
-  paymentMethod: string;
+  paymentBreakdown?: {
+    pos: number;
+    transfer: number;
+    cashInHand: number;
+    salesOnReturn: number;
+  };
   total: number;
   createdAt: string; // API returns string, we'll convert to Date
   status: 'Successful' | 'Ongoing' | 'Failed';
@@ -68,7 +78,7 @@ if (result.success) {
     id: transaction.id,
     items: transaction.items,
     customer: transaction.customer,
-    paymentMethod: transaction.paymentMethod,
+    paymentBreakdown: transaction.paymentBreakdown,
     total: transaction.total,
     status: transaction.status,
     createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null

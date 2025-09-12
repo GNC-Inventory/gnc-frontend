@@ -17,7 +17,12 @@ interface Transaction {
   id: string;
   items: CartItem[];
   customer: string;
-  paymentMethod: string;
+   paymentBreakdown?: {
+    pos: number;
+    transfer: number;
+    cashInHand: number;
+    salesOnReturn: number;
+  };
   total: number;
   createdAt: Date;
   status: 'Successful' | 'Ongoing' | 'Failed';
@@ -32,7 +37,12 @@ export const generateTransactionId = (): string => {
 export const createTransaction = (
   cartItems: CartItem[],
   customerName: string,
-  paymentMethod: string
+  paymentBreakdown: {
+    pos: number;
+    transfer: number;
+    cashInHand: number;
+    salesOnReturn: number;
+  }
 ): Transaction => {
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   
@@ -40,7 +50,7 @@ export const createTransaction = (
     id: generateTransactionId(),
     items: [...cartItems], // Create a copy of cart items
     customer: customerName,
-    paymentMethod: paymentMethod,
+    paymentBreakdown: paymentBreakdown,
     total: total,
     createdAt: new Date(),
     status: 'Successful' // All transactions are successful as per requirements
