@@ -137,7 +137,8 @@ body: JSON.stringify({
     address: '',
     phone: ''
   },
-  paymentBreakdown 
+  paymentBreakdown,
+  paymentMethod: 'Mixed' // Temporary fallback for backend compatibility
 })
   });
 
@@ -274,7 +275,7 @@ const handleCompleteSale = useCallback(async () => {
   
   try {
     const transaction = await processSaleAPI(cart.cartItems, 'Customer', {
-  pos: 0,
+  pos: cart.getTotalAmount(), // Use actual cart total for now
   transfer: 0,
   cashInHand: 0,
   salesOnReturn: 0
