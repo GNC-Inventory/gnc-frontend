@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import PrinterSelection from './PrinterSelection';
 
 interface Transaction {
   id: string;
@@ -42,10 +43,42 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const [closeHover, setCloseHover] = useState(false);
   const [printHover, setPrintHover] = useState(false);
   const [closeBtnHover, setCloseBtnHover] = useState(false);
+  const [showPrinterSelection, setShowPrinterSelection] = useState(false);
+  const [selectedPrinter, setSelectedPrinter] = useState('');
 
   const handlePrint = () => {
-    window.print();
-  };
+  setShowPrinterSelection(true);
+};
+
+const handlePrinterSelect = (printer: string) => {
+  setSelectedPrinter(printer);
+};
+
+const handleActualPrint = async () => {
+  try {
+    const response = await fetch('/api/print-receipt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        transaction,
+        printerName: selectedPrinter 
+      })
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      alert('Receipt printed successfully!');
+      setShowPrinterSelection(false);
+      onClose();
+    } else {
+      alert(`Print failed: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('Print error:', error);
+    alert('Failed to connect to printer');
+  }
+};
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
@@ -495,6 +528,14 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           </div>
         </div>
       </div>
+
+      {showPrinterSelection && (
+  <PrinterSelection
+    onPrinterSelect={handlePrinterSelect}
+    onPrint={handleActualPrint}
+    onCancel={() => setShowPrinterSelection(false)}
+  />
+)}
 
       <style jsx>{`
         @media print {
