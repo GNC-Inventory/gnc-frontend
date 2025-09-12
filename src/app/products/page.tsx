@@ -13,6 +13,14 @@ import { usePendingSales } from '../../hooks/usePendingSales';
 import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
 import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { 
+  toggleProductSelection, 
+  selectAllProducts, 
+  clearAllSelections, 
+  setSelectionMode,
+  type SelectedProduct 
+} from '../../store/selectionSlice';
 
 interface CartItem {
   id: string;
@@ -52,8 +60,8 @@ export default function ProductsPage() {
   const [isProcessingSale, setIsProcessingSale] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const dispatch = useAppDispatch();
+  const { selectedProducts, isSelectionMode } = useAppSelector(state => state.selection);
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
@@ -162,33 +170,45 @@ export default function ProductsPage() {
     }
   }, [pendingSales]);
 
-  const toggleProductSelection = useCallback((productId: string) => {
-  setSelectedProducts(prev => {
-    const newSet = new Set(prev);
-    if (newSet.has(productId)) {
-      newSet.delete(productId);
-    } else {
-      newSet.add(productId);
-    }
-    return newSet;
-  });
-}, []);
+const handleToggleSelection = useCallback((product: Product) => {
+  const selectedProduct: SelectedProduct = {
+    id: product.id,
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    basePrice: product.basePrice,
+    stockLeft: product.stockLeft,
+    make: product.make,
+    model: product.model
+  };
+  dispatch(toggleProductSelection(selectedProduct));
+}, [dispatch]);
 
-const selectAllProducts = useCallback(() => {
-  const allProductIds = new Set(filteredProducts.map(p => p.id));
-  setSelectedProducts(allProductIds);
-}, [filteredProducts]);
+const handleSelectAll = useCallback(() => {
+  const allProducts: SelectedProduct[] = filteredProducts.map(product => ({
+    id: product.id,
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    basePrice: product.basePrice,
+    stockLeft: product.stockLeft,
+    make: product.make,
+    model: product.model
+  }));
+  dispatch(selectAllProducts(allProducts));
+}, [dispatch, filteredProducts]);
 
-const clearSelection = useCallback(() => {
-  setSelectedProducts(new Set());
-  setIsSelectionMode(false);
-}, []);
+const handleClearSelections = useCallback(() => {
+  dispatch(clearAllSelections());
+}, [dispatch]);
+
+const handleSetSelectionMode = useCallback((mode: boolean) => {
+  dispatch(setSelectionMode(mode));
+}, [dispatch]);
 
 const addSelectedToCart = useCallback(() => {
-  // This opens a modal or component to set prices for selected products
-  // For now, we'll just show a toast with count
-  showToast(`${selectedProducts.size} products selected for cart`, 'info');
-}, [selectedProducts.size]);
+  showToast(`${Object.keys(selectedProducts).length} products selected for cart`, 'info');
+}, [selectedProducts]);
 
 const handleCompleteSale = useCallback(async () => {
   if (cart.cartItems.length === 0) {
@@ -449,17 +469,17 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
     margin: 0
   }}>
     Showing items by category ({localProducts.length} products)
-    {selectedProducts.size > 0 && (
-      <span style={{ color: '#2563EB', marginLeft: '8px' }}>
-        • {selectedProducts.size} selected
-      </span>
-    )}
+    {Object.keys(selectedProducts).length > 0 && (
+  <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+    • {Object.keys(selectedProducts).length} selected
+  </span>
+)}
   </h2>
   
   <div style={{ display: 'flex', gap: '8px' }}>
     <button
-      onClick={() => setIsSelectionMode(!isSelectionMode)}
-      style={{
+        onClick={() => handleSetSelectionMode(!isSelectionMode)}
+        style={{
         padding: '6px 12px',
         fontSize: '12px',
         backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
@@ -475,8 +495,8 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
     {isSelectionMode && (
       <>
         <button
-          onClick={selectAllProducts}
-          style={{
+            onClick={handleSelectAll}
+            style={{
             padding: '6px 12px',
             fontSize: '12px',
             backgroundColor: '#10B981',
@@ -489,22 +509,22 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
           Select All
         </button>
         
-        {selectedProducts.size > 0 && (
-          <button
-            onClick={addSelectedToCart}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              backgroundColor: '#F59E0B',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            Add Selected ({selectedProducts.size})
-          </button>
-        )}
+        {Object.keys(selectedProducts).length > 0 && (
+  <button
+    onClick={addSelectedToCart}
+    style={{
+      padding: '6px 12px',
+      fontSize: '12px',
+      backgroundColor: '#F59E0B',
+      color: 'white',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer'
+    }}
+  >
+    Add Selected ({Object.keys(selectedProducts).length})
+  </button>
+)}
       </>
     )}
   </div>
@@ -572,7 +592,7 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
               onClick={(e) => {
   if (isSelectionMode) {
     e.stopPropagation();
-    toggleProductSelection(product.id);
+    handleToggleSelection(product);
   } else {
     handleSelectProduct(product.id);
   }
@@ -627,7 +647,7 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
     right: '8px',
     width: '20px',
     height: '20px',
-    backgroundColor: selectedProducts.has(product.id) ? '#2563EB' : 'white',
+    backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
     border: '2px solid #2563EB',
     borderRadius: '4px',
     display: 'flex',
@@ -635,12 +655,11 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
     justifyContent: 'center',
     cursor: 'pointer'
   }}>
-    {selectedProducts.has(product.id) && (
+    {selectedProducts[product.id] && (
       <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
     )}
   </div>
-)}
-              
+)}              
               {/* Product Info */}
               <div>
                 <h4 style={{
