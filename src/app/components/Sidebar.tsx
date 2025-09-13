@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { ChevronRightIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const mainMenuItems = [
   { name: 'Dashboard', href: '/dashboard', iconPath: '/icons/dashboard.png' },
@@ -37,9 +38,50 @@ const getCompanyContext = (pathname: string) => {
   };
 };
 
+interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const companyContext = getCompanyContext(pathname);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Get user from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    if (confirm('Are you sure you want to logout?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+  };
+
+  // Generate user initials
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  };
+
+  // Get full name
+  const getFullName = () => {
+    if (!user) return 'User';
+    return `${user.firstName} ${user.lastName}`;
+  };
 
   return (
     <div style={{
@@ -281,17 +323,24 @@ export default function Sidebar() {
         borderTop: '1px solid #E5E7EB' 
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', position: 'relative' }}>
-            <Image
-              src="/user-avatar.jpg" // Replace with actual user avatar
-              alt="Arthur Taylor"
-              width={32}
-              height={32}
-              style={{ 
-                borderRadius: '50%', 
-                objectFit: 'cover' 
-              }}
-            />
+          {/* User Avatar - Using initials instead of image */}
+          <div style={{ 
+            width: '32px',
+            height: '32px',
+            backgroundColor: '#3b82f6',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{
+              color: 'white',
+              fontSize: '12px',
+              fontWeight: '500',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+              {getUserInitials()}
+            </span>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p 
@@ -307,7 +356,7 @@ export default function Sidebar() {
                 whiteSpace: 'nowrap'
               }}
             >
-              Arthur Taylor
+              {getFullName()}
             </p>
             <p 
               style={{
@@ -322,9 +371,29 @@ export default function Sidebar() {
                 whiteSpace: 'nowrap'
               }}
             >
-              arthur@allignul.com
+              {user?.email || 'Loading...'}
             </p>
           </div>
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#9ca3af',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#6b7280'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
+            title="Logout"
+          >
+            <ArrowRightOnRectangleIcon style={{ width: '16px', height: '16px' }} />
+          </button>
         </div>
       </div>
     </div>
