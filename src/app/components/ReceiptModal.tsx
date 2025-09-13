@@ -181,306 +181,184 @@ const handleActualPrint = async () => {
 
         {/* Receipt Content */}
         <div style={{ padding: '24px' }} id="receipt-content">
-          {/* Company Header */}
-<div style={{ marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '16px' }}>
-  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
-    <div style={{ marginRight: '16px', flexShrink: 0 }}>
-      <Image
-        src="/logo.png"
-        alt="GNC Logo"
-        width={50}
-        height={50}
-        style={{ display: 'block' }}
-      />
-    </div>
-    <div style={{ flex: 1 }}>
-      <h1 style={{ 
-        fontSize: '18px', 
-        fontWeight: 'bold', 
-        margin: 0, 
-        marginBottom: '2px',
-        letterSpacing: '0.5px',
-        color: '#000'
-      }}>
-        GREAT NABUKO COMPANY NIG. LTD.
-      </h1>
-      <p style={{ 
-        fontSize: '11px', 
-        margin: 0, 
-        marginBottom: '4px',
-        color: '#000'
-      }}>
-        (REGISTERED IN NIGERIA)
-      </p>
-      <p style={{ 
-        fontSize: '10px', 
-        margin: 0, 
-        marginBottom: '2px',
-        color: '#000',
-        lineHeight: '1.3'
-      }}>
-        Call For Your Industrial Electrical, Electronics Telecommunication,
-      </p>
-      <p style={{ 
-        fontSize: '10px', 
-        margin: 0, 
-        marginBottom: '8px',
-        color: '#000',
-        lineHeight: '1.3'
-      }}>
-        Building Materials, Chandelier Lights, Sales, Suppliers, and General Contractors
-      </p>
-    </div>
-    <div style={{ textAlign: 'right', fontSize: '10px', color: '#000' }}>
-      <div style={{ marginBottom: '2px' }}>📞 08188294545</div>
-      <div>08037075421</div>
-    </div>
+          {/* Company Header - Optimized for 80mm thermal printer */}
+<div style={{ marginBottom: '16px', borderBottom: '1px solid #000', paddingBottom: '12px' }}>
+  <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+    <Image
+      src="/logo.png"
+      alt="GNC Logo"
+      width={30}
+      height={30}
+      style={{ display: 'block', margin: '0 auto' }}
+    />
   </div>
   
-  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#000' }}>
-    <div>
-      <div><strong>HEAD OFFICE:</strong> 23 Bassey Duke street, calabar</div>
-      <div><strong>Branch Office:</strong> 19c Bassey Duke street, calabar</div>
-      <div><strong>Branch Office:</strong> 4 Bassey Duke street, calabar</div>
-    </div>
-    <div style={{ alignSelf: 'flex-end', fontWeight: 'bold' }}>
-      1501
-    </div>
-  </div>
-  
-  <div style={{ textAlign: 'center', marginTop: '12px' }}>
-    <p style={{ color: '#4B5563', fontSize: '14px', margin: 0, fontWeight: '500' }}>Sales Receipt</p>
-  </div>
-</div>
-
-          {/* Customer Information Section */}
-          <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginBottom: '24px' }}>
-            <h4 style={{ fontWeight: 500, color: '#111827', marginBottom: '12px' }}>Customer Information</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', rowGap: '8px' }}>
-              <div>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Name</p>
-                <p style={{ fontWeight: 500, color: '#111827', fontSize: '14px', margin: 0 }}>
-                  {transaction.customer}
-                </p>
-              </div>
-              {transaction.customerAddress && (
-                <div>
-                  <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Address</p>
-                  <p style={{ color: '#111827', fontSize: '14px', margin: 0 }}>{transaction.customerAddress}</p>
-                </div>
-              )}
-              {transaction.customerPhone && (
-                <div>
-                  <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Phone</p>
-                  <p style={{ color: '#111827', fontSize: '14px', margin: 0 }}>{transaction.customerPhone}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Transaction Details */}
-          <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginBottom: '24px' }}>
-            <h4 style={{ fontWeight: 500, color: '#111827', marginBottom: '12px' }}>Transaction Details</h4>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                gap: '12px',
-                fontSize: '14px',
-              }}
-            >
-              <div>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Transaction ID</p>
-                <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>{transaction.id}</p>
-              </div>
-              <div>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Date</p>
-                <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>{formatDate(transaction.createdAt)}</p>
-              </div>
-              <div>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Time</p>
-                <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>{formatTime(transaction.createdAt)}</p>
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-  <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Payment Method</p>
-  {transaction.paymentBreakdown ? (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {transaction.paymentBreakdown.pos > 0 && (
-        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
-          POS: ₦{transaction.paymentBreakdown.pos.toLocaleString()}
-        </p>
-      )}
-      {transaction.paymentBreakdown.transfer > 0 && (
-        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
-          Transfer: ₦{transaction.paymentBreakdown.transfer.toLocaleString()}
-        </p>
-      )}
-      {transaction.paymentBreakdown.cashInHand > 0 && (
-        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
-          Cash in Hand: ₦{transaction.paymentBreakdown.cashInHand.toLocaleString()}
-        </p>
-      )}
-      {transaction.paymentBreakdown.salesOnReturn > 0 && (
-        <p style={{ fontWeight: 500, color: '#111827', margin: 0, fontSize: '12px' }}>
-          Sales on Return: ₦{transaction.paymentBreakdown.salesOnReturn.toLocaleString()}
-        </p>
-      )}
-    </div>
-  ) : (
-    <p style={{ fontWeight: 500, color: '#111827', textTransform: 'capitalize', margin: 0 }}>
-      {transaction.paymentMethod || 'Not specified'}
+  <div style={{ textAlign: 'center' }}>
+    <h1 style={{ 
+      fontSize: '14px', 
+      fontWeight: 'bold', 
+      margin: 0, 
+      marginBottom: '2px',
+      letterSpacing: '0.3px',
+      color: '#000',
+      lineHeight: '1.2'
+    }}>
+      GREAT NABUKO COMPANY
+    </h1>
+    <h2 style={{ 
+      fontSize: '13px', 
+      fontWeight: 'bold', 
+      margin: 0, 
+      marginBottom: '4px',
+      color: '#000'
+    }}>
+      NIG. LTD.
+    </h2>
+    <p style={{ 
+      fontSize: '10px', 
+      margin: 0, 
+      marginBottom: '6px',
+      color: '#000'
+    }}>
+      (REGISTERED IN NIGERIA)
     </p>
-  )}
-</div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <p style={{ color: '#4B5563', fontSize: '12px', marginBottom: '4px' }}>Status</p>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    paddingLeft: '8px',
-                    paddingRight: '8px',
-                    paddingTop: '4px',
-                    paddingBottom: '4px',
-                    borderRadius: '9999px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    ...statusStyles,
-                  }}
-                >
-                  {transaction.status}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Items */}
-          <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginBottom: '24px' }}>
-            <h4 style={{ fontWeight: 500, color: '#111827', marginBottom: '16px' }}>Items Purchased</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', rowGap: '12px' }}>
-{transaction.items.map((item, index) => (
-  <div
-    key={index}
-    style={{
-      borderBottom: index < transaction.items.length - 1 ? '1px solid #F3F4F6' : 'none',
-      paddingBottom: '12px',
-      marginBottom: index < transaction.items.length - 1 ? '12px' : '0',
-    }}
-  >
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        marginBottom: '8px',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          columnGap: '12px',
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
-        <div style={{ width: '40px', height: '40px', position: 'relative', flexShrink: 0 }}>
-          <Image
-            src={item.image}
-            alt={item.name}
-            width={40}
-            height={40}
-            style={{
-              objectFit: 'contain',
-              borderRadius: '4px',
-              background: '#F9FAFB',
-              width: '40px',
-              height: '40px',
-              display: 'block',
-            }}
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p
-            style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#111827',
-              margin: 0,
-              marginBottom: '4px',
-            }}
-          >
-            {item.name}
-          </p>
-          
-          {/* New product details */}
-          {(item.make || item.model) && (
-            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
-              {[item.make, item.model].filter(Boolean).join(' ')}
-            </p>
-          )}
-          
-          {item.type && (
-            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
-              Type: {item.type}
-            </p>
-          )}
-          
-          {item.capacity && (
-            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, marginBottom: '2px' }}>
-              Capacity: {item.capacity}
-            </p>
-          )}
-          
-          <p style={{ fontSize: '12px', color: '#4B5563', margin: 0, marginTop: '4px' }}>
-            ₦{item.price.toLocaleString()} × {item.quantity}
-          </p>
-        </div>
-      </div>
-      <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginLeft: '8px' }}>
-        ₦{(item.price * item.quantity).toLocaleString()}
-      </div>
+    
+    <div style={{ fontSize: '9px', color: '#000', marginBottom: '6px' }}>
+      <div>📞 08188294545, 08037075421</div>
     </div>
     
-    {/* Description on separate line if it exists */}
-    {item.description && (
-      <div style={{ paddingLeft: '52px' }}>
-        <p style={{ fontSize: '11px', color: '#6B7280', margin: 0, fontStyle: 'italic', lineHeight: '1.4' }}>
-          {item.description}
-        </p>
+    <div style={{ fontSize: '8px', color: '#000', lineHeight: '1.3', marginBottom: '6px' }}>
+      <div>Industrial Electrical, Electronics</div>
+      <div>Telecommunication, Building Materials</div>
+      <div>Chandelier Lights, Sales & Suppliers</div>
+    </div>
+    
+    <div style={{ fontSize: '8px', color: '#000', lineHeight: '1.3', marginBottom: '8px' }}>
+      <div><strong>HEAD:</strong> 23 Bassey Duke St, Calabar</div>
+      <div><strong>BRANCH:</strong> 19c Bassey Duke St</div>
+      <div><strong>BRANCH:</strong> 4 Bassey Duke St</div>
+    </div>
+    
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ fontSize: '12px', fontWeight: 'bold' }}>1501</div>
+      <div style={{ fontSize: '12px', fontWeight: '500' }}>Sales Receipt</div>
+    </div>
+  </div>
+</div>
+
+          {/* Customer Information Section - Optimized */}
+<div style={{ borderTop: '1px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
+  <h4 style={{ fontWeight: 'bold', color: '#000', marginBottom: '6px', fontSize: '11px' }}>CUSTOMER INFO</h4>
+  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+    <div style={{ marginBottom: '2px' }}>
+      <span style={{ fontWeight: 'bold' }}>Name: </span>{transaction.customer}
+    </div>
+    {transaction.customerAddress && (
+      <div style={{ marginBottom: '2px' }}>
+        <span style={{ fontWeight: 'bold' }}>Address: </span>{transaction.customerAddress}
+      </div>
+    )}
+    {transaction.customerPhone && (
+      <div style={{ marginBottom: '2px' }}>
+        <span style={{ fontWeight: 'bold' }}>Phone: </span>{transaction.customerPhone}
       </div>
     )}
   </div>
-))}
-            </div>
-          </div>
+</div>
 
-          {/* Totals */}
-          <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', rowGap: '8px' }}>
-              
-              <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '18px' }}>
-  <span style={{ color: '#111827' }}>Total</span>
-  <span style={{ color: '#111827' }}>
-    ₦{(transaction.paymentBreakdown ? 
+          {/* Transaction Details - Optimized */}
+<div style={{ borderTop: '1px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
+  <h4 style={{ fontWeight: 'bold', color: '#000', marginBottom: '6px', fontSize: '11px' }}>TRANSACTION</h4>
+  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+    <div style={{ marginBottom: '2px' }}>
+      <span style={{ fontWeight: 'bold' }}>ID: </span>{transaction.id}
+    </div>
+    <div style={{ marginBottom: '2px' }}>
+      <span style={{ fontWeight: 'bold' }}>Date: </span>{formatDate(transaction.createdAt)}
+    </div>
+    <div style={{ marginBottom: '2px' }}>
+      <span style={{ fontWeight: 'bold' }}>Time: </span>{formatTime(transaction.createdAt)}
+    </div>
+    <div style={{ marginBottom: '2px' }}>
+      <span style={{ fontWeight: 'bold' }}>Status: </span>
+      <span style={{ 
+        color: transaction.status === 'Successful' ? '#047857' : 
+               transaction.status === 'Ongoing' ? '#C2410C' : '#B91C1C'
+      }}>
+        {transaction.status}
+      </span>
+    </div>
+    <div>
+      <span style={{ fontWeight: 'bold' }}>Payment:</span>
+      {transaction.paymentBreakdown ? (
+        <div style={{ marginLeft: '4px', fontSize: '9px' }}>
+          {transaction.paymentBreakdown.pos > 0 && <div>POS: ₦{transaction.paymentBreakdown.pos.toLocaleString()}</div>}
+          {transaction.paymentBreakdown.transfer > 0 && <div>Transfer: ₦{transaction.paymentBreakdown.transfer.toLocaleString()}</div>}
+          {transaction.paymentBreakdown.cashInHand > 0 && <div>Cash: ₦{transaction.paymentBreakdown.cashInHand.toLocaleString()}</div>}
+          {transaction.paymentBreakdown.salesOnReturn > 0 && <div>Return: ₦{transaction.paymentBreakdown.salesOnReturn.toLocaleString()}</div>}
+        </div>
+      ) : (
+        <span> {transaction.paymentMethod || 'Not specified'}</span>
+      )}
+    </div>
+  </div>
+</div>
+          {/* Items - Optimized for thermal */}
+<div style={{ borderTop: '1px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
+  <h4 style={{ fontWeight: 'bold', color: '#000', marginBottom: '6px', fontSize: '11px' }}>ITEMS</h4>
+  {transaction.items.map((item, index) => (
+    <div key={index} style={{ marginBottom: '8px', borderBottom: index < transaction.items.length - 1 ? '1px dashed #ccc' : 'none', paddingBottom: '6px' }}>
+      <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '2px' }}>
+        {item.name}
+      </div>
+      {(item.make || item.model) && (
+        <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
+          {[item.make, item.model].filter(Boolean).join(' ')}
+        </div>
+      )}
+      {item.type && (
+        <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
+          Type: {item.type}
+        </div>
+      )}
+      {item.capacity && (
+        <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
+          Capacity: {item.capacity}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '3px' }}>
+        <span>₦{item.price.toLocaleString()} × {item.quantity}</span>
+        <span style={{ fontWeight: 'bold' }}>₦{(item.price * item.quantity).toLocaleString()}</span>
+      </div>
+      {item.description && (
+        <div style={{ fontSize: '8px', color: '#666', marginTop: '2px', fontStyle: 'italic' }}>
+          {item.description}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+          {/* Totals - Optimized */}
+<div style={{ borderTop: '2px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
+    <span>TOTAL</span>
+    <span>₦{(transaction.paymentBreakdown ? 
       Object.values(transaction.paymentBreakdown).reduce((sum, amount) => sum + amount, 0) : 
       transaction.total
-    ).toLocaleString()}
-  </span>
+    ).toLocaleString()}</span>
+  </div>
 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Footer */}
-          <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-              Thank you for your business!
-            </p>
-            <p style={{ fontSize: '12px', color: '#9CA3AF', margin: 0 }}>
-              This receipt was generated electronically
-            </p>
-          </div>
+          {/* Footer - Optimized */}
+<div style={{ borderTop: '1px solid #000', paddingTop: '8px', textAlign: 'center' }}>
+  <p style={{ fontSize: '10px', marginBottom: '4px', fontWeight: 'bold' }}>
+    Thank you for your business!
+  </p>
+  <p style={{ fontSize: '8px', color: '#666', margin: 0 }}>
+    Electronic Receipt - {new Date().toLocaleDateString()}
+  </p>
+</div>
         </div>
 
         {/* Modal Footer */}
