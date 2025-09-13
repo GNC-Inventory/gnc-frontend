@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeOffIcon, UserIcon, LockIcon } from 'lucide-react';
+import { showToast } from '../../utils/toast';
 
 interface User {
   id: number;
@@ -17,8 +18,6 @@ export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const router = useRouter();
 
   const [passwordData, setPasswordData] = useState({
@@ -41,22 +40,16 @@ export default function SettingsPage() {
     }
   }, [router]);
 
-  const clearMessages = () => {
-    setMessage('');
-    setError('');
-  };
-
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearMessages();
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New passwords do not match');
+      showToast('New passwords do not match', 'error');
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+      showToast('Password must be at least 6 characters long', 'error');
       return;
     }
 
@@ -82,12 +75,12 @@ export default function SettingsPage() {
 
       if (data.success) {
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setMessage('Password changed successfully');
+        showToast('Password changed successfully', 'success');
       } else {
-        setError(data.error?.message || 'Failed to change password');
+        showToast(data.error?.message || 'Failed to change password', 'error');
       }
     } catch (error) {
-      setError('Failed to change password');
+      showToast('Failed to change password', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -149,17 +142,6 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ padding: '24px' }}>
-          {message && (
-            <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-              <p style={{ color: '#166534', fontSize: '14px', margin: '0' }}>{message}</p>
-            </div>
-          )}
-          {error && (
-            <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
-              <p style={{ color: '#dc2626', fontSize: '14px', margin: '0' }}>{error}</p>
-            </div>
-          )}
-
           {activeTab === 'profile' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
