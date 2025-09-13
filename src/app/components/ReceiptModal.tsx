@@ -57,34 +57,45 @@ const handlePrinterSelect = (printer: string) => {
 };
 
 const handleActualPrint = async () => {
+  console.log('Actual print started with printer:', selectedPrinter);
+  
+  // Close modal FIRST
+  setShowPrinterSelection(false);
+  
   try {
-    if (selectedPrinter.includes('XP-') || selectedPrinter.includes('Thermal')) {
-      // Option 1: Try Web Serial API for thermal printers (Chrome/Edge)
-      if (ClientSidePrinter.isSupported()) {
-        const printer = new ClientSidePrinter();
-        const connected = await printer.connect();
-        if (connected) {
-          await printer.printReceipt(transaction);
-          await printer.disconnect();
-          alert('Receipt printed successfully!');
-        } else {
-          // Fallback to browser print
-          BrowserPrinter.printReceipt(transaction);
-        }
+    if (selectedPrinter === 'browser' || !ClientSidePrinter.isSupported()) {
+      // Use browser printing with better error handling
+      const printSuccess = await BrowserPrinter.printReceipt(transaction);
+      
+      if (printSuccess) {
+        console.log('Browser print completed');
+        // Optional: show success message
+        // alert('Receipt sent to printer!');
       } else {
-        // Fallback to browser print
-        BrowserPrinter.printReceipt(transaction);
+        throw new Error('Browser print failed');
       }
     } else {
-      // Option 2: Browser print for regular printers
-      BrowserPrinter.printReceipt(transaction);
+      // Use thermal printer (your existing code)
+      const printer = new ClientSidePrinter();
+      const connected = await printer.connect();
+      
+      if (!connected) {
+        throw new Error('Failed to connect to printer');
+      }
+      
+      const printSuccess = await printer.printReceipt(transaction);
+      await printer.disconnect();
+      
+      if (!printSuccess) {
+        throw new Error('Print job failed');
+      }
+      
+      console.log('Thermal print completed');
     }
     
-    setShowPrinterSelection(false);
-    onClose();
   } catch (error) {
     console.error('Print error:', error);
-    alert('Print failed: ' + (error as Error).message);
+    alert('Print failed: ' + (error as Error).message + '\n\nPlease check your printer connection or try again.');
   }
 };
 

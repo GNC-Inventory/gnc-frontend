@@ -251,109 +251,263 @@ export class ClientSidePrinter {
 
 // Alternative: Browser print with custom formatting
 export class BrowserPrinter {
-  static printReceipt(transaction: Transaction): void {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  static async printReceipt(transaction: Transaction): Promise<boolean> {
+    try {
+      // Method 1: Try opening a new window for printing
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      
+      if (!printWindow) {
+        console.warn('Popup blocked, trying fallback method');
+        return this.printReceiptFallback(transaction);
+      }
 
-    const calculatedTotal = transaction.paymentBreakdown 
-      ? Object.values(transaction.paymentBreakdown).reduce((sum, amount) => sum + amount, 0)
-      : transaction.total;
+      const calculatedTotal = transaction.paymentBreakdown 
+        ? Object.values(transaction.paymentBreakdown).reduce((sum, amount) => sum + amount, 0)
+        : transaction.total;
 
-    const receiptHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Receipt - ${transaction.id}</title>
-        <style>
-          @media print {
-            @page { 
-              size: 80mm auto; 
-              margin: 0; 
+      const receiptHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Receipt - ${transaction.id}</title>
+          <style>
+            @media print {
+              @page { 
+                size: 80mm auto; 
+                margin: 0; 
+              }
+              body { 
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.2;
+                margin: 5mm;
+                color: black;
+              }
+              .no-print { display: none; }
             }
-            body { 
+            body {
               font-family: 'Courier New', monospace;
               font-size: 12px;
               line-height: 1.2;
-              margin: 5mm;
-              color: black;
+              width: 80mm;
+              margin: 10px auto;
+              padding: 10px;
             }
-          }
-          body {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.2;
-            width: 80mm;
-            margin: 0 auto;
-          }
-          .center { text-align: center; }
-          .large { font-size: 16px; font-weight: bold; }
-          .separator { border-top: 1px dashed black; margin: 10px 0; }
-          .total { font-size: 14px; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="center">
-          <div class="large">GREAT NABUKO COMPANY</div>
-          <div>NIG. LTD.</div>
-          <div>(REGISTERED IN NIGERIA)</div>
-          <br>
-          <div>Tel: 08188294545, 08037075421</div>
-          <div>23 Bassey Duke street, calabar</div>
-        </div>
-        
-        <div class="separator"></div>
-        <div class="center large">SALES RECEIPT</div>
-        <div class="separator"></div>
-        
-        <div>ID: ${transaction.id}</div>
-        <div>Date: ${transaction.createdAt.toLocaleDateString()}</div>
-        <div>Customer: ${transaction.customer}</div>
-        ${transaction.customerAddress ? `<div>Address: ${transaction.customerAddress}</div>` : ''}
-        ${transaction.customerPhone ? `<div>Phone: ${transaction.customerPhone}</div>` : ''}
-        
-        <div class="separator"></div>
-        <div><strong>ITEMS:</strong></div>
-        ${transaction.items.map((item, index) => {
-          const itemTotal = item.price * item.quantity;
-          return `
-            <div style="margin: 5px 0;">
-              <div>${index + 1}. ${item.name}</div>
-              ${item.make || item.model ? `<div style="margin-left: 10px;">${[item.make, item.model].filter(Boolean).join(' ')}</div>` : ''}
-              ${item.type ? `<div style="margin-left: 10px;">Type: ${item.type}</div>` : ''}
-              ${item.capacity ? `<div style="margin-left: 10px;">Capacity: ${item.capacity}</div>` : ''}
-              ${item.description ? `<div style="margin-left: 10px; font-style: italic;">${item.description}</div>` : ''}
-              <div style="margin-left: 10px;">${item.quantity} x ₦${item.price.toLocaleString()} = ₦${itemTotal.toLocaleString()}</div>
-            </div>
-          `;
-        }).join('')}
-        
-        <div class="separator"></div>
-        <div class="center total">TOTAL: ₦${calculatedTotal.toLocaleString()}</div>
-        <div class="separator"></div>
-        
-        ${transaction.paymentBreakdown ? `
-          <div><strong>PAYMENT BREAKDOWN:</strong></div>
-          ${transaction.paymentBreakdown.pos > 0 ? `<div>POS: ₦${transaction.paymentBreakdown.pos.toLocaleString()}</div>` : ''}
-          ${transaction.paymentBreakdown.transfer > 0 ? `<div>Transfer: ₦${transaction.paymentBreakdown.transfer.toLocaleString()}</div>` : ''}
-          ${transaction.paymentBreakdown.cashInHand > 0 ? `<div>Cash: ₦${transaction.paymentBreakdown.cashInHand.toLocaleString()}</div>` : ''}
-          ${transaction.paymentBreakdown.salesOnReturn > 0 ? `<div>Sales on Return: ₦${transaction.paymentBreakdown.salesOnReturn.toLocaleString()}</div>` : ''}
-          <br>
-        ` : ''}
-        
-        <div class="center">
-          <div>Thank you for your business!</div>
-          <div>Status: ${transaction.status}</div>
-        </div>
-      </body>
-      </html>
-    `;
+            .center { text-align: center; }
+            .large { font-size: 16px; font-weight: bold; }
+            .separator { 
+              border-top: 1px dashed black; 
+              margin: 10px 0; 
+              width: 100%;
+            }
+            .total { font-size: 14px; font-weight: bold; }
+            .print-button {
+              position: fixed;
+              top: 10px;
+              right: 10px;
+              padding: 10px 20px;
+              background: #007bff;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              z-index: 1000;
+            }
+            .print-button:hover {
+              background: #0056b3;
+            }
+            @media print {
+              .print-button { display: none; }
+            }
+          </style>
+          <script>
+            function printAndClose() {
+              window.print();
+              setTimeout(() => window.close(), 1000);
+            }
+            
+            window.onload = function() {
+              // Auto-focus for better UX
+              window.focus();
+              
+              // Auto-print after a short delay
+              setTimeout(() => {
+                window.print();
+              }, 500);
+            };
+          </script>
+        </head>
+        <body>
+          <button class="print-button no-print" onclick="printAndClose()">🖨️ Print & Close</button>
+          
+          <div class="center">
+            <div class="large">GREAT NABUKO COMPANY</div>
+            <div>NIG. LTD.</div>
+            <div>(REGISTERED IN NIGERIA)</div>
+            <br>
+            <div>Tel: 08188294545, 08037075421</div>
+            <div>23 Bassey Duke street, calabar</div>
+          </div>
+          
+          <div class="separator"></div>
+          <div class="center large">SALES RECEIPT</div>
+          <div class="separator"></div>
+          
+          <div>ID: ${transaction.id}</div>
+          <div>Date: ${transaction.createdAt.toLocaleDateString()}</div>
+          <div>Customer: ${transaction.customer}</div>
+          ${transaction.customerAddress ? `<div>Address: ${transaction.customerAddress}</div>` : ''}
+          ${transaction.customerPhone ? `<div>Phone: ${transaction.customerPhone}</div>` : ''}
+          
+          <div class="separator"></div>
+          <div><strong>ITEMS:</strong></div>
+          ${transaction.items.map((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            return `
+              <div style="margin: 5px 0;">
+                <div>${index + 1}. ${item.name}</div>
+                ${item.make || item.model ? `<div style="margin-left: 10px;">${[item.make, item.model].filter(Boolean).join(' ')}</div>` : ''}
+                ${item.type ? `<div style="margin-left: 10px;">Type: ${item.type}</div>` : ''}
+                ${item.capacity ? `<div style="margin-left: 10px;">Capacity: ${item.capacity}</div>` : ''}
+                ${item.description ? `<div style="margin-left: 10px; font-style: italic;">${item.description}</div>` : ''}
+                <div style="margin-left: 10px;">${item.quantity} x ₦${item.price.toLocaleString()} = ₦${itemTotal.toLocaleString()}</div>
+              </div>
+            `;
+          }).join('')}
+          
+          <div class="separator"></div>
+          <div class="center total">TOTAL: ₦${calculatedTotal.toLocaleString()}</div>
+          <div class="separator"></div>
+          
+          ${transaction.paymentBreakdown ? `
+            <div><strong>PAYMENT BREAKDOWN:</strong></div>
+            ${transaction.paymentBreakdown.pos > 0 ? `<div>POS: ₦${transaction.paymentBreakdown.pos.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.transfer > 0 ? `<div>Transfer: ₦${transaction.paymentBreakdown.transfer.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.cashInHand > 0 ? `<div>Cash: ₦${transaction.paymentBreakdown.cashInHand.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.salesOnReturn > 0 ? `<div>Sales on Return: ₦${transaction.paymentBreakdown.salesOnReturn.toLocaleString()}</div>` : ''}
+            <br>
+          ` : ''}
+          
+          <div class="center">
+            <div>Thank you for your business!</div>
+            <div>Status: ${transaction.status}</div>
+          </div>
+        </body>
+        </html>
+      `;
 
-    printWindow.document.write(receiptHTML);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Browser print failed:', error);
+      return this.printReceiptFallback(transaction);
+    }
+  }
+
+  // Fallback method: Create a temporary div and print current page
+  static printReceiptFallback(transaction: Transaction): boolean {
+    try {
+      const calculatedTotal = transaction.paymentBreakdown 
+        ? Object.values(transaction.paymentBreakdown).reduce((sum, amount) => sum + amount, 0)
+        : transaction.total;
+
+      // Create a hidden div with the receipt
+      const printDiv = document.createElement('div');
+      printDiv.id = 'receipt-print-area';
+      printDiv.style.position = 'fixed';
+      printDiv.style.left = '-9999px';
+      printDiv.innerHTML = `
+        <div style="font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.2; width: 300px;">
+          <div style="text-align: center;">
+            <div style="font-size: 16px; font-weight: bold;">GREAT NABUKO COMPANY</div>
+            <div>NIG. LTD.</div>
+            <div>(REGISTERED IN NIGERIA)</div>
+            <br>
+            <div>Tel: 08188294545, 08037075421</div>
+            <div>23 Bassey Duke street, calabar</div>
+          </div>
+          
+          <hr style="border-top: 1px dashed black;">
+          <div style="text-align: center; font-weight: bold;">SALES RECEIPT</div>
+          <hr style="border-top: 1px dashed black;">
+          
+          <div>ID: ${transaction.id}</div>
+          <div>Date: ${transaction.createdAt.toLocaleDateString()}</div>
+          <div>Customer: ${transaction.customer}</div>
+          ${transaction.customerAddress ? `<div>Address: ${transaction.customerAddress}</div>` : ''}
+          ${transaction.customerPhone ? `<div>Phone: ${transaction.customerPhone}</div>` : ''}
+          
+          <hr style="border-top: 1px dashed black;">
+          <div><strong>ITEMS:</strong></div>
+          ${transaction.items.map((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            return `
+              <div style="margin: 5px 0;">
+                <div>${index + 1}. ${item.name}</div>
+                ${item.make || item.model ? `<div style="margin-left: 10px;">${[item.make, item.model].filter(Boolean).join(' ')}</div>` : ''}
+                ${item.type ? `<div style="margin-left: 10px;">Type: ${item.type}</div>` : ''}
+                ${item.capacity ? `<div style="margin-left: 10px;">Capacity: ${item.capacity}</div>` : ''}
+                ${item.description ? `<div style="margin-left: 10px; font-style: italic;">${item.description}</div>` : ''}
+                <div style="margin-left: 10px;">${item.quantity} x ₦${item.price.toLocaleString()} = ₦${itemTotal.toLocaleString()}</div>
+              </div>
+            `;
+          }).join('')}
+          
+          <hr style="border-top: 1px dashed black;">
+          <div style="text-align: center; font-weight: bold;">TOTAL: ₦${calculatedTotal.toLocaleString()}</div>
+          <hr style="border-top: 1px dashed black;">
+          
+          ${transaction.paymentBreakdown ? `
+            <div><strong>PAYMENT BREAKDOWN:</strong></div>
+            ${transaction.paymentBreakdown.pos > 0 ? `<div>POS: ₦${transaction.paymentBreakdown.pos.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.transfer > 0 ? `<div>Transfer: ₦${transaction.paymentBreakdown.transfer.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.cashInHand > 0 ? `<div>Cash: ₦${transaction.paymentBreakdown.cashInHand.toLocaleString()}</div>` : ''}
+            ${transaction.paymentBreakdown.salesOnReturn > 0 ? `<div>Sales on Return: ₦${transaction.paymentBreakdown.salesOnReturn.toLocaleString()}</div>` : ''}
+            <br>
+          ` : ''}
+          
+          <div style="text-align: center;">
+            <div>Thank you for your business!</div>
+            <div>Status: ${transaction.status}</div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(printDiv);
+
+      // Create print styles
+      const printStyles = document.createElement('style');
+      printStyles.id = 'receipt-print-styles';
+      printStyles.innerHTML = `
+        @media print {
+          body * { visibility: hidden; }
+          #receipt-print-area, #receipt-print-area * { visibility: visible; }
+          #receipt-print-area { 
+            position: static !important; 
+            left: auto !important;
+            width: 100% !important;
+          }
+        }
+      `;
+      document.head.appendChild(printStyles);
+
+      // Trigger print
+      window.print();
+
+      // Cleanup after a delay
+      setTimeout(() => {
+        document.body.removeChild(printDiv);
+        document.head.removeChild(printStyles);
+      }, 1000);
+
+      return true;
+    } catch (error) {
+      console.error('Fallback print failed:', error);
+      alert('Print failed. Please try again or use a different browser.');
+      return false;
+    }
   }
 }
