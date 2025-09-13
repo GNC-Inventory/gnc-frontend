@@ -97,46 +97,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           overflow: 'auto',
         }}
       >
-        {/* Modal Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px',
-            borderBottom: '1px solid #E5E7EB',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '20px',
-              fontWeight: 600,
-              color: '#111827',
-              margin: 0,
-            }}
-          >
-            Receipt
-          </h2>
-          <button
-            onClick={onClose}
-            onMouseEnter={() => setCloseHover(true)}
-            onMouseLeave={() => setCloseHover(false)}
-            style={{
-              color: closeHover ? '#4B5563' : '#9CA3AF',
-              transition: 'color 150ms ease',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            aria-label="Close"
-          >
-            <XMarkIcon style={{ width: '24px', height: '24px' }} />
-          </button>
-        </div>
+
 
         {/* Receipt Content */}
         <div style={{ padding: '24px' }} id="receipt-content">
