@@ -6,9 +6,10 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('joseph@example.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const togglePasswordVisibility = () => {
@@ -19,16 +20,51 @@ export default function LoginPage() {
     e.preventDefault();
     
     if (!email.trim() || !password.trim()) {
-      alert('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
+    setError('');
     
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data.token && data.data.user) {
+        const { token, user } = data.data;
+
+        // Store auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // Check if user needs to change password (first login)
+        if (user.forcePasswordChange) {
+          // Redirect to password change page
+          router.push('/change-password');
+        } else {
+          // Normal login - go to dashboard
+          router.push('/dashboard');
+        }
+      } else {
+        setError(data.error?.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1000);
+    }
   };
 
   return (
@@ -76,6 +112,26 @@ export default function LoginPage() {
             }}>
               Continue from where you left off
             </p>
+
+            {/* Error Message */}
+            {error && (
+              <div style={{
+                marginBottom: '24px',
+                padding: '12px 16px',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px'
+              }}>
+                <p style={{
+                  color: '#DC2626',
+                  fontSize: '14px',
+                  margin: '0',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  {error}
+                </p>
+              </div>
+            )}
             
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="email" style={{
@@ -86,13 +142,14 @@ export default function LoginPage() {
                 fontSize: '14px',
                 fontFamily: 'system-ui, -apple-system, sans-serif'
               }}>
-                Email Address/Username
+                Email Address
               </label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -101,9 +158,10 @@ export default function LoginPage() {
                   fontSize: '14px',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  opacity: isLoading ? 0.6 : 1
                 }}
-                placeholder="joseph@example.com"
+                placeholder="Enter your email"
                 onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
                 onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
               />
@@ -126,6 +184,7 @@ export default function LoginPage() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                   style={{
                     width: '100%',
                     padding: '12px 48px 12px 16px',
@@ -134,7 +193,8 @@ export default function LoginPage() {
                     fontSize: '14px',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    opacity: isLoading ? 0.6 : 1
                   }}
                   placeholder="Enter your password"
                   onFocus={(e) => e.target.style.borderColor = '#3B82F6'}
@@ -143,6 +203,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={togglePasswordVisibility}
+                  disabled={isLoading}
                   style={{
                     position: 'absolute',
                     right: '12px',
@@ -151,14 +212,19 @@ export default function LoginPage() {
                     background: 'none',
                     border: 'none',
                     color: '#9CA3AF',
-                    cursor: 'pointer',
+                    cursor: isLoading ? 'default' : 'pointer',
                     padding: '4px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    opacity: isLoading ? 0.6 : 1
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#6B7280'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) e.currentTarget.style.color = '#6B7280';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) e.currentTarget.style.color = '#9CA3AF';
+                  }}
                 >
                   {showPassword ? (
                     <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
@@ -194,6 +260,17 @@ export default function LoginPage() {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
+
+            {/* Help Text */}
+            <p style={{
+              textAlign: 'center',
+              marginTop: '20px',
+              color: '#6B7280',
+              fontSize: '12px',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+              Use credentials provided by your administrator
+            </p>
           </div>
         </form>
       </div>
