@@ -75,6 +75,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
 
   return (
     <div
+     className="print-hide"
       style={{
         position: 'fixed',
         inset: 0 as unknown as number,
@@ -375,29 +376,20 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
 
       <style jsx>{`
   @media print {
-    body * {
-      visibility: hidden;
+    .print-hide {
+      display: none !important;
     }
-    #receipt-content,
-    #receipt-content * {
-      visibility: visible;
+    body {
+      margin: 0;
+      padding: 0;
     }
     #receipt-content {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      background: white;
-    }
-    /* Hide the entire modal structure when printing */
-    .modal-footer,
-    div[style*="position: fixed"],
-    div[style*="background: rgba(0,0,0,0.5)"] {
-      display: none !important;
-    }
-    /* Hide any overlays or modals */
-    [style*="z-index: 50"] {
-      display: none !important;
+      position: static !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 20px !important;
+      background: white !important;
     }
   }
 `}</style>
