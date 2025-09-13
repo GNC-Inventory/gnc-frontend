@@ -45,7 +45,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const [closeBtnHover, setCloseBtnHover] = useState(false);
   const [showPrinterSelection, setShowPrinterSelection] = useState(false);
   const [selectedPrinter, setSelectedPrinter] = useState('');
-  const [selectedPrinterData, setSelectedPrinterData] = useState<any>(null);
+  
 
   const handlePrint = () => {
     console.log('Print button clicked');
@@ -60,7 +60,7 @@ const handlePrinterSelect = (printerId: string) => {
   // The PrinterSelection component handles the printer data internally
 };
 // FIND AND REPLACE your entire handleActualPrint function with:
-const handleActualPrint = async (printerData?: any) => {
+const handleActualPrint = async (printerData?: { port?: SerialPort; id: string; name: string; status: string; type: string; connection: string }) => {
   console.log('Actual print started with printer:', selectedPrinter);
   
   // Close modal FIRST

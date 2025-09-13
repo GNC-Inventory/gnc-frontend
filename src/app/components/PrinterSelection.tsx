@@ -40,7 +40,7 @@ interface PrinterType {
 
 interface PrinterSelectionProps {
   onPrinterSelect: (printer: string) => void;
-  onPrint: (printerData?: any) => void;
+  onPrint: (printerData?: PrinterType) => void;
   onCancel: () => void;
 }
 
@@ -107,7 +107,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
       const data = await response.json();
       
       if (data.success) {
-        return data.printers.map((printer: any, index: number) => ({
+        return data.printers.map((printer: { name: string; status: string; type: string }, index: number) => ({
           id: `system-${index}`,
           name: printer.name,
           status: printer.status,
@@ -216,7 +216,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
     } catch (err) {
       console.error('Failed to connect USB printer:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      if ((err as any)?.name === 'NotFoundError') {
+      if ((err as Error & { name?: string })?.name === 'NotFoundError') {
         alert('No printer selected or printer not found.');
       } else {
         alert('Failed to connect to printer: ' + errorMessage);
