@@ -679,15 +679,35 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
                 justifyContent: 'center',
                 overflow: 'hidden'
               }}>
-                <Image
-  src={product.image}
-  alt={product.name}
-  width={120}
-  height={120}
-  style={{
-    objectFit: 'contain'
-  }}
-/>
+                {product.image && product.image.trim() !== '' ? (
+  <img
+    src={product.image}
+    alt={product.name}
+    style={{
+      width: '120px',
+      height: '120px',
+      objectFit: 'contain'
+    }}
+    onError={(e) => {
+      console.error('Image failed to load:', e.currentTarget.src);
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+) : (
+  <div style={{
+    width: '120px',
+    height: '120px',
+    backgroundColor: '#E5E7EB',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9CA3AF',
+    fontSize: '12px',
+    textAlign: 'center'
+  }}>
+    No Image
+  </div>
+)}
               </div>
 
               {/* Selection Checkbox */}
