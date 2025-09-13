@@ -47,10 +47,12 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const [selectedPrinter, setSelectedPrinter] = useState('');
 
   const handlePrint = () => {
+    console.log('Print button clicked');
   setShowPrinterSelection(true);
 };
 
 const handlePrinterSelect = (printer: string) => {
+  console.log('Actual print started');
   setSelectedPrinter(printer);
 };
 
