@@ -266,7 +266,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           {/* Items */}
           <div style={{ borderTop: '1px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
             <h4 style={{ fontWeight: 'bold', color: '#000', marginBottom: '6px', fontSize: '11px' }}>ITEMS</h4>
-            {transaction.items.map((item: any, index: number) => (
+            {transaction.items.map((item, index: number) => (
               <div key={index} style={{ marginBottom: '8px', borderBottom: index < transaction.items.length - 1 ? '1px dashed #ccc' : 'none', paddingBottom: '6px' }}>
                 <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '2px' }}>
                   {item.name}
