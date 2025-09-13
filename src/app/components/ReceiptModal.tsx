@@ -45,18 +45,22 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const [closeBtnHover, setCloseBtnHover] = useState(false);
   const [showPrinterSelection, setShowPrinterSelection] = useState(false);
   const [selectedPrinter, setSelectedPrinter] = useState('');
+  const [selectedPrinterData, setSelectedPrinterData] = useState<any>(null);
 
   const handlePrint = () => {
     console.log('Print button clicked');
   setShowPrinterSelection(true);
 };
 
-const handlePrinterSelect = (printer: string) => {
-  console.log('Actual print started');
-  setSelectedPrinter(printer);
+const handlePrinterSelect = (printerId: string) => {
+  console.log('Printer selected:', printerId);
+  setSelectedPrinter(printerId);
+  
+  // Note: We can't access printer data directly from this component
+  // The PrinterSelection component handles the printer data internally
 };
-
-const handleActualPrint = async () => {
+// FIND AND REPLACE your entire handleActualPrint function with:
+const handleActualPrint = async (printerData?: any) => {
   console.log('Actual print started with printer:', selectedPrinter);
   
   // Close modal FIRST
@@ -64,33 +68,42 @@ const handleActualPrint = async () => {
   
   try {
     if (selectedPrinter === 'browser' || !ClientSidePrinter.isSupported()) {
-      // Use browser printing with better error handling
+      // Use browser printing
       const printSuccess = await BrowserPrinter.printReceipt(transaction);
       
       if (printSuccess) {
         console.log('Browser print completed');
-        // Optional: show success message
-        // alert('Receipt sent to printer!');
       } else {
         throw new Error('Browser print failed');
       }
-    } else {
-      // Use thermal printer (your existing code)
+    } else if (selectedPrinter.startsWith('usb-')) {
+      // Use USB thermal printer with Web Serial
       const printer = new ClientSidePrinter();
-      const connected = await printer.connect();
       
-      if (!connected) {
-        throw new Error('Failed to connect to printer');
+      // If we have printer data with a port, use it
+      if (printerData?.port) {
+        printer.port = printerData.port;
+      } else {
+        const connected = await printer.connect();
+        if (!connected) {
+          throw new Error('Failed to connect to USB printer');
+        }
       }
       
       const printSuccess = await printer.printReceipt(transaction);
       await printer.disconnect();
       
       if (!printSuccess) {
-        throw new Error('Print job failed');
+        throw new Error('USB print job failed');
       }
       
-      console.log('Thermal print completed');
+      console.log('USB thermal print completed');
+    } else {
+      // System printer fallback
+      const printSuccess = await BrowserPrinter.printReceipt(transaction);
+      if (!printSuccess) {
+        throw new Error('System print failed');
+      }
     }
     
   } catch (error) {

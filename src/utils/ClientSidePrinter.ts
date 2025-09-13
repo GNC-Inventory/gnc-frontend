@@ -56,7 +56,7 @@ interface Transaction {
 }
 
 export class ClientSidePrinter {
-  private port: SerialPort | null = null;
+  public port: SerialPort | null = null;
 
   // Check if Web Serial API is supported
   static isSupported(): boolean {
