@@ -75,7 +75,6 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
 
   return (
     <div
-     className="print-hide"
       style={{
         position: 'fixed',
         inset: 0 as unknown as number,
@@ -376,20 +375,21 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
 
       <style jsx>{`
   @media print {
-    .print-hide {
-      display: none !important;
+    body * {
+      visibility: hidden;
     }
-    body {
-      margin: 0;
-      padding: 0;
+    #receipt-content,
+    #receipt-content * {
+      visibility: visible;
     }
     #receipt-content {
-      position: static !important;
-      width: 100% !important;
-      max-width: none !important;
-      margin: 0 !important;
-      padding: 20px !important;
-      background: white !important;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    .modal-footer {
+      display: none !important;
     }
   }
 `}</style>
