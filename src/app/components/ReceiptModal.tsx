@@ -322,7 +322,8 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
         </div>
 
         {/* Modal Footer */}
-        <div style={{ borderTop: '1px solid #E5E7EB', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: '#F9FAFB' }}>
+        {/* Modal Footer */}
+      <div className="modal-footer" style={{ borderTop: '1px solid #E5E7EB', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: '#F9FAFB' }}>
           <div style={{ display: 'flex', columnGap: '12px' }}>
             <button
               onClick={handlePrint}
@@ -373,22 +374,25 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
       </div>
 
       <style jsx>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #receipt-content,
-          #receipt-content * {
-            visibility: visible;
-          }
-          #receipt-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}</style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #receipt-content,
+    #receipt-content * {
+      visibility: visible;
+    }
+    #receipt-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    .modal-footer {
+      display: none !important;
+    }
+  }
+`}</style>
     </div>
   );
 }
