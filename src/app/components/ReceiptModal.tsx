@@ -387,8 +387,16 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
       left: 0;
       top: 0;
       width: 100%;
+      background: white;
     }
-    .modal-footer {
+    /* Hide the entire modal structure when printing */
+    .modal-footer,
+    div[style*="position: fixed"],
+    div[style*="background: rgba(0,0,0,0.5)"] {
+      display: none !important;
+    }
+    /* Hide any overlays or modals */
+    [style*="z-index: 50"] {
       display: none !important;
     }
   }
