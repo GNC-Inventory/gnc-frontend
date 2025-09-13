@@ -5,6 +5,16 @@ import Image from 'next/image';
 import PrinterSelection from './PrinterSelection';
 import { ClientSidePrinter, BrowserPrinter } from '../../utils/ClientSidePrinter';
 
+// Add SerialPort type declaration
+declare global {
+  interface SerialPort {
+    open(options: { baudRate: number; dataBits?: number; stopBits?: number; parity?: string }): Promise<void>;
+    close(): Promise<void>;
+    readable: ReadableStream | null;
+    writable: WritableStream | null;
+  }
+}
+
 interface Transaction {
   id: string;
   items: Array<{
@@ -128,18 +138,7 @@ const handleActualPrint = async (printerData?: { port?: SerialPort; id: string; 
     });
   };
 
-  
-  const statusStyles = (() => {
-    if (transaction.status === 'Successful') {
-      return { background: '#D1FAE5', color: '#047857' }; // bg-green-100 text-green-700
-    }
-    if (transaction.status === 'Ongoing') {
-      return { background: '#FFEDD5', color: '#C2410C' }; // bg-orange-100 text-orange-700
-    }
-    return { background: '#FEE2E2', color: '#B91C1C' }; // bg-red-100 text-red-700
-  })();
-
-  return (
+    return (
     <div
       style={{
         position: 'fixed',
