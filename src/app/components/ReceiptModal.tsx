@@ -274,7 +274,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           {/* Footer */}
           <div style={{ borderTop: '1px solid #000', paddingTop: '8px', textAlign: 'center' }}>
             <p style={{ fontSize: '10px', marginBottom: '4px', fontWeight: 'bold' }}>
-              Thank you for your business!
+              Thank you for your patronage!
             </p>
             <p style={{ fontSize: '8px', color: '#666', margin: 0 }}>
               Electronic Receipt - {new Date().toLocaleDateString()}

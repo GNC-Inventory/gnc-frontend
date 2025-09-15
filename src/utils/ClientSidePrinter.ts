@@ -389,7 +389,7 @@ export class BrowserPrinter {
           ` : ''}
           
           <div class="center">
-            <div>Thank you for your business!</div>
+            <div>Thank you for your patronage!</div>
             <div>Status: ${transaction.status}</div>
           </div>
         </body>
@@ -470,7 +470,7 @@ export class BrowserPrinter {
           ` : ''}
           
           <div style="text-align: center;">
-            <div>Thank you for your business!</div>
+            <div>Thank you for your patronage!</div>
             <div>Status: ${transaction.status}</div>
           </div>
         </div>
