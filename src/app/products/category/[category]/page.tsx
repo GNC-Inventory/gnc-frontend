@@ -6,7 +6,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useInventory, type Product } from '../../../../hooks/useInventory';
 import ProductDetailModal from '../../../components/ProductDetailModal';
 import EmptyState from '../../../components/EmptyState';
-import NextImage from 'next/image';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { 
   toggleProductSelection, 
@@ -413,14 +412,34 @@ export default function CategoryPage() {
                 overflow: 'hidden',
                 position: 'relative'
               }}>
-                <NextImage
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  style={{
-                    objectFit: 'contain'
-                  }}
-                />
+                {product.image && product.image.trim() !== '' ? (
+  <img
+    src={product.image}
+    alt={product.name}
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
+    }}
+    onError={(e) => {
+      console.error('Image failed to load:', e.currentTarget.src);
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+) : (
+  <div style={{
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E5E7EB',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9CA3AF',
+    fontSize: '14px'
+  }}>
+    No Image
+  </div>
+)}
               </div>
 
               {/* Product Info */}
