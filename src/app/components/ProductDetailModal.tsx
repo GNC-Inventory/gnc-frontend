@@ -254,13 +254,36 @@ const handleAddItem = async () => {
                 height: '320px'
               }}
             >
-              <Image
-                src={product.image}
-                alt={product.name}
-                width={250}
-                height={250}
-                style={{ objectFit: 'contain', maxHeight: '100%' }}
-              />
+              {product.image && product.image.trim() !== '' ? (
+  <img
+    src={product.image}
+    alt={product.name}
+    style={{
+      width: '250px',
+      height: '250px',
+      objectFit: 'contain',
+      maxHeight: '100%'
+    }}
+    onError={(e) => {
+      console.error('Image failed to load:', e.currentTarget.src);
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+) : (
+  <div style={{
+    width: '250px',
+    height: '250px',
+    backgroundColor: '#E5E7EB',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9CA3AF',
+    fontSize: '14px',
+    textAlign: 'center'
+  }}>
+    No Image Available
+  </div>
+)}
             </div>
 
             {/* Product Info */}
