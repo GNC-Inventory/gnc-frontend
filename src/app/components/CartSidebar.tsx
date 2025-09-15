@@ -215,20 +215,38 @@ export default function CartSidebar({
                   height: '44px',
                 }}
               >
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  width={44}
-                  height={44}
-                  style={{
-                    objectFit: 'contain',
-                    borderRadius: 4, // rounded
-                    background: '#F9FAFB', // bg-gray-50
-                    width: '44px',
-                    height: '44px',
-                    display: 'block',
-                  }}
-                />
+                {item.image && item.image.trim() !== '' ? (
+  <img
+    src={item.image}
+    alt={item.name}
+    style={{
+      objectFit: 'contain',
+      borderRadius: '4px',
+      background: '#F9FAFB',
+      width: '44px',
+      height: '44px',
+      display: 'block',
+    }}
+    onError={(e) => {
+      console.error('Image failed to load:', e.currentTarget.src);
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+) : (
+  <div style={{
+    width: '44px',
+    height: '44px',
+    backgroundColor: '#E5E7EB',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9CA3AF',
+    fontSize: '10px'
+  }}>
+    No Image
+  </div>
+)}
               </div>
 
               {/* Product Details */}
