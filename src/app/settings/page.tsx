@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { EyeIcon, EyeOffIcon, UserIcon, LockIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, UserIcon, LockIcon, AlertTriangle, Trash2, X } from 'lucide-react';
 import { showToast } from '../../utils/toast';
 
 interface User {
@@ -16,9 +16,14 @@ interface User {
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'danger'>('profile');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Reset Sales State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -86,6 +91,43 @@ export default function SettingsPage() {
     }
   };
 
+  const handleResetSales = async () => {
+    if (confirmationText !== 'RESET') {
+      showToast('Please type RESET to confirm', 'error');
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch('https://gnc-inventory-backend.onrender.com/api/sales/reset', {
+        method: 'DELETE',
+        headers: {
+          'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        localStorage.removeItem('transactionData');
+        setShowResetModal(false);
+        setConfirmationText('');
+        showToast(`Sales data has been reset successfully. ${result.data?.recordsArchived || 0} records archived.`, 'success');
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Failed to reset sales data');
+      }
+    } catch (error: any) {
+      showToast(`Failed to reset sales data: ${error.message}`, 'error');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -96,7 +138,8 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: UserIcon },
-    { id: 'password', label: 'Password', icon: LockIcon }
+    { id: 'password', label: 'Password', icon: LockIcon },
+    { id: 'danger', label: 'Danger Zone', icon: AlertTriangle }
   ];
 
   const passwordFields = [
@@ -119,13 +162,13 @@ export default function SettingsPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'profile' | 'password')}
+                onClick={() => setActiveTab(tab.id as 'profile' | 'password' | 'danger')}
                 style={{
                   padding: '16px 24px',
                   borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
                   fontWeight: '500',
                   fontSize: '14px',
-                  color: activeTab === tab.id ? '#3b82f6' : '#6b7280',
+                  color: activeTab === tab.id ? (tab.id === 'danger' ? '#dc2626' : '#3b82f6') : '#6b7280',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -212,8 +255,209 @@ export default function SettingsPage() {
               </div>
             </form>
           )}
+
+          {activeTab === 'danger' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ backgroundColor: '#fef2f2', border: '2px solid #fecaca', borderRadius: '12px', padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <AlertTriangle style={{ width: '20px', height: '20px', color: '#dc2626' }} />
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', margin: 0 }}>Reset Sales Data</h3>
+                    </div>
+                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
+                      This will permanently delete all sales transaction records and reset "Stock Out" and "Gross Total Sales Value" to zero.
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#dc2626', fontWeight: '500', margin: 0 }}>
+                      ⚠️ This action cannot be undone. Use only for clearing testing data.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowResetModal(true)}
+                    style={{
+                      padding: '12px 20px',
+                      backgroundColor: '#dc2626',
+                      color: 'white',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontWeight: '500',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Trash2 style={{ width: '16px', height: '16px' }} />
+                    Reset Sales
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 50 
+        }}>
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '24px', 
+            width: '500px', 
+            maxWidth: '90vw', 
+            padding: '24px' 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle style={{ width: '24px', height: '24px', color: '#dc2626' }} />
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>Confirm Sales Data Reset</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setConfirmationText('');
+                }}
+                disabled={isResetting}
+                style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}
+              >
+                <X style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            <div style={{ 
+              backgroundColor: '#fef2f2', 
+              border: '2px solid #fecaca', 
+              borderRadius: '12px', 
+              padding: '16px', 
+              marginBottom: '16px' 
+            }}>
+              <p style={{ fontSize: '14px', color: '#991b1b', fontWeight: '500', marginBottom: '8px' }}>
+                ⚠️ WARNING: This action will permanently:
+              </p>
+              <ul style={{ fontSize: '14px', color: '#b91c1c', marginLeft: '16px', lineHeight: '1.6' }}>
+                <li>Delete all sales transaction records</li>
+                <li>Reset "Total Stock Out" to 0 items</li>
+                <li>Reset "Gross Total Sales Value" to ₦ 0.00</li>
+                <li>Clear all testing phase sales data</li>
+              </ul>
+              <p style={{ fontSize: '14px', color: '#991b1b', fontWeight: '500', marginTop: '12px', marginBottom: 0 }}>
+                This action CANNOT be undone!
+              </p>
+            </div>
+
+            <div style={{ 
+              backgroundColor: '#eff6ff', 
+              border: '1px solid #bfdbfe', 
+              borderRadius: '8px', 
+              padding: '12px', 
+              marginBottom: '16px' 
+            }}>
+              <p style={{ fontSize: '12px', color: '#1e40af', margin: 0 }}>
+                ℹ️ Note: All data will be archived before deletion for audit purposes.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>
+                Type <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 8px', borderRadius: '4px' }}>RESET</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value.toUpperCase())}
+                placeholder="Type RESET"
+                disabled={isResetting}
+                style={{ 
+                  width: '100%', 
+                  height: '40px', 
+                  borderRadius: '8px', 
+                  padding: '8px 12px', 
+                  border: '1px solid #d1d5db', 
+                  textAlign: 'center', 
+                  fontFamily: 'monospace', 
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setConfirmationText('');
+                }}
+                disabled={isResetting}
+                style={{
+                  padding: '12px 20px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  backgroundColor: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetSales}
+                disabled={isResetting || confirmationText !== 'RESET'}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: confirmationText === 'RESET' && !isResetting ? '#dc2626' : '#fca5a5',
+                  color: 'white',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: confirmationText === 'RESET' && !isResetting ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isResetting ? (
+                  <>
+                    <div style={{ 
+                      width: '16px', 
+                      height: '16px', 
+                      border: '2px solid white', 
+                      borderTop: '2px solid transparent', 
+                      borderRadius: '50%', 
+                      animation: 'spin 1s linear infinite' 
+                    }}></div>
+                    Resetting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 style={{ width: '16px', height: '16px' }} />
+                    Reset All Sales Data
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
