@@ -64,8 +64,8 @@ const deductInventory = async (productId: string, quantityToDeduct: number) => {
     console.log('Product ID:', productId);
     console.log('Quantity to deduct:', quantityToDeduct);
     
-    // First, find the inventory item ID for this product
-    const inventoryResponse = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
+    // FIXED: Use environment variable instead of hardcoded URL
+    const inventoryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory`, {
       headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY! }
     });
     
@@ -83,8 +83,8 @@ const deductInventory = async (productId: string, quantityToDeduct: number) => {
     // Calculate new quantity
     const newQuantity = inventoryItem.quantity - quantityToDeduct;
     
-    // Update the inventory item using its inventory ID
-    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${inventoryItem.id}`, {
+    // FIXED: Use environment variable instead of hardcoded URL
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory/${inventoryItem.id}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
