@@ -14,6 +14,7 @@ import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { RootState } from '../../store/store'; // ADDED: Import RootState type
 import { 
   toggleProductSelection, 
   selectAllProducts,  
@@ -74,7 +75,7 @@ export default function ProductsPage() {
   const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
   const dispatch = useAppDispatch();
-  const { selectedProducts, isSelectionMode } = useAppSelector(state => state.selection);
+  const { selectedProducts, isSelectionMode } = useAppSelector((state: RootState) => state.selection);
   const [showBulkCartModal, setShowBulkCartModal] = useState(false);
 
   // Hooks
