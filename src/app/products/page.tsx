@@ -240,21 +240,26 @@ const handleBulkAddToCart = useCallback(async (items: Array<{
   price: number;
   quantity: number;
 }>) => {
+  let successCount = 0;
+  
   for (const item of items) {
-    // Find the full product from your products array
-const fullProduct = localProducts.find(p => p.id === item.product.id);
-if (!fullProduct) {
-  showToast(`Product ${item.product.name} not found`, 'error');
-  return;
-}
-const success = cart.addToCart(fullProduct, item.price, item.quantity);
+    const fullProduct = localProducts.find(p => p.id === item.product.id);
+    if (!fullProduct) {
+      showToast(`Product ${item.product.name} not found`, 'error');
+      continue;  // ✅ CHANGED FROM return
+    }
+    const success = cart.addToCart(fullProduct, item.price, item.quantity);
     if (!success) {
       showToast(`Failed to add ${item.product.name} to cart`, 'error');
-      return;
+      continue;  // ✅ CHANGED FROM return
     }
+    successCount++;
   }
-  showToast(`Successfully added ${items.length} products to cart!`, 'success');
-}, [cart]);
+  
+  if (successCount > 0) {
+    showToast(`Successfully added ${successCount} products to cart!`, 'success');
+  }
+}, [cart, localProducts]);  // ✅ ADDED localProducts to dependencies
 
 const handleCompleteSale = useCallback(async () => {
   console.log('Cart items being sent:', JSON.stringify(cart.cartItems, null, 2));
