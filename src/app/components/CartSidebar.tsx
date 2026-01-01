@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
@@ -212,40 +213,39 @@ export default function CartSidebar({
                   flexShrink: 0,
                   width: '44px',
                   height: '44px',
+                  position: 'relative',
                 }}
               >
                 {item.image && item.image.trim() !== '' ? (
-  <img
-    src={item.image}
-    alt={item.name}
-    style={{
-      objectFit: 'contain',
-      borderRadius: '4px',
-      background: '#F9FAFB',
-      width: '44px',
-      height: '44px',
-      display: 'block',
-    }}
-    onError={(e) => {
-      console.error('Image failed to load:', e.currentTarget.src);
-      e.currentTarget.style.display = 'none';
-    }}
-  />
-) : (
-  <div style={{
-    width: '44px',
-    height: '44px',
-    backgroundColor: '#E5E7EB',
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9CA3AF',
-    fontSize: '10px'
-  }}>
-    No Image
-  </div>
-)}
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    sizes="44px"
+                    style={{
+                      objectFit: 'contain',
+                      borderRadius: '4px',
+                    }}
+                    onError={(e) => {
+                      console.error('Image failed to load:', e.currentTarget.src);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    backgroundColor: '#E5E7EB',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9CA3AF',
+                    fontSize: '10px'
+                  }}>
+                    No Image
+                  </div>
+                )}
               </div>
 
               {/* Product Details */}
