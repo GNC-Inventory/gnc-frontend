@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
 // Add SerialPort type declaration
@@ -48,7 +47,6 @@ interface ReceiptModalProps {
 }
 
 export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
-  const [closeHover, setCloseHover] = useState(false);
   const [printHover, setPrintHover] = useState(false);
   const [closeBtnHover, setCloseBtnHover] = useState(false);
 
