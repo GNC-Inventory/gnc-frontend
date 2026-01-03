@@ -22,7 +22,6 @@ import {
   type SelectedProduct 
 } from '../../store/selectionSlice';
 import BulkCartModal from '../components/BulkCartModal';
-import Image from 'next/image';
 
 interface CartItem {
   id: string;
@@ -698,6 +697,7 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
       console.error('Image failed to load:', e.currentTarget.src);
       e.currentTarget.style.display = 'none';
     }}
+    // eslint-disable-next-line @next/next/no-img-element
   />
 ) : (
   <div style={{
