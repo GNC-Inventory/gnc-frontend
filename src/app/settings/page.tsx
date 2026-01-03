@@ -84,9 +84,9 @@ export default function SettingsPage() {
       } else {
         showToast(data.error?.message || 'Failed to change password', 'error');
       }
-    } catch (error) {
-      showToast('Failed to change password', 'error');
-    } finally {
+    } catch {
+  showToast('Failed to change password', 'error');
+} finally {
       setIsLoading(false);
     }
   };
@@ -121,9 +121,10 @@ export default function SettingsPage() {
       } else {
         throw new Error(result.error || 'Failed to reset sales data');
       }
-    } catch (error: any) {
-      showToast(`Failed to reset sales data: ${error.message}`, 'error');
-    } finally {
+    } catch (error) {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  showToast(`Failed to reset sales data: ${errorMessage}`, 'error');
+} finally {
       setIsResetting(false);
     }
   };
@@ -346,8 +347,8 @@ export default function SettingsPage() {
               </p>
               <ul style={{ fontSize: '14px', color: '#b91c1c', marginLeft: '16px', lineHeight: '1.6' }}>
                 <li>Delete all sales transaction records</li>
-                <li>Reset "Total Stock Out" to 0 items</li>
-                <li>Reset "Gross Total Sales Value" to ₦ 0.00</li>
+                <li>Reset &quot;Total Stock Out&quot; to 0 items</li>
+                <li>Reset &quot;Gross Total Sales Value&quot; to ₦ 0.00</li>
                 <li>Clear all testing phase sales data</li>
               </ul>
               <p style={{ fontSize: '14px', color: '#991b1b', fontWeight: '500', marginTop: '12px', marginBottom: 0 }}>
