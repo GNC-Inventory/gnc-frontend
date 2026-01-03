@@ -267,8 +267,8 @@ export default function SettingsPage() {
                       <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', margin: 0 }}>Reset Sales Data</h3>
                     </div>
                     <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                      This will permanently delete all sales transaction records and reset "Stock Out" and "Gross Total Sales Value" to zero.
-                    </p>
+  This will permanently delete all sales transaction records and reset &quot;Stock Out&quot; and &quot;Gross Total Sales Value&quot; to zero.
+</p>
                     <p style={{ fontSize: '12px', color: '#dc2626', fontWeight: '500', margin: 0 }}>
                       ⚠️ This action cannot be undone. Use only for clearing testing data.
                     </p>
