@@ -425,6 +425,7 @@ export default function CategoryPage() {
       console.error('Image failed to load:', e.currentTarget.src);
       e.currentTarget.style.display = 'none';
     }}
+    // eslint-disable-next-line @next/next/no-img-element
   />
 ) : (
   <div style={{
