@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Printer, Check, Usb, Globe, RefreshCw } from 'lucide-react';
 
 // Add SerialPort type declarations at the very top
@@ -122,7 +122,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
   };
 
   // Fetch all available printers
-  const fetchPrinters = async () => {
+  const fetchPrinters = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -162,7 +162,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
     } finally {
       setLoading(false);
     }
-  };
+  }, [onPrinterSelect]);
 
   // Handle connecting to new USB printer
   const connectNewUSBPrinter = async () => {
@@ -228,7 +228,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
 
   useEffect(() => {
     fetchPrinters();
-  }, []);
+  }, [fetchPrinters]);
 
   const handlePrinterSelect = (printerId: string) => {
     if (printerId === 'usb-new') {
@@ -395,7 +395,7 @@ export default function PrinterSelection({ onPrinterSelect, onPrint, onCancel }:
             Cancel
           </button>
           <button
-          onClick={() => onPrint(printers.find(p => p.id === selectedPrinter))}
+            onClick={() => onPrint(printers.find(p => p.id === selectedPrinter))}
             disabled={!selectedPrinter || loading || scanningUSB || selectedPrinter === 'usb-new'}
             className={`
               flex-1 px-4 py-2 rounded-lg font-medium transition-colors
