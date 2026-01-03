@@ -259,15 +259,15 @@ const handleAddItem = async () => {
     src={product.image}
     alt={product.name}
     style={{
-      width: '250px',
-      height: '250px',
-      objectFit: 'contain',
-      maxHeight: '100%'
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
     }}
     onError={(e) => {
       console.error('Image failed to load:', e.currentTarget.src);
       e.currentTarget.style.display = 'none';
     }}
+    // eslint-disable-next-line @next/next/no-img-element
   />
 ) : (
   <div style={{
