@@ -28,6 +28,28 @@ export default function LoginPage() {
     setError('');
     
     try {
+      // MOCK LOGIN - Accept any credentials
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock user data
+      const mockToken = 'mock-jwt-token-' + Date.now();
+      const mockUser = {
+        id: '1',
+        email: email.trim(),
+        name: email.split('@')[0], // Use email prefix as name
+        role: 'admin',
+        forcePasswordChange: false
+      };
+
+      // Store auth data
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+
+      // Redirect to dashboard
+      router.push('/dashboard');
+
+      /* REAL API CALL - Uncomment when backend is ready
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -50,18 +72,17 @@ export default function LoginPage() {
 
         // Check if user needs to change password (first login)
         if (user.forcePasswordChange) {
-          // Redirect to password change page
           router.push('/change-password');
         } else {
-          // Normal login - go to dashboard
           router.push('/dashboard');
         }
       } else {
         setError(data.error?.message || 'Login failed. Please check your credentials.');
       }
+      */
     } catch (error) {
       console.error('Login error:', error);
-      setError('Network error. Please check your connection and try again.');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
