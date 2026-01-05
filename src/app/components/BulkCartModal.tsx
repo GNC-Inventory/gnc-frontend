@@ -66,7 +66,7 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
     }, 0);
   };
 
-  const handleAddAllToCart = async () => {
+  const handleAddAllToCart = () => {
     if (selectedProductsArray.length === 0) {
       showToast('No products selected', 'error');
       return;
@@ -101,14 +101,11 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
         quantity: getProductPricing(product.id).quantity
       }));
 
-      await onAddToCart(items);
+      onAddToCart(items); // Parent handles success/failure and modal closing
       dispatch(clearAllSelections());
-      showToast(`Successfully added ${items.length} products to cart!`, 'success');
-      onClose();
     } catch (error) {
       console.error('Error adding products to cart:', error);
       showToast('Failed to add products to cart', 'error');
-    } finally {
       setIsProcessing(false);
     }
   };
