@@ -225,7 +225,7 @@ const addSelectedToCart = useCallback(() => {
   setShowBulkCartModal(true);
 }, []);
 
-const handleBulkAddToCart = useCallback(async (items: Array<{
+const handleBulkAddToCart = useCallback((items: Array<{
   product: {
     id: string;
     name: string;
@@ -240,25 +240,38 @@ const handleBulkAddToCart = useCallback(async (items: Array<{
   quantity: number;
 }>) => {
   let successCount = 0;
+  const failedProducts: string[] = [];
   
+  // Try to add each product
   for (const item of items) {
     const fullProduct = localProducts.find(p => p.id === item.product.id);
     if (!fullProduct) {
-      showToast(`Product ${item.product.name} not found`, 'error');
-      continue;  // ✅ CHANGED FROM return
+      failedProducts.push(item.product.name);
+      continue;
     }
+    
     const success = cart.addToCart(fullProduct, item.price, item.quantity);
     if (!success) {
-      showToast(`Failed to add ${item.product.name} to cart`, 'error');
-      continue;  // ✅ CHANGED FROM return
+      failedProducts.push(item.product.name);
+      continue;
     }
     successCount++;
   }
   
-  if (successCount > 0) {
-    showToast(`Successfully added ${successCount} products to cart!`, 'success');
+  // Show detailed feedback
+  if (failedProducts.length > 0) {
+    showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
   }
-}, [cart, localProducts]);  // ✅ ADDED localProducts to dependencies
+  
+  if (successCount === 0) {
+    showToast('No products were added to cart', 'error');
+    return; // Don't close modal if nothing was added
+  }
+  
+  // Success - close modal and show success message
+  setShowBulkCartModal(false);
+  showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
+}, [cart, localProducts]);
 
 const handleCompleteSale = useCallback(async () => {
   console.log('Cart items being sent:', JSON.stringify(cart.cartItems, null, 2));
