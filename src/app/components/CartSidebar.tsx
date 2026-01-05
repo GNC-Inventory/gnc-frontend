@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
   id: string;
   name: string;
-  make?: string;        // Add this
-  model?: string;       // Add this
-  type?: string;        // Add this
-  capacity?: string;    // Add this
-  description?: string; // Add this
+  make?: string;
+  model?: string;
+  type?: string;
+  capacity?: string;
+  description?: string;
   image: string;
   price: number;
   quantity: number;
@@ -99,8 +98,6 @@ export default function CartSidebar({
           <button
             onClick={onCancel}
             style={{
-              // Tailwind text-blue-600 + hover:text-blue-700 were present,
-              // but your inline color already forces this:
               fontFamily: 'var(--font-inter), Inter, sans-serif',
               fontWeight: 500,
               fontSize: '12px',
@@ -139,7 +136,7 @@ export default function CartSidebar({
           maxHeight: '400px',
           display: 'flex',
           flexDirection: 'column',
-          rowGap: '16px', // replaces space-y-4
+          rowGap: '16px',
         }}
       >
         {cartItems.map((item) => (
@@ -160,7 +157,7 @@ export default function CartSidebar({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                columnGap: '12px', // replaces space-x-3
+                columnGap: '12px',
                 flex: 1,
                 minWidth: 0,
               }}
@@ -171,7 +168,7 @@ export default function CartSidebar({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid #D1D5DB', // gray-300
+                  border: '1px solid #D1D5DB',
                   borderRadius: '4px',
                   width: '24px',
                   height: '20px',
@@ -198,7 +195,6 @@ export default function CartSidebar({
               {/* Multiplication Sign */}
               <span
                 style={{
-                  // text-gray-400
                   color: '#9CA3AF',
                   fontFamily: 'var(--font-inter), Inter, sans-serif',
                   fontSize: '12px',
@@ -217,12 +213,13 @@ export default function CartSidebar({
                 }}
               >
                 {item.image && item.image.trim() !== '' ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={item.image}
                     alt={item.name}
-                    fill
-                    sizes="44px"
                     style={{
+                      width: '44px',
+                      height: '44px',
                       objectFit: 'contain',
                       borderRadius: '4px',
                     }}
@@ -252,7 +249,6 @@ export default function CartSidebar({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3
                   style={{
-                    // truncate + mb-1
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -282,10 +278,10 @@ export default function CartSidebar({
                 setDeleteHover((prev) => ({ ...prev, [item.id]: false }))
               }
               style={{
-                padding: '4px', // p-1
-                color: deleteHover[item.id] ? '#B91C1C' : '#EF4444', // hover:text-red-700 : text-red-500
+                padding: '4px',
+                color: deleteHover[item.id] ? '#B91C1C' : '#EF4444',
                 transition: 'color 150ms ease',
-                marginLeft: '8px', // ml-2
+                marginLeft: '8px',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -342,7 +338,7 @@ export default function CartSidebar({
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '12px',
-            opacity: completeHover ? 0.9 : 1, // hover:opacity-90
+            opacity: completeHover ? 0.9 : 1,
             transition: 'opacity 150ms ease',
             border: 'none',
             cursor: 'pointer',
@@ -374,7 +370,7 @@ export default function CartSidebar({
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            opacity: cancelHover ? 0.8 : 1, // hover:opacity-80
+            opacity: cancelHover ? 0.8 : 1,
             transition: 'opacity 150ms ease',
           }}
         >
