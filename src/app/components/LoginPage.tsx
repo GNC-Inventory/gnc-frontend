@@ -33,11 +33,16 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Mock user data
+      const emailPrefix = email.split('@')[0];
+      const nameParts = emailPrefix.split(/[._-]/); // Split by dot, underscore, or dash
+      
       const mockToken = 'mock-jwt-token-' + Date.now();
       const mockUser = {
         id: '1',
         email: email.trim(),
-        name: email.split('@')[0], // Use email prefix as name
+        name: emailPrefix,
+        firstName: nameParts[0] || emailPrefix,
+        lastName: nameParts[1] || 'User',
         role: 'admin',
         forcePasswordChange: false
       };
