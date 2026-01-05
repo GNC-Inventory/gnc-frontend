@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MagnifyingGlassIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useRouter, useParams } from 'next/navigation';
 import { useInventory, type Product } from '../../../../hooks/useInventory';
+import { useCart } from '../../../../hooks/useCart';
 import ProductDetailModal from '../../../components/ProductDetailModal';
 import EmptyState from '../../../components/EmptyState';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -20,6 +21,8 @@ export default function CategoryPage() {
   const router = useRouter();
   const params = useParams();
   const { products, loading, error, refetch } = useInventory();
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const cart = useCart(localProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,12 +37,17 @@ export default function CategoryPage() {
   const categoryName = typeof params.category === 'string' ? decodeURIComponent(params.category) : '';
   const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
 
+  // Sync products
+  useEffect(() => {
+    setLocalProducts(products);
+  }, [products]);
+
   // Filter products by category
   const categoryProducts = useMemo(() => {
-    return products.filter(product => 
+    return localProducts.filter(product => 
       product.category.toLowerCase() === categoryName.toLowerCase()
     );
-  }, [products, categoryName]);
+  }, [localProducts, categoryName]);
 
   // Apply search and filters
   const filteredProducts = useMemo(() => {
@@ -81,10 +89,18 @@ export default function CategoryPage() {
   const handleSelectProduct = (productId: string) => {
     if (isSelectionMode) return; // Prevent opening modal in selection mode
     
-    const product = products.find(p => p.id === productId);
+    const product = localProducts.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
       setSelectedProduct(product);
       setIsModalOpen(true);
+    }
+  };
+
+  const handleAddToCart = (product: Product, price: number, quantity: number) => {
+    const success = cart.addToCart(product, price, quantity);
+    if (success) {
+      setIsModalOpen(false);
+      setSelectedProduct(null);
     }
   };
 
@@ -127,13 +143,51 @@ export default function CategoryPage() {
   };
 
   const handleBulkAddToCart = (items: Array<{
-    product: { id: string; name: string; image: string; category: string; basePrice: number; stockLeft: number; make?: string; model?: string; };
+    product: { 
+      id: string; 
+      name: string; 
+      image: string; 
+      category: string; 
+      basePrice: number; 
+      stockLeft: number; 
+      make?: string; 
+      model?: string; 
+    };
     price: number;
     quantity: number;
   }>) => {
-    // This would integrate with your cart system
-    showToast(`Added ${items.length} products to cart!`, 'success');
+    let successCount = 0;
+    const failedProducts: string[] = [];
+    
+    // Try to add each product
+    for (const item of items) {
+      const fullProduct = localProducts.find(p => p.id === item.product.id);
+      if (!fullProduct) {
+        failedProducts.push(item.product.name);
+        continue;
+      }
+      
+      const success = cart.addToCart(fullProduct, item.price, item.quantity);
+      if (!success) {
+        failedProducts.push(item.product.name);
+        continue;
+      }
+      successCount++;
+    }
+    
+    // Show detailed feedback
+    if (failedProducts.length > 0) {
+      showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
+    }
+    
+    if (successCount === 0) {
+      showToast('No products were added to cart', 'error');
+      return; // Don't close modal if nothing was added
+    }
+    
+    // Success - close modal and show success message
     setShowBulkCartModal(false);
+    showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
   };
 
   if (loading) {
@@ -509,7 +563,7 @@ export default function CategoryPage() {
         product={selectedProduct} 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onAddToCart={() => {}} // You can implement this if needed
+        onAddToCart={handleAddToCart}
       />
 
       {/* Bulk Cart Modal */}
