@@ -30,57 +30,80 @@ export const useCart = (products: Product[]): UseCartReturn => {
   }, [cartItems]);
 
 // Function to restore inventory when items are removed
+// Function to restore inventory when items are removed
 const restoreInventory = async (productId: string, quantity: number) => {
-  try {
-    // ADD DEBUGGING LOGS HERE
-    console.log('Environment variables check:');
-    console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
-    console.log('NEXT_PUBLIC_API_KEY:', process.env.NEXT_PUBLIC_API_KEY ? 'SET' : 'NOT SET');
-    console.log('Making restore inventory call for productId:', productId, 'quantity:', quantity);
+  console.log('🔄 === RESTORE INVENTORY DEBUG START ===');
+  console.log('🔄 Product ID:', productId);
+  console.log('🔄 Quantity to restore:', quantity);
+  console.log('🔄 Environment Check:');
+  console.log('   - BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+  console.log('   - API_KEY exists?', process.env.NEXT_PUBLIC_API_KEY ? '✅ YES' : '❌ NO');
+  console.log('   - API_KEY value:', process.env.NEXT_PUBLIC_API_KEY); // WARNING: Remove this after debugging!
 
-    // Fix: Use the same endpoint format as deductInventory
-    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${productId}`, {
+  try {
+    const requestBody = {
+      productId: productId,
+      action: 'restore',  // Changed to match backend expectation
+      quantity: quantity  // Positive number for restore
+    };
+
+    const requestUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory`;
+    
+    console.log('🔄 Request Details:');
+    console.log('   - URL:', requestUrl);
+    console.log('   - Method: PUT');
+    console.log('   - Body:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch(requestUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
-      body: JSON.stringify({
-        quantity: -quantity  // Use negative quantity to restore/add back
-      })
+      body: JSON.stringify(requestBody)
     });
 
-    // ADD MORE DEBUGGING LOGS HERE
-    console.log('Response status:', response.status);
-    console.log('Response URL:', response.url);
+    console.log('🔄 Response Status:', response.status);
+    console.log('🔄 Response OK?', response.ok);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error Details:', errorText);
-      console.error('Request headers sent:', {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.NEXT_PUBLIC_API_KEY
-      });
-      console.error('Request body sent:', JSON.stringify({
-        quantity: -quantity
-      }));
-    }
-
-    const result = await response.json();
-    console.log('API Response:', result);
+    const responseText = await response.text();
+    console.log('🔄 Raw Response:', responseText);
     
-    if (!result.success) {
-      console.error('Failed to restore inventory:', result.error);
-      // Don't throw error here as cart removal should still proceed
-      toast.warning('Item removed from cart, but inventory restoration failed');
+    let result;
+    try {
+      result = JSON.parse(responseText);
+      console.log('🔄 Parsed Response:', JSON.stringify(result, null, 2));
+    } catch (parseError) {
+      console.error('❌ Failed to parse response as JSON:', parseError);
+      toast.error('Invalid response from server when restoring inventory');
       return false;
     }
 
+    if (!response.ok) {
+      console.error('❌ API returned error status:', response.status);
+      console.error('❌ Error details:', result);
+      toast.error(`Failed to restore inventory: ${result.error || 'Unknown error'}`);
+      return false;
+    }
+    
+    if (!result.success) {
+      console.error('❌ API returned success=false:', result.error);
+      toast.error(`Failed to restore inventory: ${result.error}`);
+      return false;
+    }
+
+    console.log('✅ Inventory restored successfully!');
+    console.log('🔄 === RESTORE INVENTORY DEBUG END ===');
+    toast.success(`Restored ${quantity} unit(s) to inventory`);
     return true;
+
   } catch (error) {
-    console.error('Error occurred:', error);
-    console.error('Error restoring inventory:', error);
-    toast.warning('Item removed from cart, but inventory restoration failed');
+    console.error('❌ === RESTORE INVENTORY ERROR ===');
+    console.error('Error type:', error instanceof Error ? error.name : typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Full error:', error);
+    console.error('❌ === ERROR END ===');
+    toast.error('Network error when restoring inventory');
     return false;
   }
 };
