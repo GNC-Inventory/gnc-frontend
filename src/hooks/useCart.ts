@@ -228,9 +228,26 @@ const clearCart = useCallback(async (shouldRestoreInventory: boolean = true): Pr
   console.log('shouldRestoreInventory:', shouldRestoreInventory);
   console.log('cartItems to process:', cartItems);
   
-  if (shouldRestoreInventory) {
+  if (shouldRestoreInventory && cartItems.length > 0) {
     console.log('RESTORING inventory for', cartItems.length, 'items');
-    // ... restore logic
+    
+    // Restore inventory for each item
+    const restorePromises = cartItems.map(item => 
+      restoreInventory(item.id, item.quantity)
+    );
+    
+    const results = await Promise.all(restorePromises);
+    const successCount = results.filter(r => r === true).length;
+    
+    console.log(`Restored ${successCount}/${cartItems.length} items successfully`);
+    
+    if (successCount === cartItems.length) {
+      toast.success('Cart cleared and inventory restored');
+    } else if (successCount > 0) {
+      toast.warning(`Cart cleared. ${successCount}/${cartItems.length} items restored to inventory`);
+    } else {
+      toast.warning('Cart cleared but inventory restoration failed');
+    }
   } else {
     console.log('NOT restoring inventory (sale completed)');
     toast.success('Cart cleared');
