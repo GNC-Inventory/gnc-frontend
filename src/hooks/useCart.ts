@@ -35,38 +35,75 @@ const restoreInventory = async (productId: string, quantity: number) => {
   console.log('🔄 === RESTORE INVENTORY DEBUG START ===');
   console.log('🔄 Product ID:', productId);
   console.log('🔄 Quantity to restore:', quantity);
-  console.log('🔄 Environment Check:');
-  console.log('   - BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
-  console.log('   - API_KEY exists?', process.env.NEXT_PUBLIC_API_KEY ? '✅ YES' : '❌ NO');
-  console.log('   - API_KEY value:', process.env.NEXT_PUBLIC_API_KEY); // WARNING: Remove this after debugging!
 
   try {
-    const requestBody = {
-      productId: productId,
-      action: 'restore',  // Changed to match backend expectation
-      quantity: quantity  // Positive number for restore
-    };
-
-    const requestUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory`;
-    
-    console.log('🔄 Request Details:');
-    console.log('   - URL:', requestUrl);
-    console.log('   - Method: PUT');
-    console.log('   - Body:', JSON.stringify(requestBody, null, 2));
-
-    const response = await fetch(requestUrl, {
-      method: 'PUT',
+    // Step 1: Get current product to find its inventory item ID
+    console.log('🔄 Step 1: Fetching current product data...');
+    const productResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/products`, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-      },
-      body: JSON.stringify(requestBody)
+      }
     });
 
-    console.log('🔄 Response Status:', response.status);
-    console.log('🔄 Response OK?', response.ok);
+    if (!productResponse.ok) {
+      throw new Error('Failed to fetch products');
+    }
+
+    const productsResult = await productResponse.json();
+    const product = productsResult.data.find((p: any) => p.id === productId);
     
-    const responseText = await response.text();
+    if (!product) {
+      throw new Error(`Product ${productId} not found`);
+    }
+
+    const currentStock = product.stockLeft;
+    const newStock = currentStock + quantity;
+    
+    console.log('🔄 Current stock:', currentStock);
+    console.log('🔄 Restoring:', quantity);
+    console.log('🔄 New stock will be:', newStock);
+
+    // Step 2: Update inventory with new quantity
+    // The endpoint expects inventory item ID, not product ID
+    // We need to find the inventory item ID from the product
+    const inventoryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+      }
+    });
+
+    const inventoryResult = await inventoryResponse.json();
+    const inventoryItem = inventoryResult.data.find((item: any) => 
+      item.product.id.toString() === productId
+    );
+
+    if (!inventoryItem) {
+      throw new Error(`Inventory item for product ${productId} not found`);
+    }
+
+    console.log('🔄 Found inventory item ID:', inventoryItem.id);
+    console.log('🔄 Updating inventory...');
+
+    // Step 3: Update the inventory item with new quantity
+    const updateResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory/${inventoryItem.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+        },
+        body: JSON.stringify({
+          quantity: newStock  // Send the new total quantity
+        })
+      }
+    );
+
+    console.log('🔄 Response Status:', updateResponse.status);
+    
+    const responseText = await updateResponse.text();
     console.log('🔄 Raw Response:', responseText);
     
     let result;
@@ -74,34 +111,26 @@ const restoreInventory = async (productId: string, quantity: number) => {
       result = JSON.parse(responseText);
       console.log('🔄 Parsed Response:', JSON.stringify(result, null, 2));
     } catch (parseError) {
-      console.error('❌ Failed to parse response as JSON:', parseError);
-      toast.error('Invalid response from server when restoring inventory');
+      console.error('❌ Failed to parse response as JSON');
+      toast.error('Invalid response from server');
       return false;
     }
 
-    if (!response.ok) {
-      console.error('❌ API returned error status:', response.status);
-      console.error('❌ Error details:', result);
-      toast.error(`Failed to restore inventory: ${result.error || 'Unknown error'}`);
-      return false;
-    }
-    
-    if (!result.success) {
-      console.error('❌ API returned success=false:', result.error);
-      toast.error(`Failed to restore inventory: ${result.error}`);
+    if (!updateResponse.ok || !result.success) {
+      console.error('❌ Restore failed:', result.error);
+      toast.error(`Failed to restore inventory: ${result.error?.message || 'Unknown error'}`);
       return false;
     }
 
     console.log('✅ Inventory restored successfully!');
+    console.log('✅ New stock level:', newStock);
     console.log('🔄 === RESTORE INVENTORY DEBUG END ===');
     toast.success(`Restored ${quantity} unit(s) to inventory`);
     return true;
 
   } catch (error) {
     console.error('❌ === RESTORE INVENTORY ERROR ===');
-    console.error('Error type:', error instanceof Error ? error.name : typeof error);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    console.error('Full error:', error);
+    console.error('Error:', error);
     console.error('❌ === ERROR END ===');
     toast.error('Network error when restoring inventory');
     return false;
