@@ -353,8 +353,11 @@ const handleBackToCart = useCallback(() => {
   if (completedTransaction) {
     cart.clearCart(false);
     setCompletedTransaction(null);
+    setShowCheckout(false);
+  } else {
+    setShowCheckout(false);
+    setShowCart(true); // ← ADD THIS LINE
   }
-  setShowCheckout(false);
 }, [completedTransaction, cart]);
 
 const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
