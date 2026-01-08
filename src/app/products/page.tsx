@@ -90,7 +90,10 @@ export default function ProductsPage() {
   const pendingSales = usePendingSales();
 
   // Computed - use localProducts instead of products for real-time updates
-  const showCart = useMemo(() => cart.cartItems.length > 0 && !showCheckout, [cart.cartItems.length, showCheckout]);
+  const showCart = useMemo(() => 
+  cart.cartItems.length > 0 && !showCheckout, 
+  [cart.cartItems, showCheckout]  // ← Change this line
+);
   const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
   const isCompact = showCart || showCheckout;
 
