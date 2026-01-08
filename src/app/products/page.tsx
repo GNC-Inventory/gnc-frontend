@@ -341,13 +341,14 @@ const handleCancelSale = useCallback(async () => {
 
 const handleBackToCart = useCallback(async () => {
   if (completedTransaction) {
-    await cart.clearCart(false); // Don't restore - transaction completed
+    // Transaction was completed - clear cart without restoring
+    await cart.clearCart(false);
     setCompletedTransaction(null);
     setShowCheckout(false);
   } else {
-    // User is going back before completing - restore inventory
-    await cart.clearCart(true); // ← ADD THIS: Restore inventory
+    // Just going back to cart - don't clear anything
     setShowCheckout(false);
+    // Cart sidebar will automatically show because showCart depends on cart.cartItems.length
   }
 }, [completedTransaction, cart]);
 
