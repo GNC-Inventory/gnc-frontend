@@ -345,6 +345,8 @@ const handleBackToCart = useCallback(async () => {
     setCompletedTransaction(null);
     setShowCheckout(false);
   } else {
+    // User is going back before completing - restore inventory
+    await cart.clearCart(true); // ← ADD THIS: Restore inventory
     setShowCheckout(false);
   }
 }, [completedTransaction, cart]);
