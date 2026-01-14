@@ -47,39 +47,46 @@ export default function ProductDetailModal({
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '' || value === '0') {
-      setQuantity(0);
-    } else {
-      const numValue = parseInt(value);
-      if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
-        setQuantity(numValue);
-      }
+  const value = e.target.value;
+  if (value === '' || value === '0') {
+    setQuantity(0);
+  } else {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
+      setQuantity(numValue);
     }
-  };
+  }
+};
 
-  const handleAddItem = async () => {
-    if (!product || !onAddToCart) return;
-    if (quantity > product.stockLeft) {
-      toast.error(`Only ${product.stockLeft} items available in stock`);
-      return;
-    }
-    setIsProcessing(true);
+// ❌ REMOVED: deductInventory function - inventory will be deducted at checkout instead
+// This prevents inventory from being stuck when customers abandon their carts
 
-    try {
-      // ✅ CHANGED: Just add to cart without deducting inventory
-      // Inventory will be validated and deducted when sale is completed at checkout
-      onAddToCart(product, 0, quantity); // Price will be handled in checkout
-      
-      toast.success(`${product.name} (${quantity}) added to cart`);
-      setQuantity(1);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to add item: ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+const handleAddItem = () => {
+  if (!product || !onAddToCart) return;
+  if (quantity > product.stockLeft) {
+    toast.error(`Only ${product.stockLeft} items available in stock`);
+    return;
+  }
+  setIsProcessing(true);
+
+  try {
+    // ✅ CHANGED: Just add to cart without deducting inventory
+    // Inventory will be validated and deducted when sale is completed at checkout
+    onAddToCart(product, 0, quantity); // Price will be handled in checkout
+    
+    // Note: addToCart in useCart handles validation and shows error toasts
+    // We show success and close modal assuming it worked
+    // If validation failed, user will see error toast from addToCart
+    toast.success(`${product.name} (${quantity}) added to cart`);
+    setQuantity(1);
+    onClose(); // Close modal after adding to cart
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    toast.error(`Failed to add item: ${errorMessage}`);
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const isAddButtonActive =
   product &&
@@ -188,15 +195,15 @@ export default function ProductDetailModal({
     src={product.image}
     alt={product.name}
     style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain'
+      width: '250px',
+      height: '250px',
+      objectFit: 'contain',
+      maxHeight: '100%'
     }}
     onError={(e) => {
       console.error('Image failed to load:', e.currentTarget.src);
       e.currentTarget.style.display = 'none';
     }}
-    // eslint-disable-next-line @next/next/no-img-element
   />
 ) : (
   <div style={{

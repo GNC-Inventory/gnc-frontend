@@ -36,6 +36,14 @@ export const useCart = (products: Product[]): UseCartReturn => {
     // ✅ CHANGED: Removed inventory deduction, now just adds to cart
     // Stock validation is client-side only - backend will validate at checkout
     const existingItem = cartItems.find(item => item.id === product.id);
+    const currentCartQuantity = existingItem ? existingItem.quantity : 0;
+    const totalRequestedQuantity = currentCartQuantity + quantity;
+
+    // Validate sufficient stock
+    if (totalRequestedQuantity > product.stockLeft) {
+      toast.error(`Only ${product.stockLeft} items available in stock`);
+      return false;
+    }
 
     setCartItems(current => {
 if (existingItem) {
