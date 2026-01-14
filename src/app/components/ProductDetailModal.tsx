@@ -47,87 +47,39 @@ export default function ProductDetailModal({
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value;
-  if (value === '' || value === '0') {
-    setQuantity(0);
-  } else {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
-      setQuantity(numValue);
+    const value = e.target.value;
+    if (value === '' || value === '0') {
+      setQuantity(0);
+    } else {
+      const numValue = parseInt(value);
+      if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
+        setQuantity(numValue);
+      }
     }
-  }
-};
+  };
 
-const deductInventory = async (productId: string, quantityToDeduct: number) => {
-  try {
-    console.log('=== DEDUCT INVENTORY DEBUG ===');
-    console.log('Product ID:', productId);
-    console.log('Quantity to deduct:', quantityToDeduct);
-    
-    // First, find the inventory item ID for this product
-    const inventoryResponse = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
-      headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY! }
-    });
-    
-    const inventoryResult = await inventoryResponse.json();
-    if (!inventoryResult.success) {
-      throw new Error('Failed to fetch inventory items');
+  const handleAddItem = async () => {
+    if (!product || !onAddToCart) return;
+    if (quantity > product.stockLeft) {
+      toast.error(`Only ${product.stockLeft} items available in stock`);
+      return;
     }
-    
-    // Find the inventory item for this product
-    const inventoryItem = inventoryResult.data.find((item: { id: number; product: { id: number }; quantity: number }) => item.product.id.toString() === productId);
-    if (!inventoryItem) {
-      throw new Error(`Inventory item not found for product ${productId}`);
+    setIsProcessing(true);
+
+    try {
+      // ✅ CHANGED: Just add to cart without deducting inventory
+      // Inventory will be validated and deducted when sale is completed at checkout
+      onAddToCart(product, 0, quantity); // Price will be handled in checkout
+      
+      toast.success(`${product.name} (${quantity}) added to cart`);
+      setQuantity(1);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to add item: ${errorMessage}`);
+    } finally {
+      setIsProcessing(false);
     }
-    
-    // Calculate new quantity
-    const newQuantity = inventoryItem.quantity - quantityToDeduct;
-    
-    // Update the inventory item using its inventory ID
-    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${inventoryItem.id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-      },
-      body: JSON.stringify({ quantity: newQuantity })
-    });
-
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to update inventory');
-    }
-
-    return { quantity: newQuantity };
-  } catch (error) {
-    console.error('=== DEDUCT INVENTORY ERROR ===');
-    console.error('Error:', error);
-    throw error;
-  }
-};
-
-const handleAddItem = async () => {
-  if (!product || !onAddToCart) return;
-  if (quantity > product.stockLeft) {
-    toast.error(`Only ${product.stockLeft} items available in stock`);
-    return;
-  }
-  setIsProcessing(true);
-
-  try {
-    // ✅ CHANGED: Just add to cart without deducting inventory
-    // Inventory will be validated and deducted when sale is completed at checkout
-    onAddToCart(product, 0, quantity); // Price will be handled in checkout
-    
-    toast.success(`${product.name} (${quantity}) added to cart`);
-    setQuantity(1);
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    toast.error(`Failed to add item: ${errorMessage}`);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
 
   const isAddButtonActive =
   product &&
