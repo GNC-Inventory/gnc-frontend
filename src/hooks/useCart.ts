@@ -33,100 +33,127 @@ export const useCart = (products: Product[]): UseCartReturn => {
 // Inventory will only be deducted when sale is completed at checkout
 
   const addToCart = useCallback((product: Product, price: number, quantity: number = 1): boolean => {
-    // ✅ CHANGED: Removed inventory deduction, now just adds to cart
-    // Stock validation is client-side only - backend will validate at checkout
-    const existingItem = cartItems.find(item => item.id === product.id);
-    const currentCartQuantity = existingItem ? existingItem.quantity : 0;
-    const totalRequestedQuantity = currentCartQuantity + quantity;
+    console.log('=== ADD TO CART CALLED ===');
+    console.log('Product:', product);
+    console.log('Price:', price);
+    console.log('Quantity:', quantity);
+    
+    // Use functional update to get current cart state
+    let validationFailed = false;
+    
+    setCartItems(current => {
+      console.log('Current cart items:', current);
+      
+      const existingItem = current.find(item => item.id === product.id);
+      const currentCartQuantity = existingItem ? existingItem.quantity : 0;
+      const totalRequestedQuantity = currentCartQuantity + quantity;
 
-    // Validate sufficient stock
-    if (totalRequestedQuantity > product.stockLeft) {
-      toast.error(`Only ${product.stockLeft} items available in stock`);
+      console.log('Existing item in cart:', existingItem);
+      console.log('Current cart quantity:', currentCartQuantity);
+      console.log('Total requested:', totalRequestedQuantity);
+      console.log('Stock left:', product.stockLeft);
+
+      // Validate sufficient stock
+      if (totalRequestedQuantity > product.stockLeft) {
+        console.log('❌ VALIDATION FAILED: Insufficient stock');
+        validationFailed = true;
+        toast.error(`Only ${product.stockLeft} items available in stock`);
+        return current; // Return unchanged cart
+      }
+
+      console.log('✅ Validation passed, updating cart...');
+
+      const updated = existingItem
+        ? current.map(item => 
+            item.id === product.id 
+              ? { 
+                  ...item, 
+                  quantity: item.quantity + quantity, 
+                  price,
+                  make: product.make,
+                  model: product.model,
+                  type: product.type,
+                  capacity: product.capacity,
+                  description: product.description
+                }
+              : item
+          )
+        : [...current, {
+            id: product.id,
+            name: product.name,
+            make: product.make,
+            model: product.model,
+            type: product.type,
+            capacity: product.capacity,
+            description: product.description,
+            image: product.image,
+            price,
+            quantity
+          }];
+      
+      console.log('Updated cart:', updated);
+      return updated;
+    });
+
+    if (validationFailed) {
+      console.log('❌ Returning false due to validation failure');
       return false;
     }
 
-    setCartItems(current => {
-if (existingItem) {
-  return current.map(item => 
-    item.id === product.id 
-      ? { 
-          ...item, 
-          quantity: item.quantity + quantity, 
-          price,
-          // Ensure we keep the product details
-          make: product.make,
-          model: product.model,
-          type: product.type,
-          capacity: product.capacity,
-          description: product.description
-        }
-      : item
-        );
-      } else {
-return [...current, {
-  id: product.id,
-  name: product.name,
-  make: product.make,        // Add this
-  model: product.model,      // Add this
-  type: product.type,        // Add this
-  capacity: product.capacity, // Add this
-  description: product.description, // Add this
-  image: product.image,
-  price,
-  quantity
-}];
-      }
-    });
-
+    console.log('✅ Cart updated, returning true');
+    console.log('=== ADD TO CART COMPLETE ===');
     return true;
-  }, [cartItems]);
+  }, []); // ✅ Empty dependency array - use functional updates instead
 
-  const updateQuantity = useCallback(async (id: string, quantity: number): Promise<void> => {
+  const updateQuantity = useCallback((id: string, quantity: number): void => {
     if (quantity <= 0) {
       // ✅ CHANGED: Just remove item, no inventory restoration needed
-      const item = cartItems.find(item => item.id === id);
-      if (item) {
-        setCartItems(current => current.filter(item => item.id !== id));
-        toast.success(`${item.name} removed from cart`);
-      }
+      setCartItems(current => {
+        const item = current.find(item => item.id === id);
+        if (item) {
+          toast.success(`${item.name} removed from cart`);
+        }
+        return current.filter(item => item.id !== id);
+      });
       return;
     }
 
     // ✅ CHANGED: Removed inventory API calls for quantity changes
     // Just update cart state - backend validates at checkout
-    const currentItem = cartItems.find(item => item.id === id);
-    if (!currentItem) return;
-
     setCartItems(current => 
       current.map(item => 
         item.id === id ? { ...item, quantity } : item
       )
     );
-  }, [products, cartItems]);
+  }, []); // ✅ Empty dependency array
 
-  const removeItem = useCallback(async (id: string): Promise<void> => {
-    const item = cartItems.find(item => item.id === id);
-    
-    if (item) {
-      // ✅ CHANGED: No inventory restoration - just remove from cart
-      setCartItems(current => current.filter(item => item.id !== id));
-      toast.success(`${item.name} removed from cart`);
-    }
-  }, [cartItems]);
+  const removeItem = useCallback((id: string): void => {
+    setCartItems(current => {
+      const item = current.find(item => item.id === id);
+      
+      if (item) {
+        toast.success(`${item.name} removed from cart`);
+        return current.filter(item => item.id !== id);
+      }
+      
+      return current;
+    });
+  }, []); // ✅ Empty dependency array
 
 const clearCart = useCallback(async (shouldRestoreInventory: boolean = true): Promise<void> => {
   console.log('=== CLEAR CART DEBUG ===');
   console.log('shouldRestoreInventory:', shouldRestoreInventory);
-  console.log('cartItems to process:', cartItems);
   
-  // ✅ CHANGED: Removed inventory restoration logic since inventory is never deducted on add to cart
-  // Just clear the cart regardless of shouldRestoreInventory flag
+  setCartItems(current => {
+    console.log('cartItems to process:', current);
+    // ✅ CHANGED: Removed inventory restoration logic since inventory is never deducted on add to cart
+    return [];
+  });
   
-  setCartItems([]);
   storage.cart.clear();
   toast.success('Cart cleared');
   console.log('=== CLEAR CART COMPLETE ===');
-}, [cartItems]);
+}, []); // ✅ Empty dependency array
 
   const getTotalAmount = useCallback((): number => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
