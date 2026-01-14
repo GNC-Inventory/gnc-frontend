@@ -62,30 +62,51 @@ export default function ProductDetailModal({
 // This prevents inventory from being stuck when customers abandon their carts
 
 const handleAddItem = () => {
-  if (!product || !onAddToCart) return;
+  console.log('=== HANDLE ADD ITEM CALLED ===');
+  console.log('product:', product);
+  console.log('onAddToCart:', onAddToCart);
+  console.log('quantity:', quantity);
+  
+  if (!product || !onAddToCart) {
+    console.log('❌ Early return: product or onAddToCart is missing');
+    return;
+  }
+  
   if (quantity > product.stockLeft) {
+    console.log('❌ Quantity exceeds stock:', quantity, '>', product.stockLeft);
     toast.error(`Only ${product.stockLeft} items available in stock`);
     return;
   }
+  
+  console.log('✅ Validation passed, setting processing...');
   setIsProcessing(true);
 
   try {
+    console.log('📦 Calling onAddToCart with:', { product, price: 0, quantity });
+    
     // ✅ CHANGED: Just add to cart without deducting inventory
     // Inventory will be validated and deducted when sale is completed at checkout
     onAddToCart(product, 0, quantity); // Price will be handled in checkout
+    
+    console.log('✅ onAddToCart completed');
     
     // Note: addToCart in useCart handles validation and shows error toasts
     // We show success and close modal assuming it worked
     // If validation failed, user will see error toast from addToCart
     toast.success(`${product.name} (${quantity}) added to cart`);
     setQuantity(1);
+    console.log('✅ Closing modal...');
     onClose(); // Close modal after adding to cart
   } catch (error: unknown) {
+    console.error('❌ ERROR in handleAddItem:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     toast.error(`Failed to add item: ${errorMessage}`);
   } finally {
+    console.log('🏁 Setting processing to false');
     setIsProcessing(false);
   }
+  
+  console.log('=== HANDLE ADD ITEM COMPLETE ===');
 };
 
   const isAddButtonActive =
