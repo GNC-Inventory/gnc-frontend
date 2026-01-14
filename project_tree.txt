@@ -1,0 +1,91 @@
+|-- project_tree.txt
+|-- README.md
+|-- public
+|   |-- products
+|   |   |-- fan.png
+|   |   |-- solar-panel.png
+|   |   |-- drying-machine.png
+|   |   |-- air-conditioner.png
+|   |   |-- television.png
+|   |   |-- theatre-system.png
+|   |   |-- washing-machine.png
+|   |   |-- refrigerator.png
+|   |   |-- generator.png
+|   |   |-- solar-inverter.png
+|   |-- glob.jpg
+|   |-- apex-logo.png
+|   |-- logo.png
+|   |-- icons
+|   |   |-- support.png
+|   |   |-- transactions.png
+|   |   |-- exchange.png
+|   |   |-- dashboard.png
+|   |   |-- returns.png
+|   |   |-- settings.png
+|   |   |-- payments.png
+|   |   |-- products.png
+|   |-- bg.png
+|-- .gitignore
+|-- package-lock.json
+|-- package.json
+|-- tsconfig.json
+|-- eslint.config.mjs
+|-- next.config.ts
+|-- src
+|   |-- app
+|   |   |-- settings
+|   |   |   |-- page.tsx
+|   |   |-- products
+|   |   |   |-- category
+|   |   |   |   |-- [category]
+|   |   |   |   |   |-- page.tsx
+|   |   |   |-- layout.tsx
+|   |   |   |-- page.tsx
+|   |   |-- postcss.config.mjs
+|   |   |-- dashboard
+|   |   |   |-- layout.tsx
+|   |   |   |-- page.tsx
+|   |   |-- components
+|   |   |   |-- LoginPage.tsx
+|   |   |   |-- Navbar.tsx
+|   |   |   |-- PendingSalesView.tsx
+|   |   |   |-- PrinterSelection.tsx
+|   |   |   |-- CartSidebar.tsx
+|   |   |   |-- ProductDetailModal.tsx
+|   |   |   |-- CategorySection.tsx
+|   |   |   |-- ReceiptModal.tsx
+|   |   |   |-- CheckoutView.tsx
+|   |   |   |-- ProductCard.tsx
+|   |   |   |-- dashboard
+|   |   |   |   |-- AverageSalesCard.tsx
+|   |   |   |   |-- PendingSale1Card.tsx
+|   |   |   |   |-- ReturnedItemsCard.tsx
+|   |   |   |   |-- SalesCard.tsx
+|   |   |   |   |-- PendingSale2Card.tsx
+|   |   |   |   |-- StatsCard.tsx
+|   |   |   |   |-- AmountReturnedCard.tsx
+|   |   |   |   |-- TransactionsCard.tsx
+|   |   |   |   |-- TargetLeftCard.tsx
+|   |   |   |-- PendingSaleCard.tsx
+|   |   |   |-- Sidebar.tsx
+|   |   |   |-- BulkCartModal.tsx
+|   |   |   |-- EmptyState.tsx
+|   |   |-- transactions
+|   |   |   |-- page.tsx
+|   |   |-- layout.tsx
+|   |   |-- page.tsx
+|   |   |-- globals.css
+|   |   |-- providers.tsx
+|   |-- utils
+|   |   |-- ClientSidePrinter.ts
+|   |   |-- toast.ts
+|   |   |-- storage.ts
+|   |   |-- transactionUtils.ts
+|   |-- hooks
+|   |   |-- usePendingSales.ts
+|   |   |-- useCart.ts
+|   |   |-- useInventory.ts
+|   |-- store
+|   |   |-- selectionSlice.ts
+|   |   |-- hooks.ts
+|   |   |-- store.ts

@@ -64,8 +64,8 @@ const deductInventory = async (productId: string, quantityToDeduct: number) => {
     console.log('Product ID:', productId);
     console.log('Quantity to deduct:', quantityToDeduct);
     
-    // FIXED: Use environment variable instead of hardcoded URL
-    const inventoryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory`, {
+    // First, find the inventory item ID for this product
+    const inventoryResponse = await fetch('https://gnc-inventory-backend.onrender.com/api/admin/inventory', {
       headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY! }
     });
     
@@ -83,8 +83,8 @@ const deductInventory = async (productId: string, quantityToDeduct: number) => {
     // Calculate new quantity
     const newQuantity = inventoryItem.quantity - quantityToDeduct;
     
-    // FIXED: Use environment variable instead of hardcoded URL
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/inventory/${inventoryItem.id}`, {
+    // Update the inventory item using its inventory ID
+    const response = await fetch(`https://gnc-inventory-backend.onrender.com/api/admin/inventory/${inventoryItem.id}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -113,40 +113,17 @@ const handleAddItem = async () => {
     return;
   }
   setIsProcessing(true);
-  toast.info(`Adding ${quantity} item(s) to cart...`);
 
   try {
-    const updatedInventoryItem = await deductInventory(product.id, quantity);
-    
-    // Fix: Handle case where backend returns array instead of single item
-    let newStockLeft;
-    if (Array.isArray(updatedInventoryItem)) {
-      // Find the specific product in the returned array
-      const specificItem = updatedInventoryItem.find(item => item.productId === parseInt(product.id));
-      newStockLeft = specificItem ? specificItem.quantity : product.stockLeft - quantity;
-    } else {
-      // Handle case where single item is returned
-      newStockLeft = updatedInventoryItem.quantity;
-    }
-    
-    const updatedProduct = { ...product, stockLeft: newStockLeft };
-    
-    if (onInventoryUpdate) onInventoryUpdate(product.id, newStockLeft);
-        onAddToCart(updatedProduct, 0, quantity); // Price will be handled in checkout
+    // ✅ CHANGED: Just add to cart without deducting inventory
+    // Inventory will be validated and deducted when sale is completed at checkout
+    onAddToCart(product, 0, quantity); // Price will be handled in checkout
     
     toast.success(`${product.name} (${quantity}) added to cart`);
     setQuantity(1);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    if (errorMessage.includes('insufficient stock')) {
-      const match = errorMessage.match(/only (\d+) available/i);
-      const availableStock = match ? match[1] : 'limited';
-      toast.error(`Insufficient stock! Only ${availableStock} items available. Another rep may be processing this item.`);
-    } else if (errorMessage.includes('not found')) {
-      toast.error('Product not found in inventory');
-    } else {
-      toast.error(`Failed to add item: ${errorMessage}`);
-    }
+    toast.error(`Failed to add item: ${errorMessage}`);
   } finally {
     setIsProcessing(false);
   }
