@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { toast } from '@/utils/toast';
@@ -8,11 +8,11 @@ import { toast } from '@/utils/toast';
 interface Product {
   id: string;
   name: string;
-  make?: string;        // Add this
-  model?: string;       // Add this
-  type?: string;        // Add this
-  capacity?: string;    // Add this
-  description?: string; // Add this
+  make?: string;
+  model?: string;
+  type?: string;
+  capacity?: string;
+  description?: string;
   image: string;
   category: string;
   sku: string;
@@ -40,81 +40,105 @@ export default function ProductDetailModal({
   onInventoryUpdate
 }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const [customPrice, setCustomPrice] = useState<number>(0); // ✅ NEW: Price state
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // ✅ NEW: Initialize price when product changes
+  useEffect(() => {
+    if (product) {
+      setCustomPrice(product.basePrice);
+      setQuantity(1);
+    }
+  }, [product]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString();
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value;
-  if (value === '' || value === '0') {
-    setQuantity(0);
-  } else {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
-      setQuantity(numValue);
+    const value = e.target.value;
+    if (value === '' || value === '0') {
+      setQuantity(0);
+    } else {
+      const numValue = parseInt(value);
+      if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
+        setQuantity(numValue);
+      }
     }
-  }
-};
+  };
 
-// ❌ REMOVED: deductInventory function - inventory will be deducted at checkout instead
-// This prevents inventory from being stuck when customers abandon their carts
+  // ✅ NEW: Handle price change
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setCustomPrice(0);
+    } else {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0) {
+        setCustomPrice(numValue);
+      }
+    }
+  };
 
-const handleAddItem = () => {
-  console.log('=== HANDLE ADD ITEM CALLED ===');
-  console.log('product:', product);
-  console.log('onAddToCart:', onAddToCart);
-  console.log('quantity:', quantity);
-  
-  if (!product || !onAddToCart) {
-    console.log('❌ Early return: product or onAddToCart is missing');
-    return;
-  }
-  
-  if (quantity > product.stockLeft) {
-    console.log('❌ Quantity exceeds stock:', quantity, '>', product.stockLeft);
-    toast.error(`Only ${product.stockLeft} items available in stock`);
-    return;
-  }
-  
-  console.log('✅ Validation passed, setting processing...');
-  setIsProcessing(true);
+  const handleAddItem = () => {
+    console.log('=== HANDLE ADD ITEM CALLED ===');
+    console.log('product:', product);
+    console.log('onAddToCart:', onAddToCart);
+    console.log('quantity:', quantity);
+    console.log('customPrice:', customPrice); // ✅ NEW: Log price
+    
+    if (!product || !onAddToCart) {
+      console.log('❌ Early return: product or onAddToCart is missing');
+      return;
+    }
+    
+    if (quantity > product.stockLeft) {
+      console.log('❌ Quantity exceeds stock:', quantity, '>', product.stockLeft);
+      toast.error(`Only ${product.stockLeft} items available in stock`);
+      return;
+    }
 
-  try {
-    console.log('📦 Calling onAddToCart with:', { product, price: 0, quantity });
+    // ✅ NEW: Validate price
+    if (customPrice <= 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
     
-    // ✅ CHANGED: Just add to cart without deducting inventory
-    // Inventory will be validated and deducted when sale is completed at checkout
-    onAddToCart(product, 0, quantity); // Price will be handled in checkout
+    console.log('✅ Validation passed, setting processing...');
+    setIsProcessing(true);
+
+    try {
+      console.log('📦 Calling onAddToCart with:', { product, price: customPrice, quantity });
+      
+      // ✅ FIXED: Pass custom price instead of 0
+      onAddToCart(product, customPrice, quantity);
+      
+      console.log('✅ onAddToCart completed');
+      
+      toast.success(`${product.name} (${quantity}) added to cart`);
+      setQuantity(1);
+      setCustomPrice(product.basePrice); // Reset to base price
+      console.log('✅ Closing modal...');
+      onClose();
+    } catch (error: unknown) {
+      console.error('❌ ERROR in handleAddItem:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to add item: ${errorMessage}`);
+    } finally {
+      console.log('🏁 Setting processing to false');
+      setIsProcessing(false);
+    }
     
-    console.log('✅ onAddToCart completed');
-    
-    // Note: addToCart in useCart handles validation and shows error toasts
-    // We show success and close modal assuming it worked
-    // If validation failed, user will see error toast from addToCart
-    toast.success(`${product.name} (${quantity}) added to cart`);
-    setQuantity(1);
-    console.log('✅ Closing modal...');
-    onClose(); // Close modal after adding to cart
-  } catch (error: unknown) {
-    console.error('❌ ERROR in handleAddItem:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    toast.error(`Failed to add item: ${errorMessage}`);
-  } finally {
-    console.log('🏁 Setting processing to false');
-    setIsProcessing(false);
-  }
-  
-  console.log('=== HANDLE ADD ITEM COMPLETE ===');
-};
+    console.log('=== HANDLE ADD ITEM COMPLETE ===');
+  };
 
   const isAddButtonActive =
-  product &&
-  product.stockLeft > 0 &&
-  quantity > 0 &&
-  quantity <= product.stockLeft &&
-  !isProcessing;
+    product &&
+    product.stockLeft > 0 &&
+    quantity > 0 &&
+    quantity <= product.stockLeft &&
+    customPrice > 0 && // ✅ NEW: Price must be valid
+    !isProcessing;
 
   if (!isOpen || !product) return null;
 
@@ -212,78 +236,79 @@ const handleAddItem = () => {
               }}
             >
               {product.image && product.image.trim() !== '' ? (
-  <img
-    src={product.image}
-    alt={product.name}
-    style={{
-      width: '250px',
-      height: '250px',
-      objectFit: 'contain',
-      maxHeight: '100%'
-    }}
-    onError={(e) => {
-      console.error('Image failed to load:', e.currentTarget.src);
-      e.currentTarget.style.display = 'none';
-    }}
-  />
-) : (
-  <div style={{
-    width: '250px',
-    height: '250px',
-    backgroundColor: '#E5E7EB',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9CA3AF',
-    fontSize: '14px',
-    textAlign: 'center'
-  }}>
-    No Image Available
-  </div>
-)}
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  style={{
+                    width: '250px',
+                    height: '250px',
+                    objectFit: 'contain',
+                    maxHeight: '100%'
+                  }}
+                  onError={(e) => {
+                    console.error('Image failed to load:', e.currentTarget.src);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '250px',
+                  height: '250px',
+                  backgroundColor: '#E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9CA3AF',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}>
+                  No Image Available
+                </div>
+              )}
             </div>
 
             {/* Product Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Make and Model */}
-  {(product.make || product.model) && (
-    <div>
-      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Make & Model</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
-        {product.make && (
-          <p><span style={{ fontWeight: 500 }}>Make:</span> {product.make}</p>
-        )}
-        {product.model && (
-          <p><span style={{ fontWeight: 500 }}>Model:</span> {product.model}</p>
-        )}
-      </div>
-    </div>
-  )}
+              {/* Make and Model */}
+              {(product.make || product.model) && (
+                <div>
+                  <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Make & Model</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
+                    {product.make && (
+                      <p><span style={{ fontWeight: 500 }}>Make:</span> {product.make}</p>
+                    )}
+                    {product.model && (
+                      <p><span style={{ fontWeight: 500 }}>Model:</span> {product.model}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-  {/* Type and Capacity */}
-  {(product.type || product.capacity) && (
-    <div>
-      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Specifications</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
-        {product.type && (
-          <p><span style={{ fontWeight: 500 }}>Type:</span> {product.type}</p>
-        )}
-        {product.capacity && (
-          <p><span style={{ fontWeight: 500 }}>Capacity:</span> {product.capacity}</p>
-        )}
-      </div>
-    </div>
-  )}
+              {/* Type and Capacity */}
+              {(product.type || product.capacity) && (
+                <div>
+                  <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Specifications</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: '#4B5563' }}>
+                    {product.type && (
+                      <p><span style={{ fontWeight: 500 }}>Type:</span> {product.type}</p>
+                    )}
+                    {product.capacity && (
+                      <p><span style={{ fontWeight: 500 }}>Capacity:</span> {product.capacity}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-  {/* Description */}
-  {product.description && (
-    <div>
-      <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Description</h3>
-      <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: '1.5' }}>
-        {product.description}
-      </p>
-    </div>
-  )}
+              {/* Description */}
+              {product.description && (
+                <div>
+                  <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Description</h3>
+                  <p style={{ fontSize: '0.875rem', color: '#4B5563', lineHeight: '1.5' }}>
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
               {/* Types */}
               <div>
                 <h3 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600, color: '#000' }}>Type</h3>
@@ -377,6 +402,36 @@ const handleAddItem = () => {
           {/* Right side */}
           <div style={{ width: '320px' }}>
             
+            {/* ✅ NEW: Price Input */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="price" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
+                Selling Price (₦)
+              </label>
+              <input
+                type="number"
+                id="price"
+                min="0"
+                step="0.01"
+                value={customPrice === 0 ? '' : customPrice}
+                onChange={handlePriceChange}
+                disabled={product.stockLeft === 0 || isProcessing}
+                placeholder={`Base: ₦${formatCurrency(product.basePrice)}`}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
+                  cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
+                  fontSize: '1rem'
+                }}
+              />
+              <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#6B7280' }}>
+                Adjust price for discounts or negotiated deals
+              </p>
+            </div>
+
             {/* Quantity Input */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="quantity" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
@@ -413,6 +468,34 @@ const handleAddItem = () => {
               )}
             </div>
 
+            {/* ✅ NEW: Total Preview */}
+            <div style={{ 
+              marginBottom: '24px', 
+              padding: '16px', 
+              backgroundColor: '#F3F4F6', 
+              borderRadius: '8px' 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>Price per item:</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>₦{formatCurrency(customPrice)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>Quantity:</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>×{quantity}</span>
+              </div>
+              <div style={{ 
+                borderTop: '1px solid #D1D5DB', 
+                paddingTop: '8px', 
+                display: 'flex', 
+                justifyContent: 'space-between' 
+              }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600 }}>Total:</span>
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#2563EB' }}>
+                  ₦{formatCurrency(customPrice * quantity)}
+                </span>
+              </div>
+            </div>
+
             {/* Add Button */}
             <button
               onClick={handleAddItem}
@@ -428,7 +511,8 @@ const handleAddItem = () => {
                 padding: '0 16px',
                 backgroundColor: isAddButtonActive ? '#2563EB' : '#D1D5DB',
                 cursor: isAddButtonActive ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                border: 'none'
               }}
             >
               {isProcessing ? (
