@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
@@ -54,8 +54,12 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
   const [printHover, setPrintHover] = useState(false);
   const [backFooterHover, setBackFooterHover] = useState(false);
 
+  // ✅ FIXED: Calculate actual cart total from items
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [cartItems]);
+
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-  
   
   // Calculate running total of payment amounts
   const paymentTotal = Object.values(paymentAmounts).reduce((sum, amount) => sum + amount, 0);
@@ -349,13 +353,13 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             />
           </div>
 
-          {/* Sales on Return Amount */}
+          {/* ✅ FIXED: Changed label to "Sales Or Return Amount" */}
           <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="salesOnReturnAmount"
               style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 400, color: '#6B7280' }}
             >
-              Sales on Return Amount
+              Sales Or Return Amount
             </label>
             <input
               type="number"
@@ -393,19 +397,20 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           borderTop: '1px solid #E5E7EB',
         }}
       >
+        {/* ✅ FIXED: Show actual cart total instead of paymentTotal */}
         <div
-  style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  }}
->
-  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
-  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-    ₦ {paymentTotal.toLocaleString()}
-  </span>
-</div>
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+          }}
+        >
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+            ₦ {cartTotal.toLocaleString()}
+          </span>
+        </div>
 
         {/* Print Receipt */}
         <button
