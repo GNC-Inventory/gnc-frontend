@@ -14,7 +14,7 @@ import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import type { RootState } from '../../store/store'; // ADDED: Import RootState type
+import type { RootState } from '../../store/store';
 import { 
   toggleProductSelection, 
   selectAllProducts,  
@@ -26,11 +26,11 @@ import BulkCartModal from '../components/BulkCartModal';
 interface CartItem {
   id: string;
   name: string;
-  make?: string;        // Add this
-  model?: string;       // Add this
-  type?: string;        // Add this
-  capacity?: string;    // Add this
-  description?: string; // Add this
+  make?: string;
+  model?: string;
+  type?: string;
+  capacity?: string;
+  description?: string;
   image: string;
   price: number;
   quantity: number;
@@ -46,7 +46,7 @@ interface CompletedTransaction {
   id: string;
   items: CartItem[];
   customer: string;
-   paymentBreakdown?: {
+  paymentBreakdown?: {
     pos: number;
     transfer: number;
     cashInHand: number;
@@ -92,14 +92,14 @@ export default function ProductsPage() {
   // Computed - use localProducts instead of products for real-time updates
   const [showCart, setShowCart] = useState(false);
 
-// Add this effect right after the useState
-useEffect(() => {
-  if (!showCheckout && cart.cartItems.length > 0) {
-    setShowCart(true);
-  } else if (cart.cartItems.length === 0) {
-    setShowCart(false);
-  }
-}, [showCheckout, cart.cartItems.length]);
+  // Add this effect right after the useState
+  useEffect(() => {
+    if (!showCheckout && cart.cartItems.length > 0) {
+      setShowCart(true);
+    } else if (cart.cartItems.length === 0) {
+      setShowCart(false);
+    }
+  }, [showCheckout, cart.cartItems.length]);
 
   const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
   const isCompact = showCart || showCheckout;
@@ -120,40 +120,40 @@ useEffect(() => {
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: string, paymentBreakdown: PaymentBreakdown) => {
-  console.log('Items being sent to API:', items);
-  const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-    },
-    body: JSON.stringify({ 
-      items: items.map(item => ({
-        ...item,
-        id: parseInt(item.id) // Convert string ID to number
-      })),
-      customer: {
-        name: customer,
-        address: '',
-        phone: ''
+    console.log('Items being sent to API:', items);
+    const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
-      paymentBreakdown,
-      paymentMethod: 'Mixed' // Temporary fallback for backend compatibility
-    })
-  });
+      body: JSON.stringify({ 
+        items: items.map(item => ({
+          ...item,
+          id: parseInt(item.id)
+        })),
+        customer: {
+          name: customer,
+          address: '',
+          phone: ''
+        },
+        paymentBreakdown,
+        paymentMethod: 'Mixed'
+      })
+    });
 
-  const result = await response.json();
-  console.log('API Response:', result); // Add logging to debug
-  
-  if (!result.success) {
-    const errorMessage = typeof result.error === 'object' 
-      ? result.error.message || result.error.code || 'Failed to process sale'
-      : result.error || 'Failed to process sale';
-    throw new Error(errorMessage);
-  }
-  
-  return result.data; // Add this return statement
-};
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    if (!result.success) {
+      const errorMessage = typeof result.error === 'object' 
+        ? result.error.message || result.error.code || 'Failed to process sale'
+        : result.error || 'Failed to process sale';
+      throw new Error(errorMessage);
+    }
+    
+    return result.data;
+  };
 
   // New handler for inventory updates from ProductDetailModal
   const handleInventoryUpdate = useCallback((productId: string, newStockLeft: number) => {
@@ -190,7 +190,6 @@ useEffect(() => {
     setSelectedProduct(null);
   }, []);
 
-  // Add the missing handleResumeSale function
   const handleResumeSale = useCallback((saleId: string) => {
     const resumedItems = pendingSales.resumeSale(saleId);
     if (resumedItems) {
@@ -198,192 +197,187 @@ useEffect(() => {
     }
   }, [pendingSales]);
 
-const handleToggleSelection = useCallback((product: Product) => {
-  const selectedProduct: SelectedProduct = {
-    id: product.id,
-    name: product.name,
-    image: product.image,
-    category: product.category,
-    basePrice: product.basePrice,
-    stockLeft: product.stockLeft,
-    make: product.make,
-    model: product.model
-  };
-  dispatch(toggleProductSelection(selectedProduct));
-}, [dispatch]);
-
-const handleSelectAll = useCallback(() => {
-  const allProducts: SelectedProduct[] = filteredProducts.map(product => ({
-    id: product.id,
-    name: product.name,
-    image: product.image,
-    category: product.category,
-    basePrice: product.basePrice,
-    stockLeft: product.stockLeft,
-    make: product.make,
-    model: product.model
-  }));
-  dispatch(selectAllProducts(allProducts));
-}, [dispatch, filteredProducts]);
-
-
-const handleSetSelectionMode = useCallback((mode: boolean) => {
-  dispatch(setSelectionMode(mode));
-}, [dispatch]);
-
-const addSelectedToCart = useCallback(() => {
-  setShowBulkCartModal(true);
-}, []);
-
-const handleBulkAddToCart = useCallback((items: Array<{
-  product: {
-    id: string;
-    name: string;
-    image: string;
-    category: string;
-    basePrice: number;
-    stockLeft: number;
-    make?: string;
-    model?: string;
-  };
-  price: number;
-  quantity: number;
-}>) => {
-  let successCount = 0;
-  const failedProducts: string[] = [];
-  
-  // Try to add each product
-  for (const item of items) {
-    const fullProduct = localProducts.find(p => p.id === item.product.id);
-    if (!fullProduct) {
-      failedProducts.push(item.product.name);
-      continue;
-    }
-    
-    const success = cart.addToCart(fullProduct, item.price, item.quantity);
-    if (!success) {
-      failedProducts.push(item.product.name);
-      continue;
-    }
-    successCount++;
-  }
-  
-  // Show detailed feedback
-  if (failedProducts.length > 0) {
-    showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
-  }
-  
-  if (successCount === 0) {
-    showToast('No products were added to cart', 'error');
-    return; // Don't close modal if nothing was added
-  }
-  
-  // Success - close modal and show success message
-  setShowBulkCartModal(false);
-  showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
-}, [cart, localProducts]);
-
-const handleCompleteSale = useCallback(async () => {
-  console.log('Cart items being sent:', JSON.stringify(cart.cartItems, null, 2));
-  if (cart.cartItems.length === 0) {
-    showToast('Cart is empty', 'error');
-    return;
-  }
-
-  setIsProcessingSale(true);
-  
-  try {
-    const transaction = await processSaleAPI(cart.cartItems, 'Customer', {
-  pos: cart.getTotalAmount(), // Use actual cart total for now
-  transfer: 0,
-  cashInHand: 0,
-  salesOnReturn: 0
-});
-    
-    // CRITICAL: Store cart items BEFORE clearing the cart
-    const enhancedTransaction = {
-      ...transaction,
-      items: cart.cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        make: item.make,
-        model: item.model,
-        type: item.type,
-        capacity: item.capacity,
-        description: item.description,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity
-      }))
+  const handleToggleSelection = useCallback((product: Product) => {
+    const selectedProduct: SelectedProduct = {
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      category: product.category,
+      basePrice: product.basePrice,
+      stockLeft: product.stockLeft,
+      make: product.make,
+      model: product.model
     };
+    dispatch(toggleProductSelection(selectedProduct));
+  }, [dispatch]);
+
+  const handleSelectAll = useCallback(() => {
+    const allProducts: SelectedProduct[] = filteredProducts.map(product => ({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      category: product.category,
+      basePrice: product.basePrice,
+      stockLeft: product.stockLeft,
+      make: product.make,
+      model: product.model
+    }));
+    dispatch(selectAllProducts(allProducts));
+  }, [dispatch, filteredProducts]);
+
+  const handleSetSelectionMode = useCallback((mode: boolean) => {
+    dispatch(setSelectionMode(mode));
+  }, [dispatch]);
+
+  const addSelectedToCart = useCallback(() => {
+    setShowBulkCartModal(true);
+  }, []);
+
+  const handleBulkAddToCart = useCallback((items: Array<{
+    product: {
+      id: string;
+      name: string;
+      image: string;
+      category: string;
+      basePrice: number;
+      stockLeft: number;
+      make?: string;
+      model?: string;
+    };
+    price: number;
+    quantity: number;
+  }>) => {
+    let successCount = 0;
+    const failedProducts: string[] = [];
     
-    setCompletedTransaction(enhancedTransaction);
-    showToast('Sale processed successfully! Inventory updated.', 'success');
-    // REMOVED: refetch() - this was causing stale data to overwrite correct local state
-    
-    await cart.clearCart(false);
-    setShowCheckout(true);
-  } catch (error: unknown) {
-    console.error('Error processing sale:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    
-    if (errorMessage.includes('Insufficient stock')) {
-      showToast('Insufficient stock for some items. Please check inventory.', 'error');
-    } else if (errorMessage.includes('not found')) {
-      showToast('Some products are no longer available. Please refresh and try again.', 'error');
-      refetch(); // Keep this refetch only in error cases
-    } else {
-      showToast('Failed to process sale. Please try again.', 'error');
+    for (const item of items) {
+      const fullProduct = localProducts.find(p => p.id === item.product.id);
+      if (!fullProduct) {
+        failedProducts.push(item.product.name);
+        continue;
+      }
+      
+      const success = cart.addToCart(fullProduct, item.price, item.quantity);
+      if (!success) {
+        failedProducts.push(item.product.name);
+        continue;
+      }
+      successCount++;
     }
-  } finally {
-    setIsProcessingSale(false);
-  }
-}, [cart, refetch]);
+    
+    if (failedProducts.length > 0) {
+      showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
+    }
+    
+    if (successCount === 0) {
+      showToast('No products were added to cart', 'error');
+      return;
+    }
+    
+    setShowBulkCartModal(false);
+    showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
+  }, [cart, localProducts]);
 
-const handleHoldSale = useCallback(async () => {
-  pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
-  await cart.clearCart(true); // Restore inventory when holding sale
-}, [pendingSales, cart]);
-
-const handleCancelSale = useCallback(async () => {
-  await cart.clearCart(true); // Restore inventory when canceling
-}, [cart]);
-
-const handleBackToCart = useCallback(() => {
-  if (completedTransaction) {
-    cart.clearCart(false);
-    setCompletedTransaction(null);
-    setShowCheckout(false);
-  } else {
-    setShowCheckout(false);
-    setShowCart(true); // ← ADD THIS LINE
-  }
-}, [completedTransaction, cart]);
-
-const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
-  try {
-    if (!completedTransaction) {
-      showToast('No completed transaction to print', 'error');
+  // ✅ FIXED: handleCompleteSale - Just show checkout, DON'T process sale yet
+  const handleCompleteSale = useCallback(() => {
+    console.log('=== COMPLETE SALE CLICKED ===');
+    console.log('Cart items:', cart.cartItems);
+    
+    if (cart.cartItems.length === 0) {
+      showToast('Cart is empty', 'error');
       return;
     }
 
-    // Items are already preserved from handleCompleteSale
-    const finalTransaction = { 
-  ...completedTransaction, 
-  customer: customerDetails.name,
-  customerAddress: customerDetails.address,
-  customerPhone: customerDetails.phone,
-  paymentBreakdown
-};
+    // ✅ CHANGED: Just move to checkout view, DON'T process the sale yet
+    // Inventory will be deducted when receipt is printed
+    setShowCheckout(true);
+    setShowCart(false);
+    
+    console.log('=== MOVED TO CHECKOUT - INVENTORY NOT DEDUCTED ===');
+  }, [cart]);
 
-    setCompletedTransaction(finalTransaction);
-    setShowCheckout(false);
-    showToast(`Receipt printed for ${customerDetails.name}!`, 'success');
-  } catch (error) {
-    console.error('Error printing receipt:', error);
-    showToast('Error printing receipt. Please try again.', 'error');
-  }
-}, [completedTransaction]);
+  const handleHoldSale = useCallback(async () => {
+    pendingSales.holdSale(cart.cartItems, cart.getTotalAmount());
+    await cart.clearCart(true);
+  }, [pendingSales, cart]);
+
+  const handleCancelSale = useCallback(async () => {
+    await cart.clearCart(true);
+  }, [cart]);
+
+  const handleBackToCart = useCallback(() => {
+    if (completedTransaction) {
+      cart.clearCart(false);
+      setCompletedTransaction(null);
+      setShowCheckout(false);
+    } else {
+      setShowCheckout(false);
+      setShowCart(true);
+    }
+  }, [completedTransaction, cart]);
+
+  // ✅ FIXED: handlePrintReceipt - THIS is where we process sale and deduct inventory
+  const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
+    console.log('=== PRINT RECEIPT CLICKED ===');
+    console.log('Customer details:', customerDetails);
+    console.log('Payment breakdown:', paymentBreakdown);
+    console.log('Cart items:', cart.cartItems);
+    
+    setIsProcessingSale(true);
+    
+    try {
+      // ✅ NEW: NOW we process the sale and deduct inventory
+      console.log('Processing sale and deducting inventory...');
+      
+      const transaction = await processSaleAPI(cart.cartItems, customerDetails.name, paymentBreakdown);
+      
+      // Store complete transaction with customer details
+      const enhancedTransaction = {
+        ...transaction,
+        customer: customerDetails.name,
+        customerAddress: customerDetails.address,
+        customerPhone: customerDetails.phone,
+        paymentBreakdown,
+        items: cart.cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          make: item.make,
+          model: item.model,
+          type: item.type,
+          capacity: item.capacity,
+          description: item.description,
+          image: item.image,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      };
+      
+      console.log('✅ Sale processed successfully, inventory deducted');
+      setCompletedTransaction(enhancedTransaction);
+      showToast('Sale completed! Receipt ready to print.', 'success');
+      
+      // ✅ Clear cart WITHOUT restoring inventory (it was never deducted until now)
+      await cart.clearCart(false);
+      setShowCheckout(false);
+      
+    } catch (error: unknown) {
+      console.error('❌ Error processing sale:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (errorMessage.includes('Insufficient stock')) {
+        showToast('Insufficient stock for some items. Please check inventory and try again.', 'error');
+      } else if (errorMessage.includes('not found')) {
+        showToast('Some products are no longer available. Please refresh and try again.', 'error');
+        refetch();
+      } else {
+        showToast(`Failed to process sale: ${errorMessage}`, 'error');
+      }
+    } finally {
+      setIsProcessingSale(false);
+    }
+    
+    console.log('=== PRINT RECEIPT COMPLETE ===');
+  }, [cart, refetch, processSaleAPI]);
 
   if (loading) {
     return (
@@ -525,90 +519,90 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
 
       {/* Products Container */}
       <div 
-  style={{
-    backgroundColor: 'white',
-    borderRadius: '32px',
-    padding: '32px',
-    transition: 'all 0.3s',
-    position: isCompact ? 'fixed' : 'relative',
-    overflow: isCompact ? 'auto' : 'auto', // Change this from 'visible' to 'auto'
-    width: isCompact ? '728px' : '100%',
-    height: isCompact ? '716px' : '600px', // Add fixed height
-    top: isCompact ? '172px' : 'auto',
-    left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
-      ? `${(window.innerWidth - 1440) / 2 + 304}px` 
-      : '304px') : 'auto'
-  }}
->
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '32px',
+          padding: '32px',
+          transition: 'all 0.3s',
+          position: isCompact ? 'fixed' : 'relative',
+          overflow: isCompact ? 'auto' : 'auto',
+          width: isCompact ? '728px' : '100%',
+          height: isCompact ? '716px' : '600px',
+          top: isCompact ? '172px' : 'auto',
+          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
+            ? `${(window.innerWidth - 1440) / 2 + 304}px` 
+            : '304px') : 'auto'
+        }}
+      >
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-  <h2 style={{
-    fontWeight: 500,
-    fontSize: '14px',
-    color: 'black',
-    margin: 0
-  }}>
-    Showing items by category ({localProducts.length} products)
-    {Object.keys(selectedProducts).length > 0 && (
-  <span style={{ color: '#2563EB', marginLeft: '8px' }}>
-    • {Object.keys(selectedProducts).length} selected
-  </span>
-)}
-  </h2>
-  
-  <div style={{ display: 'flex', gap: '8px' }}>
-    <button
-        onClick={() => handleSetSelectionMode(!isSelectionMode)}
-        style={{
-        padding: '6px 12px',
-        fontSize: '12px',
-        backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
-        color: 'white',
-        border: 'none',
-        borderRadius: '6px',
-        cursor: 'pointer'
-      }}
-    >
-      {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
-    </button>
-    
-    {isSelectionMode && (
-      <>
-        <button
-            onClick={handleSelectAll}
-            style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            backgroundColor: '#10B981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          Select All
-        </button>
-        
-        {Object.keys(selectedProducts).length > 0 && (
-  <button
-    onClick={addSelectedToCart}
-    style={{
-      padding: '6px 12px',
-      fontSize: '12px',
-      backgroundColor: '#F59E0B',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer'
-    }}
-  >
-    Add Selected ({Object.keys(selectedProducts).length})
-  </button>
-)}
-      </>
-    )}
-  </div>
-</div>
+            <h2 style={{
+              fontWeight: 500,
+              fontSize: '14px',
+              color: 'black',
+              margin: 0
+            }}>
+              Showing items by category ({localProducts.length} products)
+              {Object.keys(selectedProducts).length > 0 && (
+                <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+                  • {Object.keys(selectedProducts).length} selected
+                </span>
+              )}
+            </h2>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => handleSetSelectionMode(!isSelectionMode)}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
+              </button>
+              
+              {isSelectionMode && (
+                <>
+                  <button
+                    onClick={handleSelectAll}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      backgroundColor: '#10B981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Select All
+                  </button>
+                  
+                  {Object.keys(selectedProducts).length > 0 && (
+                    <button
+                      onClick={addSelectedToCart}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        backgroundColor: '#F59E0B',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Add Selected ({Object.keys(selectedProducts).length})
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
         <div style={{
           borderTop: '1px solid #E5E7EB',
@@ -616,191 +610,190 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
         }}></div>
 
         {/* Products Content */}
-{Object.keys(groupedProducts).length === 0 ? (
-  error ? (
-    <EmptyState type="error" error={error} onRetry={refetch} />
-  ) : searchQuery ? (
-    <EmptyState type="no-search-results" searchQuery={searchQuery} />
-  ) : (
-    <EmptyState type="no-products" onRetry={refetch} />
-  )
-) : (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-    {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-      <div key={category} style={{ marginBottom: '24px' }}>
-        {/* Category Header */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '16px' 
-        }}>
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: 600, 
-            color: '#000', 
-            margin: 0 
-          }}>
-            {category} ({categoryProducts.length})
-          </h3>
-          <button 
-  onClick={() => router.push(`/products/category/${encodeURIComponent(category.toLowerCase())}`)}
-  style={{
-    color: '#2563EB',
-    fontSize: '14px',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer'
-  }}
->
-  See All →
-</button>
-        </div>
-        
-        {/* Horizontal Scrolling Products */}
-        <div style={{
-  display: 'flex',
-  gap: '16px',
-  overflowX: 'auto',
-  paddingBottom: '8px',
-  scrollbarWidth: 'thin',
-  scrollbarColor: '#CBD5E1 #F1F5F9'
-}}>
-          {categoryProducts.map((product) => (
-            <div
-              key={product.id}
-              onClick={(e) => {
-  if (isSelectionMode) {
-    e.stopPropagation();
-    handleToggleSelection(product);
-  } else {
-    handleSelectProduct(product.id);
-  }
-}}
-              style={{
-                minWidth: '180px',
-                backgroundColor: 'white',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                padding: '12px',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                position: 'relative'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {/* Product Image */}
-              <div style={{
-                width: '100%',
-                height: '120px',
-                backgroundColor: '#F9FAFB',
-                borderRadius: '6px',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                {product.image && product.image.trim() !== '' ? (
-  <img
-    src={product.image}
-    alt={product.name}
-    style={{
-      width: '120px',
-      height: '120px',
-      objectFit: 'contain'
-    }}
-    onError={(e) => {
-      console.error('Image failed to load:', e.currentTarget.src);
-      e.currentTarget.style.display = 'none';
-    }}
-    // eslint-disable-next-line @next/next/no-img-element
-  />
-) : (
-  <div style={{
-    width: '120px',
-    height: '120px',
-    backgroundColor: '#E5E7EB',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9CA3AF',
-    fontSize: '12px',
-    textAlign: 'center'
-  }}>
-    No Image
-  </div>
-)}
-              </div>
-
-              {/* Selection Checkbox */}
-{isSelectionMode && (
-  <div style={{
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    width: '20px',
-    height: '20px',
-    backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
-    border: '2px solid #2563EB',
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer'
-  }}>
-    {selectedProducts[product.id] && (
-      <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
-    )}
-  </div>
-)}              
-              {/* Product Info */}
-              <div>
-                <h4 style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#000',
-                  margin: '0 0 4px 0',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+        {Object.keys(groupedProducts).length === 0 ? (
+          error ? (
+            <EmptyState type="error" error={error} onRetry={refetch} />
+          ) : searchQuery ? (
+            <EmptyState type="no-search-results" searchQuery={searchQuery} />
+          ) : (
+            <EmptyState type="no-products" onRetry={refetch} />
+          )
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+              <div key={category} style={{ marginBottom: '24px' }}>
+                {/* Category Header */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  marginBottom: '16px' 
                 }}>
-                  {product.name}
-                </h4>
-                
-                <p style={{
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#000',
-                  margin: '0 0 4px 0'
-                }}>
-                  ₦{product.basePrice.toLocaleString()}
-                </p>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{
-                    fontSize: '12px',
-                    color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
-                    fontWeight: 500
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 600, 
+                    color: '#000', 
+                    margin: 0 
                   }}>
-                    {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
-                  </span>
+                    {category} ({categoryProducts.length})
+                  </h3>
+                  <button 
+                    onClick={() => router.push(`/products/category/${encodeURIComponent(category.toLowerCase())}`)}
+                    style={{
+                      color: '#2563EB',
+                      fontSize: '14px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    See All →
+                  </button>
+                </div>
+                
+                {/* Horizontal Scrolling Products */}
+                <div style={{
+                  display: 'flex',
+                  gap: '16px',
+                  overflowX: 'auto',
+                  paddingBottom: '8px',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#CBD5E1 #F1F5F9'
+                }}>
+                  {categoryProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={(e) => {
+                        if (isSelectionMode) {
+                          e.stopPropagation();
+                          handleToggleSelection(product);
+                        } else {
+                          handleSelectProduct(product.id);
+                        }
+                      }}
+                      style={{
+                        minWidth: '180px',
+                        backgroundColor: 'white',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      {/* Product Image */}
+                      <div style={{
+                        width: '100%',
+                        height: '120px',
+                        backgroundColor: '#F9FAFB',
+                        borderRadius: '6px',
+                        marginBottom: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                      }}>
+                        {product.image && product.image.trim() !== '' ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            style={{
+                              width: '120px',
+                              height: '120px',
+                              objectFit: 'contain'
+                            }}
+                            onError={(e) => {
+                              console.error('Image failed to load:', e.currentTarget.src);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '120px',
+                            height: '120px',
+                            backgroundColor: '#E5E7EB',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#9CA3AF',
+                            fontSize: '12px',
+                            textAlign: 'center'
+                          }}>
+                            No Image
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Selection Checkbox */}
+                      {isSelectionMode && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '20px',
+                          height: '20px',
+                          backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
+                          border: '2px solid #2563EB',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}>
+                          {selectedProducts[product.id] && (
+                            <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
+                          )}
+                        </div>
+                      )}              
+                      {/* Product Info */}
+                      <div>
+                        <h4 style={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: '#000',
+                          margin: '0 0 4px 0',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {product.name}
+                        </h4>
+                        
+                        <p style={{
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          color: '#000',
+                          margin: '0 0 4px 0'
+                        }}>
+                          ₦{product.basePrice.toLocaleString()}
+                        </p>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{
+                            fontSize: '12px',
+                            color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
+                            fontWeight: 500
+                          }}>
+                            {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modals & Sidebar */}
@@ -830,23 +823,21 @@ const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, 
         />
       )}
 
-      {/* Add this after CheckoutView */}
-{completedTransaction && !showCheckout && (
-  <ReceiptModal 
-    transaction={{
-      ...completedTransaction,
-      createdAt: new Date(completedTransaction.createdAt)
-    }}
-    onClose={() => setCompletedTransaction(null)}
-  />
-)}
+      {completedTransaction && !showCheckout && (
+        <ReceiptModal 
+          transaction={{
+            ...completedTransaction,
+            createdAt: new Date(completedTransaction.createdAt)
+          }}
+          onClose={() => setCompletedTransaction(null)}
+        />
+      )}
 
-{/* Bulk Cart Modal */}
-<BulkCartModal
-  isOpen={showBulkCartModal}
-  onClose={() => setShowBulkCartModal(false)}
-  onAddToCart={handleBulkAddToCart}
-/>
+      <BulkCartModal
+        isOpen={showBulkCartModal}
+        onClose={() => setShowBulkCartModal(false)}
+        onAddToCart={handleBulkAddToCart}
+      />
 
       {/* Processing Sale Loading Overlay */}
       {isProcessingSale && (
