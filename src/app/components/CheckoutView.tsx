@@ -54,7 +54,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
   const [printHover, setPrintHover] = useState(false);
   const [backFooterHover, setBackFooterHover] = useState(false);
 
-  // ✅ FIXED: Calculate actual cart total from items
+  // ✅ Calculate actual cart total from items
   const cartTotal = useMemo(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   }, [cartItems]);
@@ -68,8 +68,27 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     setCustomerDetails((prev) => ({ ...prev, [field]: value }));
   };
 
+  // ✅ NEW: Format currency for display
+  const formatCurrency = (amount: number): string => {
+    if (amount === 0) return '';
+    return amount.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // ✅ NEW: Parse currency input (remove commas, handle decimals)
+  const parseCurrencyInput = (value: string): number => {
+    if (!value || value.trim() === '') return 0;
+    // Remove commas and parse
+    const cleaned = value.replace(/,/g, '');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // ✅ IMPROVED: Handle payment amount changes with formatting
   const handlePaymentAmountChange = (field: keyof PaymentBreakdown, value: string) => {
-    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+    const numericValue = parseCurrencyInput(value);
     setPaymentAmounts((prev) => ({ ...prev, [field]: numericValue }));
   };
 
@@ -268,27 +287,40 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             >
               POS Amount
             </label>
-            <input
-              type="number"
-              id="posAmount"
-              min="0"
-              step="0.01"
-              value={paymentAmounts.pos === 0 ? '' : paymentAmounts.pos}
-              onChange={(e) => handlePaymentAmountChange('pos', e.target.value)}
-              placeholder="₦ 0.00"
-              style={{
-                width: '304px',
-                height: '40px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                paddingLeft: '12px',
-                paddingRight: '12px',
-                paddingTop: '10px',
-                paddingBottom: '10px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6B7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none',
+                }}
+              >
+                ₦
+              </span>
+              <input
+                type="text"
+                id="posAmount"
+                value={formatCurrency(paymentAmounts.pos)}
+                onChange={(e) => handlePaymentAmountChange('pos', e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '304px',
+                  height: '40px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  paddingLeft: '28px',
+                  paddingRight: '12px',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
           </div>
 
           {/* Transfer Amount */}
@@ -299,27 +331,40 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             >
               Transfer Amount
             </label>
-            <input
-              type="number"
-              id="transferAmount"
-              min="0"
-              step="0.01"
-              value={paymentAmounts.transfer === 0 ? '' : paymentAmounts.transfer}
-              onChange={(e) => handlePaymentAmountChange('transfer', e.target.value)}
-              placeholder="₦ 0.00"
-              style={{
-                width: '304px',
-                height: '40px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                paddingLeft: '12px',
-                paddingRight: '12px',
-                paddingTop: '10px',
-                paddingBottom: '10px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6B7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none',
+                }}
+              >
+                ₦
+              </span>
+              <input
+                type="text"
+                id="transferAmount"
+                value={formatCurrency(paymentAmounts.transfer)}
+                onChange={(e) => handlePaymentAmountChange('transfer', e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '304px',
+                  height: '40px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  paddingLeft: '28px',
+                  paddingRight: '12px',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
           </div>
 
           {/* Cash in Hand Amount */}
@@ -330,30 +375,43 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             >
               Cash in Hand Amount
             </label>
-            <input
-              type="number"
-              id="cashAmount"
-              min="0"
-              step="0.01"
-              value={paymentAmounts.cashInHand === 0 ? '' : paymentAmounts.cashInHand}
-              onChange={(e) => handlePaymentAmountChange('cashInHand', e.target.value)}
-              placeholder="₦ 0.00"
-              style={{
-                width: '304px',
-                height: '40px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                paddingLeft: '12px',
-                paddingRight: '12px',
-                paddingTop: '10px',
-                paddingBottom: '10px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6B7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none',
+                }}
+              >
+                ₦
+              </span>
+              <input
+                type="text"
+                id="cashAmount"
+                value={formatCurrency(paymentAmounts.cashInHand)}
+                onChange={(e) => handlePaymentAmountChange('cashInHand', e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '304px',
+                  height: '40px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  paddingLeft: '28px',
+                  paddingRight: '12px',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
           </div>
 
-          {/* ✅ FIXED: Changed label to "Sales Or Return Amount" */}
+          {/* Sales Or Return Amount */}
           <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="salesOnReturnAmount"
@@ -361,27 +419,40 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             >
               Sales Or Return Amount
             </label>
-            <input
-              type="number"
-              id="salesOnReturnAmount"
-              min="0"
-              step="0.01"
-              value={paymentAmounts.salesOnReturn === 0 ? '' : paymentAmounts.salesOnReturn}
-              onChange={(e) => handlePaymentAmountChange('salesOnReturn', e.target.value)}
-              placeholder="₦ 0.00"
-              style={{
-                width: '304px',
-                height: '40px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                paddingLeft: '12px',
-                paddingRight: '12px',
-                paddingTop: '10px',
-                paddingBottom: '10px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6B7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none',
+                }}
+              >
+                ₦
+              </span>
+              <input
+                type="text"
+                id="salesOnReturnAmount"
+                value={formatCurrency(paymentAmounts.salesOnReturn)}
+                onChange={(e) => handlePaymentAmountChange('salesOnReturn', e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '304px',
+                  height: '40px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  paddingLeft: '28px',
+                  paddingRight: '12px',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -397,7 +468,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        {/* ✅ FIXED: Show actual cart total instead of paymentTotal */}
+        {/* Cart Total */}
         <div
           style={{
             display: 'flex',
@@ -408,7 +479,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
         >
           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            ₦ {cartTotal.toLocaleString()}
+            ₦ {cartTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
 
