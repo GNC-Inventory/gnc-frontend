@@ -50,6 +50,14 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     salesOnReturn: 0,
   });
 
+  // ✅ NEW: Separate display state for each input (allows typing without interruption)
+  const [displayValues, setDisplayValues] = useState({
+    pos: '',
+    transfer: '',
+    cashInHand: '',
+    salesOnReturn: '',
+  });
+
   const [backHover, setBackHover] = useState(false);
   const [printHover, setPrintHover] = useState(false);
   const [backFooterHover, setBackFooterHover] = useState(false);
@@ -86,10 +94,24 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // ✅ Handle payment amount changes with formatting
+  // ✅ IMPROVED: Handle payment amount changes - update both display and internal value
   const handlePaymentAmountChange = (field: keyof PaymentBreakdown, value: string) => {
+    // Update display immediately (what user sees)
+    setDisplayValues(prev => ({ ...prev, [field]: value }));
+    
+    // Parse and store the numeric value
     const numericValue = parseCurrencyInput(value);
     setPaymentAmounts((prev) => ({ ...prev, [field]: numericValue }));
+  };
+
+  // ✅ NEW: Format on blur (when user leaves the input)
+  const handleBlur = (field: keyof PaymentBreakdown) => {
+    const amount = paymentAmounts[field];
+    if (amount > 0) {
+      setDisplayValues(prev => ({ ...prev, [field]: formatCurrency(amount) }));
+    } else {
+      setDisplayValues(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -304,8 +326,9 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               <input
                 type="text"
                 id="posAmount"
-                value={formatCurrency(paymentAmounts.pos)}
+                value={displayValues.pos}
                 onChange={(e) => handlePaymentAmountChange('pos', e.target.value)}
+                onBlur={() => handleBlur('pos')}
                 placeholder="0.00"
                 style={{
                   width: '304px',
@@ -348,8 +371,9 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               <input
                 type="text"
                 id="transferAmount"
-                value={formatCurrency(paymentAmounts.transfer)}
+                value={displayValues.transfer}
                 onChange={(e) => handlePaymentAmountChange('transfer', e.target.value)}
+                onBlur={() => handleBlur('transfer')}
                 placeholder="0.00"
                 style={{
                   width: '304px',
@@ -392,8 +416,9 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               <input
                 type="text"
                 id="cashAmount"
-                value={formatCurrency(paymentAmounts.cashInHand)}
+                value={displayValues.cashInHand}
                 onChange={(e) => handlePaymentAmountChange('cashInHand', e.target.value)}
+                onBlur={() => handleBlur('cashInHand')}
                 placeholder="0.00"
                 style={{
                   width: '304px',
@@ -411,7 +436,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             </div>
           </div>
 
-          {/* ✅ FIXED: "Sales Or Return Amount" (corrected label) */}
+          {/* Sales Or Return Amount */}
           <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="salesOnReturnAmount"
@@ -436,8 +461,9 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               <input
                 type="text"
                 id="salesOnReturnAmount"
-                value={formatCurrency(paymentAmounts.salesOnReturn)}
+                value={displayValues.salesOnReturn}
                 onChange={(e) => handlePaymentAmountChange('salesOnReturn', e.target.value)}
+                onBlur={() => handleBlur('salesOnReturn')}
                 placeholder="0.00"
                 style={{
                   width: '304px',
@@ -468,7 +494,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        {/* ✅ FIXED: Cart Total with proper decimal formatting */}
+        {/* Cart Total */}
         <div
           style={{
             display: 'flex',
@@ -483,7 +509,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           </span>
         </div>
 
-        {/* ✅ FIXED: Button text changed to "Go to Checkout" */}
+        {/* Go to Checkout Button */}
         <button
           onClick={handlePrintReceipt}
           disabled={!isFormValid}
