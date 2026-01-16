@@ -68,7 +68,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     setCustomerDetails((prev) => ({ ...prev, [field]: value }));
   };
 
-  // ✅ NEW: Format currency for display
+  // ✅ Format currency for display (with decimals and commas)
   const formatCurrency = (amount: number): string => {
     if (amount === 0) return '';
     return amount.toLocaleString('en-NG', {
@@ -77,7 +77,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     });
   };
 
-  // ✅ NEW: Parse currency input (remove commas, handle decimals)
+  // ✅ Parse currency input (remove commas, handle decimals)
   const parseCurrencyInput = (value: string): number => {
     if (!value || value.trim() === '') return 0;
     // Remove commas and parse
@@ -86,7 +86,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // ✅ IMPROVED: Handle payment amount changes with formatting
+  // ✅ Handle payment amount changes with formatting
   const handlePaymentAmountChange = (field: keyof PaymentBreakdown, value: string) => {
     const numericValue = parseCurrencyInput(value);
     setPaymentAmounts((prev) => ({ ...prev, [field]: numericValue }));
@@ -411,7 +411,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             </div>
           </div>
 
-          {/* Sales Or Return Amount */}
+          {/* ✅ FIXED: "Sales Or Return Amount" (corrected label) */}
           <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="salesOnReturnAmount"
@@ -468,7 +468,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        {/* Cart Total */}
+        {/* ✅ FIXED: Cart Total with proper decimal formatting */}
         <div
           style={{
             display: 'flex',
@@ -483,7 +483,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           </span>
         </div>
 
-        {/* Print Receipt */}
+        {/* ✅ FIXED: Button text changed to "Go to Checkout" */}
         <button
           onClick={handlePrintReceipt}
           disabled={!isFormValid}
@@ -505,7 +505,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           }}
         >
           <span style={{ fontSize: '14px', fontWeight: 500, color: '#FFFFFF' }}>
-            Print receipt
+            Go to Checkout
           </span>
         </button>
 
