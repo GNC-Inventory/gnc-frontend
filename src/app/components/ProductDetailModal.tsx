@@ -41,18 +41,41 @@ export default function ProductDetailModal({
 }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState<number>(0); // ✅ NEW: Price state
+  const [priceDisplay, setPriceDisplay] = useState<string>(''); // ✅ Display state for formatting
   const [isProcessing, setIsProcessing] = useState(false);
 
   // ✅ NEW: Initialize price when product changes
   useEffect(() => {
     if (product) {
       setCustomPrice(product.basePrice);
+      setPriceDisplay(formatCurrencyInput(product.basePrice)); // ✅ Format on load
       setQuantity(1);
     }
   }, [product]);
 
+  // ✅ IMPROVED: Format currency with decimals
   const formatCurrency = (value: number) => {
-    return value.toLocaleString();
+    return value.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // ✅ NEW: Format for input display
+  const formatCurrencyInput = (value: number): string => {
+    if (value === 0) return '';
+    return value.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // ✅ NEW: Parse currency input
+  const parseCurrencyInput = (value: string): number => {
+    if (!value || value.trim() === '') return 0;
+    const cleaned = value.replace(/,/g, '');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,16 +90,19 @@ export default function ProductDetailModal({
     }
   };
 
-  // ✅ NEW: Handle price change
+  // ✅ NEW: Handle price change with formatting
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      setCustomPrice(0);
-    } else {
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        setCustomPrice(numValue);
-      }
+    setPriceDisplay(value); // Update display immediately
+    
+    const numValue = parseCurrencyInput(value);
+    setCustomPrice(numValue);
+  };
+
+  // ✅ NEW: Format on blur
+  const handlePriceBlur = () => {
+    if (customPrice > 0) {
+      setPriceDisplay(formatCurrencyInput(customPrice));
     }
   };
 
@@ -408,14 +434,13 @@ export default function ProductDetailModal({
                 Selling Price (₦)
               </label>
               <input
-                type="number"
+                type="text"
                 id="price"
-                min="0"
-                step="0.01"
-                value={customPrice === 0 ? '' : customPrice}
+                value={priceDisplay}
                 onChange={handlePriceChange}
+                onBlur={handlePriceBlur}
                 disabled={product.stockLeft === 0 || isProcessing}
-                placeholder={`Base: ₦${formatCurrency(product.basePrice)}`}
+                placeholder="0.00"
                 style={{
                   width: '100%',
                   padding: '12px 16px',
