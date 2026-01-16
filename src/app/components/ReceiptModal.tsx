@@ -258,14 +258,11 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
             ))}
           </div>
 
-          {/* Total */}
+          {/* ✅ FIXED: Total - Now uses transaction.total instead of paymentBreakdown sum */}
           <div style={{ borderTop: '2px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
               <span>TOTAL</span>
-              <span>₦{(transaction.paymentBreakdown ? 
-                Object.values(transaction.paymentBreakdown).reduce((sum: number, amount: number) => sum + amount, 0) : 
-                transaction.total
-              ).toLocaleString()}</span>
+              <span>₦{transaction.total.toLocaleString()}</span>
             </div>
           </div>
 
@@ -281,8 +278,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
         </div>
 
         {/* Modal Footer */}
-        {/* Modal Footer */}
-      <div className="modal-footer" style={{ borderTop: '1px solid #E5E7EB', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: '#F9FAFB' }}>
+        <div className="modal-footer" style={{ borderTop: '1px solid #E5E7EB', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: '#F9FAFB' }}>
           <div style={{ display: 'flex', columnGap: '12px' }}>
             <button
               onClick={handlePrint}
