@@ -65,43 +65,55 @@ export default function TransactionsPage() {
   // Load transactions from localStorage
   useEffect(() => {
     const loadTransactions = async () => {
-  try {
-    const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
-  headers: { 
-    'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
-  }
-});
-    
-    const result: ApiResponse = await response.json();
-if (result.success) {
-  const transactionsWithDates: Transaction[] = result.data.map((transaction: ApiTransaction) => ({
-    id: transaction.id,
-    items: transaction.items,
-    customer: transaction.customer,
-    paymentBreakdown: transaction.paymentBreakdown,
-    total: transaction.total,
-    status: transaction.status,
-    createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
-  }));
-  setTransactions(transactionsWithDates);
-    } else {
-      console.error('Failed to load transactions:', result.error);
-      setTransactions([]);
-    }
-  } catch (error) {
-    console.error('Error loading transactions:', error);
-    setTransactions([]);
-  }
-};
+      try {
+        const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
+          headers: { 
+            'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
+          }
+        });
+        
+        const result: ApiResponse = await response.json();
+        if (result.success) {
+          // ✅ FIXED: Filter out transactions with invalid items
+          const transactionsWithDates: Transaction[] = result.data
+            .filter((transaction: ApiTransaction) => 
+              transaction.items && 
+              transaction.items.length > 0 &&
+              transaction.items.every(item => item && item.name) // Ensure all items are valid
+            )
+            .map((transaction: ApiTransaction) => ({
+              id: transaction.id,
+              items: transaction.items,
+              customer: transaction.customer,
+              paymentBreakdown: transaction.paymentBreakdown,
+              total: transaction.total,
+              status: transaction.status,
+              createdAt: transaction.createdAt ? new Date(transaction.createdAt) : null
+            }));
+          setTransactions(transactionsWithDates);
+        } else {
+          console.error('Failed to load transactions:', result.error);
+          setTransactions([]);
+        }
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        setTransactions([]);
+      }
+    };
     loadTransactions();
   }, []);
 
   // Filter transactions based on search query and date
   const filteredTransactions = transactions.filter(transaction => {
+    // ✅ FIXED: Add safety check for items
+    if (!transaction.items || transaction.items.length === 0) return false;
+    
     const matchesSearch = searchQuery.trim() === '' || 
       transaction.items.some(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchQuery.toLowerCase())
+        item && (
+          item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.id?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       ) ||
       transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       transaction.customer.toLowerCase().includes(searchQuery.toLowerCase());
@@ -117,16 +129,16 @@ if (result.success) {
   };
 
   const formatTime = (date: Date | null) => {
-  if (!date || isNaN(date.getTime())) {
-    return 'TIME MISSING'; // Clear indicator of data integrity issue
-  }
-  
-  return date.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false 
-  });
-};
+    if (!date || isNaN(date.getTime())) {
+      return 'TIME MISSING'; // Clear indicator of data integrity issue
+    }
+    
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+  };
 
   const getStatusBadgeStyle = (status: string) => {
     const baseStyle = {
@@ -149,10 +161,13 @@ if (result.success) {
   };
 
   const getProductDisplayText = (items: Transaction['items']) => {
+    // ✅ FIXED: Add safety check
+    if (!items || items.length === 0) return 'Unknown Product';
+    
     if (items.length === 1) {
-      return items[0].name;
+      return items[0]?.name || 'Unknown Product';
     } else {
-      return `${items[0].name} & ${items.length - 1} other${items.length > 2 ? 's' : ''}`;
+      return `${items[0]?.name || 'Unknown Product'} & ${items.length - 1} other${items.length > 2 ? 's' : ''}`;
     }
   };
 
@@ -428,142 +443,152 @@ if (result.success) {
                   </p>
                 </div>
               ) : (
-                filteredTransactions.map((transaction, index) => (
-                  <div 
-                    key={transaction.id} 
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(7, 1fr)',
-                      gap: '16px',
-                      padding: '16px 24px',
-                      borderTop: index > 0 ? '1px solid #E5E7EB' : 'none',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    {/* ID */}
-                    <div 
-                      style={{
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        color: '#111827'
-                      }}
-                    >
-                      {transaction.id}
-                    </div>
+                filteredTransactions.map((transaction, index) => {
+                  // ✅ FIXED: Extra safety check before rendering
+                  if (!transaction.items || transaction.items.length === 0 || !transaction.items[0]) {
+                    return null;
+                  }
 
-                    {/* Product */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        position: 'relative',
-                        flexShrink: 0
-                      }}>
-                        <Image
-                          src={transaction.items[0].image}
-                          alt={transaction.items[0].name}
-                          width={40}
-                          height={40}
-                          style={{
-                            objectFit: 'contain',
-                            borderRadius: '4px',
-                            backgroundColor: '#F9FAFB'
-                          }}
-                        />
+                  return (
+                    <div 
+                      key={transaction.id} 
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(7, 1fr)',
+                        gap: '16px',
+                        padding: '16px 24px',
+                        borderTop: index > 0 ? '1px solid #E5E7EB' : 'none',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {/* ID */}
+                      <div 
+                        style={{
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          fontWeight: 500,
+                          fontSize: '14px',
+                          lineHeight: '20px',
+                          color: '#111827'
+                        }}
+                      >
+                        {transaction.id}
                       </div>
+
+                      {/* Product - ✅ FIXED with safety checks */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          position: 'relative',
+                          flexShrink: 0
+                        }}>
+                          <Image
+                            src={transaction.items[0]?.image || '/products/placeholder.png'}
+                            alt={transaction.items[0]?.name || 'Product'}
+                            width={40}
+                            height={40}
+                            style={{
+                              objectFit: 'contain',
+                              borderRadius: '4px',
+                              backgroundColor: '#F9FAFB'
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.src = '/products/placeholder.png';
+                            }}
+                          />
+                        </div>
+                        <div 
+                          style={{
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            fontWeight: 400,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#111827',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {getProductDisplayText(transaction.items)}
+                        </div>
+                      </div>
+
+                      {/* Time */}
                       <div 
                         style={{
                           fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 400,
                           fontSize: '14px',
                           lineHeight: '20px',
-                          color: '#111827',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          color: '#6B7280'
                         }}
                       >
-                        {getProductDisplayText(transaction.items)}
+                        {formatTime(transaction.createdAt)}
                       </div>
-                    </div>
 
-                    {/* Time */}
-                    <div 
-                      style={{
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontWeight: 400,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        color: '#6B7280'
-                      }}
-                    >
-                      {formatTime(transaction.createdAt)}
-                    </div>
-
-                    {/* Price */}
-                    <div 
-                      style={{
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        color: '#111827'
-                      }}
-                    >
-                      ₦ {transaction.total.toLocaleString()}
-                    </div>
-
-                    {/* Customer */}
-                    <div 
-                      style={{
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontWeight: 400,
-                        fontSize: '14px',
-                        lineHeight: '20px',
-                        color: '#111827'
-                      }}
-                    >
-                      {transaction.customer}
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <span style={getStatusBadgeStyle(transaction.status)}>
-                        {transaction.status}
-                      </span>
-                    </div>
-
-                    {/* Action */}
-                    <div>
-                      <button
-                        onClick={() => handleViewReceipt(transaction)}
+                      {/* Price */}
+                      <div 
                         style={{
                           fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
                           lineHeight: '20px',
-                          color: '#2563EB',
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'color 0.2s'
+                          color: '#111827'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
                       >
-                        View receipt
-                      </button>
+                        ₦ {transaction.total.toLocaleString()}
+                      </div>
+
+                      {/* Customer */}
+                      <div 
+                        style={{
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          fontWeight: 400,
+                          fontSize: '14px',
+                          lineHeight: '20px',
+                          color: '#111827'
+                        }}
+                      >
+                        {transaction.customer}
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <span style={getStatusBadgeStyle(transaction.status)}>
+                          {transaction.status}
+                        </span>
+                      </div>
+
+                      {/* Action */}
+                      <div>
+                        <button
+                          onClick={() => handleViewReceipt(transaction)}
+                          style={{
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#2563EB',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'color 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
+                        >
+                          View receipt
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -572,14 +597,14 @@ if (result.success) {
 
       {/* Receipt Modal */}
       {showReceiptModal && selectedReceipt && selectedReceipt.createdAt && (
-  <ReceiptModal
-    transaction={selectedReceipt as Transaction & { createdAt: Date }}
-    onClose={() => {
-      setShowReceiptModal(false);
-      setSelectedReceipt(null);
-    }}
-  />
-)}
+        <ReceiptModal
+          transaction={selectedReceipt as Transaction & { createdAt: Date }}
+          onClose={() => {
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+          }}
+        />
+      )}
     </div>
   );
 }
