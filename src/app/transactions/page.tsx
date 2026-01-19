@@ -24,7 +24,7 @@ interface Transaction {
     salesOnReturn: number;
   };
   total: number;
-  createdAt: Date | null; // Allow null for missing timestamps
+  createdAt: Date | null;
   status: 'Successful' | 'Ongoing' | 'Failed';
 }
 
@@ -45,7 +45,7 @@ interface ApiTransaction {
     salesOnReturn: number;
   };
   total: number;
-  createdAt: string; // API returns string, we'll convert to Date
+  createdAt: string;
   status: 'Successful' | 'Ongoing' | 'Failed';
 }
 
@@ -62,7 +62,6 @@ export default function TransactionsPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<Transaction | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  // Load transactions from localStorage
   useEffect(() => {
     const loadTransactions = async () => {
       try {
@@ -74,12 +73,11 @@ export default function TransactionsPage() {
         
         const result: ApiResponse = await response.json();
         if (result.success) {
-          // ✅ FIXED: Filter out transactions with invalid items
           const transactionsWithDates: Transaction[] = result.data
             .filter((transaction: ApiTransaction) => 
               transaction.items && 
               transaction.items.length > 0 &&
-              transaction.items.every(item => item && item.name) // Ensure all items are valid
+              transaction.items.every(item => item && item.name)
             )
             .map((transaction: ApiTransaction) => ({
               id: transaction.id,
@@ -103,9 +101,7 @@ export default function TransactionsPage() {
     loadTransactions();
   }, []);
 
-  // Filter transactions based on search query and date
   const filteredTransactions = transactions.filter(transaction => {
-    // ✅ FIXED: Add safety check for items
     if (!transaction.items || transaction.items.length === 0) return false;
     
     const matchesSearch = searchQuery.trim() === '' || 
@@ -118,8 +114,6 @@ export default function TransactionsPage() {
       transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       transaction.customer.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // For now, we'll show all transactions regardless of date filter
-    // You can implement date filtering logic here based on your needs
     return matchesSearch;
   });
 
@@ -130,7 +124,7 @@ export default function TransactionsPage() {
 
   const formatTime = (date: Date | null) => {
     if (!date || isNaN(date.getTime())) {
-      return 'TIME MISSING'; // Clear indicator of data integrity issue
+      return 'TIME MISSING';
     }
     
     return date.toLocaleTimeString('en-US', { 
@@ -145,7 +139,8 @@ export default function TransactionsPage() {
       padding: '4px 12px',
       borderRadius: '9999px',
       fontSize: '12px',
-      fontWeight: 500
+      fontWeight: 500,
+      display: 'inline-block'
     };
     
     switch (status) {
@@ -161,7 +156,6 @@ export default function TransactionsPage() {
   };
 
   const getProductDisplayText = (items: Transaction['items']) => {
-    // ✅ FIXED: Add safety check
     if (!items || items.length === 0) return 'Unknown Product';
     
     if (items.length === 1) {
@@ -177,32 +171,32 @@ export default function TransactionsPage() {
       height: '100vh',
       backgroundColor: '#F9FAFB'
     }}>
-      {/* Sidebar */}
       <Sidebar />
       
-      {/* Main Content */}
       <div style={{
         flex: 1,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
-        {/* Navbar */}
         <Navbar 
           title="Transactions" 
           subtitle="Track and reference completed sales."
           showNewSaleButton={false}
         />
         
-        {/* Content */}
-        <div style={{ flex: 1, padding: '32px' }}>
-          {/* Filters and Search */}
+        <div style={{ 
+          flex: 1, 
+          padding: '32px',
+          overflow: 'auto'
+        }}>
+          {/* Filters */}
           <div style={{
             marginBottom: '24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            {/* Date Filter */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -232,18 +226,8 @@ export default function TransactionsPage() {
                     padding: '8px 32px 8px 16px',
                     fontSize: '14px',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
-                    fontWeight: 400,
-                    lineHeight: '20px',
                     outline: 'none',
                     cursor: 'pointer'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3B82F6';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#E5E7EB';
-                    e.target.style.boxShadow = 'none';
                   }}
                 >
                   <option value="Today">Today</option>
@@ -266,7 +250,7 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search */}
           <div style={{ marginBottom: '24px' }}>
             <div style={{
               position: 'relative',
@@ -305,297 +289,241 @@ export default function TransactionsPage() {
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3B82F6';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Transactions Table */}
+          {/* Table Container with Scroll */}
           <div style={{
             backgroundColor: 'white',
             borderRadius: '8px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             border: '1px solid #E5E7EB',
-            overflow: 'hidden'
+            overflowX: 'auto'
           }}>
-            {/* Table Header */}
-            <div style={{
-              borderBottom: '1px solid #E5E7EB',
-              backgroundColor: '#F9FAFB'
+            <table style={{
+              width: '100%',
+              minWidth: '1200px',
+              borderCollapse: 'collapse'
             }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '16px',
-                padding: '16px 24px'
+              <thead style={{
+                backgroundColor: '#F9FAFB',
+                borderBottom: '1px solid #E5E7EB'
               }}>
-                <div 
-                  style={{
+                <tr>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  ID
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '200px'
+                  }}>
+                    ID
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Product
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '300px'
+                  }}>
+                    Product
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Time
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '100px'
+                  }}>
+                    Time
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Price
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '150px'
+                  }}>
+                    Price
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Customer
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '200px'
+                  }}>
+                    Customer
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Status
-                </div>
-                <div 
-                  style={{
+                    color: '#6B7280',
+                    width: '120px'
+                  }}>
+                    Status
+                  </th>
+                  <th style={{
+                    padding: '16px 24px',
                     textAlign: 'left',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontWeight: 500,
                     fontSize: '12px',
-                    lineHeight: '16px',
-                    color: '#6B7280'
-                  }}
-                >
-                  Action
-                </div>
-              </div>
-            </div>
+                    color: '#6B7280',
+                    width: '130px'
+                  }}>
+                    Action
+                  </th>
+                </tr>
+              </thead>
 
-            {/* Table Body */}
-            <div>
-              {filteredTransactions.length === 0 ? (
-                <div style={{
-                  padding: '48px 24px',
-                  textAlign: 'center'
-                }}>
-                  <p 
-                    style={{
+              <tbody>
+                {filteredTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{
+                      padding: '48px 24px',
+                      textAlign: 'center',
                       fontFamily: 'system-ui, -apple-system, sans-serif',
                       fontSize: '14px',
                       color: '#6B7280'
-                    }}
-                  >
-                    {transactions.length === 0 
-                      ? 'No transactions found. Complete a sale to see transactions here.' 
-                      : 'No transactions match your search.'}
-                  </p>
-                </div>
-              ) : (
-                filteredTransactions.map((transaction, index) => {
-                  // ✅ FIXED: Extra safety check before rendering
-                  if (!transaction.items || transaction.items.length === 0 || !transaction.items[0]) {
-                    return null;
-                  }
+                    }}>
+                      {transactions.length === 0 
+                        ? 'No transactions found. Complete a sale to see transactions here.' 
+                        : 'No transactions match your search.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map((transaction) => {
+                    if (!transaction.items || transaction.items.length === 0 || !transaction.items[0]) {
+                      return null;
+                    }
 
-                  return (
-                    <div 
-                      key={transaction.id} 
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(7, 1fr)',
-                        gap: '16px',
-                        padding: '16px 24px',
-                        borderTop: index > 0 ? '1px solid #E5E7EB' : 'none',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      {/* ID */}
-                      <div 
+                    return (
+                      <tr 
+                        key={transaction.id}
                         style={{
+                          borderTop: '1px solid #E5E7EB',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <td style={{
+                          padding: '16px 24px',
                           fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
-                          lineHeight: '20px',
                           color: '#111827'
-                        }}
-                      >
-                        {transaction.id}
-                      </div>
-
-                      {/* Product - ✅ FIXED with safety checks */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                      }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          position: 'relative',
-                          flexShrink: 0
                         }}>
-                          <Image
-                            src={transaction.items[0]?.image || '/products/placeholder.png'}
-                            alt={transaction.items[0]?.name || 'Product'}
-                            width={40}
-                            height={40}
-                            style={{
-                              objectFit: 'contain',
-                              borderRadius: '4px',
-                              backgroundColor: '#F9FAFB'
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.src = '/products/placeholder.png';
-                            }}
-                          />
-                        </div>
-                        <div 
-                          style={{
-                            fontFamily: 'system-ui, -apple-system, sans-serif',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                            lineHeight: '20px',
-                            color: '#111827',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {getProductDisplayText(transaction.items)}
-                        </div>
-                      </div>
+                          {transaction.id}
+                        </td>
 
-                      {/* Time */}
-                      <div 
-                        style={{
+                        <td style={{ padding: '16px 24px' }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}>
+                            <Image
+                              src={transaction.items[0]?.image || '/products/placeholder.png'}
+                              alt={transaction.items[0]?.name || 'Product'}
+                              width={40}
+                              height={40}
+                              style={{
+                                objectFit: 'contain',
+                                borderRadius: '4px',
+                                backgroundColor: '#F9FAFB'
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.src = '/products/placeholder.png';
+                              }}
+                            />
+                            <span style={{
+                              fontFamily: 'system-ui, -apple-system, sans-serif',
+                              fontSize: '14px',
+                              color: '#111827'
+                            }}>
+                              {getProductDisplayText(transaction.items)}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td style={{
+                          padding: '16px 24px',
                           fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontWeight: 400,
                           fontSize: '14px',
-                          lineHeight: '20px',
                           color: '#6B7280'
-                        }}
-                      >
-                        {formatTime(transaction.createdAt)}
-                      </div>
+                        }}>
+                          {formatTime(transaction.createdAt)}
+                        </td>
 
-                      {/* Price */}
-                      <div 
-                        style={{
+                        <td style={{
+                          padding: '16px 24px',
                           fontFamily: 'system-ui, -apple-system, sans-serif',
                           fontWeight: 500,
                           fontSize: '14px',
-                          lineHeight: '20px',
                           color: '#111827'
-                        }}
-                      >
-                        ₦ {transaction.total.toLocaleString()}
-                      </div>
+                        }}>
+                          ₦{transaction.total.toLocaleString()}
+                        </td>
 
-                      {/* Customer */}
-                      <div 
-                        style={{
+                        <td style={{
+                          padding: '16px 24px',
                           fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontWeight: 400,
                           fontSize: '14px',
-                          lineHeight: '20px',
                           color: '#111827'
-                        }}
-                      >
-                        {transaction.customer}
-                      </div>
+                        }}>
+                          {transaction.customer}
+                        </td>
 
-                      {/* Status */}
-                      <div>
-                        <span style={getStatusBadgeStyle(transaction.status)}>
-                          {transaction.status}
-                        </span>
-                      </div>
+                        <td style={{ padding: '16px 24px' }}>
+                          <span style={getStatusBadgeStyle(transaction.status)}>
+                            {transaction.status}
+                          </span>
+                        </td>
 
-                      {/* Action */}
-                      <div>
-                        <button
-                          onClick={() => handleViewReceipt(transaction)}
-                          style={{
-                            fontFamily: 'system-ui, -apple-system, sans-serif',
-                            fontWeight: 500,
-                            fontSize: '14px',
-                            lineHeight: '20px',
-                            color: '#2563EB',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'color 0.2s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
-                          onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
-                        >
-                          View receipt
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                        <td style={{ padding: '16px 24px' }}>
+                          <button
+                            onClick={() => handleViewReceipt(transaction)}
+                            style={{
+                              fontFamily: 'system-ui, -apple-system, sans-serif',
+                              fontWeight: 500,
+                              fontSize: '14px',
+                              color: '#2563EB',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#1D4ED8'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#2563EB'}
+                          >
+                            View receipt
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      {/* Receipt Modal */}
       {showReceiptModal && selectedReceipt && selectedReceipt.createdAt && (
         <ReceiptModal
           transaction={selectedReceipt as Transaction & { createdAt: Date }}
