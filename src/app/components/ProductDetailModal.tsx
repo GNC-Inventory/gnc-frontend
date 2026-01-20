@@ -40,20 +40,20 @@ export default function ProductDetailModal({
   onInventoryUpdate
 }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
-  const [customPrice, setCustomPrice] = useState<number>(0); // ✅ NEW: Price state
-  const [priceDisplay, setPriceDisplay] = useState<string>(''); // ✅ Display state for formatting
+  const [customPrice, setCustomPrice] = useState<number>(0);
+  const [priceDisplay, setPriceDisplay] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // ✅ NEW: Initialize price when product changes
+  // ✅ Initialize price when product changes
   useEffect(() => {
     if (product) {
       setCustomPrice(product.basePrice);
-      setPriceDisplay(formatCurrencyInput(product.basePrice)); // ✅ Format on load
+      setPriceDisplay(formatCurrencyInput(product.basePrice));
       setQuantity(1);
     }
   }, [product]);
 
-  // ✅ IMPROVED: Format currency with decimals
+  // ✅ Format currency with decimals
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-NG', {
       minimumFractionDigits: 2,
@@ -61,7 +61,7 @@ export default function ProductDetailModal({
     });
   };
 
-  // ✅ NEW: Format for input display
+  // ✅ Format for input display
   const formatCurrencyInput = (value: number): string => {
     if (value === 0) return '';
     return value.toLocaleString('en-NG', {
@@ -70,7 +70,7 @@ export default function ProductDetailModal({
     });
   };
 
-  // ✅ NEW: Parse currency input
+  // ✅ Parse currency input
   const parseCurrencyInput = (value: string): number => {
     if (!value || value.trim() === '') return 0;
     const cleaned = value.replace(/,/g, '');
@@ -90,16 +90,22 @@ export default function ProductDetailModal({
     }
   };
 
-  // ✅ NEW: Handle price change with formatting
+  // ✅ UPDATED: Enforce minimum base price - prevent typing below base price
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setPriceDisplay(value); // Update display immediately
     
     const numValue = parseCurrencyInput(value);
-    setCustomPrice(numValue);
+    const basePrice = product?.basePrice || 0;
+    
+    // Only update customPrice if above base price or empty (being cleared)
+    if (numValue === 0 || numValue >= basePrice) {
+      setCustomPrice(numValue);
+    }
+    // Otherwise, don't update customPrice (user can't set price below base price)
   };
 
-  // ✅ NEW: Format on blur
+  // ✅ Format on blur
   const handlePriceBlur = () => {
     if (customPrice > 0) {
       setPriceDisplay(formatCurrencyInput(customPrice));
@@ -111,7 +117,7 @@ export default function ProductDetailModal({
     console.log('product:', product);
     console.log('onAddToCart:', onAddToCart);
     console.log('quantity:', quantity);
-    console.log('customPrice:', customPrice); // ✅ NEW: Log price
+    console.log('customPrice:', customPrice);
     
     if (!product || !onAddToCart) {
       console.log('❌ Early return: product or onAddToCart is missing');
@@ -124,9 +130,15 @@ export default function ProductDetailModal({
       return;
     }
 
-    // ✅ NEW: Validate price
+    // ✅ Validate price
     if (customPrice <= 0) {
       toast.error('Please enter a valid price');
+      return;
+    }
+
+    // ✅ EXTRA VALIDATION: Ensure price is not below base price
+    if (customPrice < product.basePrice) {
+      toast.error(`Cannot sell below base price of ₦${formatCurrency(product.basePrice)}`);
       return;
     }
     
@@ -136,7 +148,7 @@ export default function ProductDetailModal({
     try {
       console.log('📦 Calling onAddToCart with:', { product, price: customPrice, quantity });
       
-      // ✅ FIXED: Pass custom price instead of 0
+      // ✅ Pass custom price
       onAddToCart(product, customPrice, quantity);
       
       console.log('✅ onAddToCart completed');
@@ -163,7 +175,8 @@ export default function ProductDetailModal({
     product.stockLeft > 0 &&
     quantity > 0 &&
     quantity <= product.stockLeft &&
-    customPrice > 0 && // ✅ NEW: Price must be valid
+    customPrice > 0 &&
+    customPrice >= product.basePrice && // ✅ Must be >= base price
     !isProcessing;
 
   if (!isOpen || !product) return null;
@@ -428,7 +441,7 @@ export default function ProductDetailModal({
           {/* Right side */}
           <div style={{ width: '320px' }}>
             
-            {/* ✅ NEW: Price Input */}
+            {/* ✅ UPDATED: Price Input with minimum validation */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="price" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
                 Selling Price (₦)
@@ -440,21 +453,31 @@ export default function ProductDetailModal({
                 onChange={handlePriceChange}
                 onBlur={handlePriceBlur}
                 disabled={product.stockLeft === 0 || isProcessing}
-                placeholder="0.00"
+                placeholder={`Minimum: ${formatCurrency(product.basePrice)}`}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  border: '1px solid #E5E7EB',
+                  border: `2px solid ${
+                    customPrice > 0 && customPrice < product.basePrice
+                      ? '#EF4444' // Red if below minimum
+                      : '#E5E7EB'  // Gray if valid
+                  }`,
                   borderRadius: '8px',
                   outline: 'none',
-                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
+                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 
+                                   customPrice > 0 && customPrice < product.basePrice ? '#FEE2E2' : 'white',
                   cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
                   fontSize: '1rem'
                 }}
               />
               <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#6B7280' }}>
-                Adjust price for discounts or negotiated deals
+                Base price: ₦{formatCurrency(product.basePrice)} • Cannot sell below this price
               </p>
+              {customPrice > 0 && customPrice < product.basePrice && (
+                <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#EF4444', fontWeight: 500 }}>
+                  ⚠️ Price cannot be below base price
+                </p>
+              )}
             </div>
 
             {/* Quantity Input */}
@@ -493,7 +516,7 @@ export default function ProductDetailModal({
               )}
             </div>
 
-            {/* ✅ NEW: Total Preview */}
+            {/* ✅ Total Preview */}
             <div style={{ 
               marginBottom: '24px', 
               padding: '16px', 
