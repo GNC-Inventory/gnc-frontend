@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
-import Image from 'next/image';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import ReceiptModal from '../components/ReceiptModal';
@@ -72,6 +71,16 @@ export default function TransactionsPage() {
         });
         
         const result: ApiResponse = await response.json();
+        
+        // ✅ DEBUG: Log transaction data to see image URLs
+        console.log('=== TRANSACTION DATA DEBUG ===');
+        if (result.data && result.data.length > 0) {
+          console.log('First transaction:', result.data[0]);
+          console.log('First item:', result.data[0]?.items[0]);
+          console.log('Image URL:', result.data[0]?.items[0]?.image);
+          console.log('Full items array:', result.data[0]?.items);
+        }
+        
         if (result.success) {
           const transactionsWithDates: Transaction[] = result.data
             .filter((transaction: ApiTransaction) => 
@@ -412,6 +421,10 @@ export default function TransactionsPage() {
                       return null;
                     }
 
+                    // ✅ DEBUG: Log each transaction's image URL
+                    console.log('Rendering transaction:', transaction.id);
+                    console.log('Image URL:', transaction.items[0]?.image);
+
                     return (
                       <tr 
                         key={transaction.id}
@@ -438,17 +451,20 @@ export default function TransactionsPage() {
                             alignItems: 'center',
                             gap: '12px'
                           }}>
-                            <Image
+                            {/* ✅ FIXED: Use regular img instead of Next Image */}
+                            <img
                               src={transaction.items[0]?.image || '/products/placeholder.png'}
                               alt={transaction.items[0]?.name || 'Product'}
-                              width={40}
-                              height={40}
                               style={{
+                                width: '40px',
+                                height: '40px',
                                 objectFit: 'contain',
                                 borderRadius: '4px',
-                                backgroundColor: '#F9FAFB'
+                                backgroundColor: '#F9FAFB',
+                                border: '1px solid #E5E7EB'
                               }}
                               onError={(e) => {
+                                console.error('Image failed to load:', transaction.items[0]?.image);
                                 e.currentTarget.src = '/products/placeholder.png';
                               }}
                             />
