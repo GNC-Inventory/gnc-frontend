@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import SalesCard from '../components/dashboard/SalesCard';
 import TransactionsCard from '../components/dashboard/TransactionsCard';
@@ -23,6 +23,24 @@ const timeFrameOptions = [
 export default function DashboardPage() {
   const [selectedTimeFrame, setSelectedTimeFrame] = useState('Today');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userName, setUserName] = useState('User');
+
+  // ✅ NEW: Load user name from localStorage
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // Try to get first name, fall back to full name or email prefix
+        const displayName = user.firstName || user.name || user.email?.split('@')[0] || 'User';
+        // Capitalize first letter
+        setUserName(displayName.charAt(0).toUpperCase() + displayName.slice(1));
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setUserName('User');
+    }
+  }, []);
 
   const handleTimeFrameChange = (timeFrame: string) => {
     setSelectedTimeFrame(timeFrame);
@@ -44,7 +62,7 @@ export default function DashboardPage() {
             marginBottom: '16px'
           }}
         >
-          Welcome, Joseph
+          Welcome, {userName}
         </h1>
 
         {/* Showing Dropdown */}
