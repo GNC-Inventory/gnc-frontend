@@ -36,8 +36,9 @@ interface CheckoutViewProps {
 }
 
 export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: CheckoutViewProps) {
+  // ✅ FIXED: Empty customer name instead of hardcoded "Joseph Okoye"
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
-    name: 'Joseph Okoye',
+    name: '',
     address: '',
     phone: '',
   });
