@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 export const metadata: Metadata = {
-  title: "Welcome Back - Sign In",
-  description: "Continue from where you left off",
+  title: "GNC Sales - Point of Sale System",
+  description: "Modern inventory management and sales platform",
 };
 
 export default function RootLayout({
@@ -35,8 +35,8 @@ export default function RootLayout({
           position: 'relative'
         }}>
           <Providers>
-          {children}
-        </Providers>
+            {children}
+          </Providers>
         </div>
       </body>
     </html>
