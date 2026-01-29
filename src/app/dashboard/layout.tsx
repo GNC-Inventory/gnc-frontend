@@ -1,5 +1,8 @@
+'use client';
+
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function DashboardLayout({
   children,
@@ -7,29 +10,31 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      backgroundColor: '#F9FAFB'
-    }}>
-      <Sidebar />
+    <ProtectedRoute>
       <div style={{
-        flex: 1,
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
+        height: '100vh',
+        backgroundColor: '#F9FAFB'
       }}>
-        <Navbar 
-          title="Dashboard" 
-          subtitle="View your recent activities."
-        />
-        <main style={{
+        <Sidebar />
+        <div style={{
           flex: 1,
-          overflow: 'auto'
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}>
-          {children}
-        </main>
+          <Navbar 
+            title="Dashboard" 
+            subtitle="View your recent activities."
+          />
+          <main style={{
+            flex: 1,
+            overflow: 'auto'
+          }}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
