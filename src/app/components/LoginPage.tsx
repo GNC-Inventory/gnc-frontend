@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/utils/toast';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -11,6 +13,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -28,66 +31,19 @@ export default function LoginPage() {
     setError('');
     
     try {
-      // MOCK LOGIN - Accept any credentials
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock user data
-      const emailPrefix = email.split('@')[0];
-      const nameParts = emailPrefix.split(/[._-]/); // Split by dot, underscore, or dash
+      const result = await login(email.trim(), password.trim());
       
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      const mockUser = {
-        id: '1',
-        email: email.trim(),
-        name: emailPrefix,
-        firstName: nameParts[0] || emailPrefix,
-        lastName: nameParts[1] || 'User',
-        role: 'admin',
-        forcePasswordChange: false
-      };
-
-      // Store auth data
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-
-      // Redirect to dashboard
-      router.push('/dashboard');
-
-      /* REAL API CALL - Uncomment when backend is ready
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.data.token && data.data.user) {
-        const { token, user } = data.data;
-
-        // Store auth data
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-
-        // Check if user needs to change password (first login)
-        if (user.forcePasswordChange) {
-          router.push('/change-password');
-        } else {
-          router.push('/dashboard');
-        }
+      if (result.success) {
+        toast.success('Login successful!');
+        router.push('/dashboard');
       } else {
-        setError(data.error?.message || 'Login failed. Please check your credentials.');
+        setError(result.error || 'Login failed. Please check your credentials.');
+        toast.error(result.error || 'Login failed');
       }
-      */
     } catch (error) {
       console.error('Login error:', error);
       setError('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
