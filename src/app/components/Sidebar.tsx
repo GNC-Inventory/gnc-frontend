@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { ChevronRightIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/contexts/AuthContext';
 
 const mainMenuItems = [
   { name: 'Dashboard', href: '/dashboard', iconPath: '/icons/dashboard.png' },
@@ -24,7 +24,7 @@ const otherMenuItems = [
 const getCompanyContext = (pathname: string) => {
   if (pathname.startsWith('/products')) {
     return {
-      logoPath: '/apex-logo.png', // You'll provide this
+      logoPath: '/apex-logo.png',
       companyName: 'APEX',
       department: 'Employee'
     };
@@ -38,36 +38,14 @@ const getCompanyContext = (pathname: string) => {
   };
 };
 
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
-
 export default function Sidebar() {
   const pathname = usePathname();
   const companyContext = getCompanyContext(pathname);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // Get user from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-      }
-    }
-  }, []);
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/';
+      logout();
     }
   };
 
