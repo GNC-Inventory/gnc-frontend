@@ -37,13 +37,16 @@ export default function LoginPage() {
         toast.success('Login successful!');
         router.push('/dashboard');
       } else {
-        setError(result.error || 'Login failed. Please check your credentials.');
-        toast.error(result.error || 'Login failed');
+        // Show specific error from backend
+        const errorMessage = result.error || 'Login failed. Please check your credentials.';
+        setError(errorMessage);
+        toast.error(errorMessage, { duration: 5000 });
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('An error occurred. Please try again.');
-      toast.error('An error occurred. Please try again.');
+      const errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+      setError(errorMessage);
+      toast.error(errorMessage, { duration: 6000 });
     } finally {
       setIsLoading(false);
     }
