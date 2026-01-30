@@ -28,11 +28,11 @@ export async function login(email: string, password: string): Promise<{ success:
     if (data.success && data.data) {
       const { token, user } = data.data;
 
-      // Check if user is a SALESMAN
-      if (user.role !== 'SALESMAN') {
+      // Check if user is a SALESMAN or ADMIN
+      if (user.role !== 'SALESMAN' && user.role !== 'ADMIN') {
         return {
           success: false,
-          error: 'Access denied. Only salesmen can access this application.',
+          error: 'Access denied. You do not have permission to access this application.',
         };
       }
 
@@ -72,8 +72,8 @@ export async function getCurrentUser(): Promise<User | null> {
 
     const user: User = JSON.parse(userStr);
 
-    // Verify user is a SALESMAN
-    if (user.role !== 'SALESMAN') {
+    // Verify user is a SALESMAN or ADMIN
+    if (user.role !== 'SALESMAN' && user.role !== 'ADMIN') {
       logout();
       return null;
     }
