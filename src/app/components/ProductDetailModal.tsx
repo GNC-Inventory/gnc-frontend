@@ -5,6 +5,14 @@ import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { toast } from '@/utils/toast';
 
+interface UnitConversion {
+  baseUnit: string;
+  retailUnit: string;
+  conversionRate: number;
+  basePricePerUnit: number;
+  retailPricePerUnit: number;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -22,38 +30,54 @@ interface Product {
   types?: string[];
   brands?: string[];
   sizes?: string[];
+  colour?: string;
+  retailQuantity?: number;
+  unitConversion?: UnitConversion | null;
 }
 
 interface ProductDetailModalProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart?: (product: Product, price: number, quantity: number) => void;
+  onAddToCart?: (product: Product, price: number, quantity: number, unitType?: string, unitName?: string) => boolean | void;
   onInventoryUpdate?: (productId: string, newStockLeft: number) => void;
 }
 
-export default function ProductDetailModal({ 
-  product, 
-  isOpen, 
+export default function ProductDetailModal({
+  product,
+  isOpen,
   onClose,
   onAddToCart,
   onInventoryUpdate
 }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
-  const [customPrice, setCustomPrice] = useState<number>(0);
-  const [priceDisplay, setPriceDisplay] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedUnitType, setSelectedUnitType] = useState<'base' | 'retail'>('base');
+  const [totalPrice, setTotalPrice] = useState(0);
 
-  // ✅ Initialize price when product changes
+  // Reset state when modal opens/closes or product changes
   useEffect(() => {
-    if (product) {
-      setCustomPrice(product.basePrice);
-      setPriceDisplay(formatCurrencyInput(product.basePrice));
+    if (isOpen && product) {
       setQuantity(1);
+      setSelectedUnitType('base');
     }
-  }, [product]);
+  }, [isOpen, product?.id]);
 
-  // ✅ Format currency with decimals
+  // Calculate total price based on selected unit type
+  useEffect(() => {
+    if (!product) return;
+
+    let pricePerUnit = product.basePrice;
+
+    if (product.unitConversion) {
+      pricePerUnit = selectedUnitType === 'base'
+        ? product.unitConversion.basePricePerUnit
+        : product.unitConversion.retailPricePerUnit;
+    }
+
+    setTotalPrice(quantity * pricePerUnit);
+  }, [quantity, selectedUnitType, product]);
+
+  // Helper for formatting currency
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-NG', {
       minimumFractionDigits: 2,
@@ -61,123 +85,43 @@ export default function ProductDetailModal({
     });
   };
 
-  // ✅ Format for input display
-  const formatCurrencyInput = (value: number): string => {
-    if (value === 0) return '';
-    return value.toLocaleString('en-NG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
+  if (!isOpen || !product) return null;
 
-  // ✅ Parse currency input
-  const parseCurrencyInput = (value: string): number => {
-    if (!value || value.trim() === '') return 0;
-    const cleaned = value.replace(/,/g, '');
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
-  };
+  const hasUnitConversion = !!product.unitConversion;
+  const availableQuantity = hasUnitConversion && selectedUnitType === 'retail'
+    ? product.retailQuantity || 0
+    : product.stockLeft;
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '' || value === '0') {
-      setQuantity(0);
-    } else {
-      const numValue = parseInt(value);
-      if (!isNaN(numValue) && numValue >= 1 && numValue <= (product?.stockLeft || 1)) {
-        setQuantity(numValue);
+  const currentUnitName = hasUnitConversion
+    ? (selectedUnitType === 'base' ? product.unitConversion!.baseUnit : product.unitConversion!.retailUnit)
+    : 'Unit';
+
+  const currentPricePerUnit = hasUnitConversion
+    ? (selectedUnitType === 'base' ? product.unitConversion!.basePricePerUnit : product.unitConversion!.retailPricePerUnit)
+    : product.basePrice;
+
+  const handleAddToCart = () => {
+    if (quantity > availableQuantity) {
+      toast.error(`Only ${availableQuantity} ${currentUnitName}(s) available`);
+      return;
+    }
+
+    if (onAddToCart) {
+      const success = onAddToCart(
+        product,
+        currentPricePerUnit,
+        quantity,
+        selectedUnitType,
+        currentUnitName
+      );
+
+      // Handle both boolean return (from new Logic) and void (legacy)
+      if (success !== false) {
+        onClose();
+        toast.success(`${product.name} (${quantity} ${currentUnitName}) added to cart`);
       }
     }
   };
-
-  // ✅ UPDATED: Enforce minimum base price - prevent typing below base price
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPriceDisplay(value); // Update display immediately
-    
-    const numValue = parseCurrencyInput(value);
-    const basePrice = product?.basePrice || 0;
-    
-    // Only update customPrice if above base price or empty (being cleared)
-    if (numValue === 0 || numValue >= basePrice) {
-      setCustomPrice(numValue);
-    }
-    // Otherwise, don't update customPrice (user can't set price below base price)
-  };
-
-  // ✅ Format on blur
-  const handlePriceBlur = () => {
-    if (customPrice > 0) {
-      setPriceDisplay(formatCurrencyInput(customPrice));
-    }
-  };
-
-  const handleAddItem = () => {
-    console.log('=== HANDLE ADD ITEM CALLED ===');
-    console.log('product:', product);
-    console.log('onAddToCart:', onAddToCart);
-    console.log('quantity:', quantity);
-    console.log('customPrice:', customPrice);
-    
-    if (!product || !onAddToCart) {
-      console.log('❌ Early return: product or onAddToCart is missing');
-      return;
-    }
-    
-    if (quantity > product.stockLeft) {
-      console.log('❌ Quantity exceeds stock:', quantity, '>', product.stockLeft);
-      toast.error(`Only ${product.stockLeft} items available in stock`);
-      return;
-    }
-
-    // ✅ Validate price
-    if (customPrice <= 0) {
-      toast.error('Please enter a valid price');
-      return;
-    }
-
-    // ✅ EXTRA VALIDATION: Ensure price is not below base price
-    if (customPrice < product.basePrice) {
-      toast.error(`Cannot sell below base price of ₦${formatCurrency(product.basePrice)}`);
-      return;
-    }
-    
-    console.log('✅ Validation passed, setting processing...');
-    setIsProcessing(true);
-
-    try {
-      console.log('📦 Calling onAddToCart with:', { product, price: customPrice, quantity });
-      
-      // ✅ Pass custom price
-      onAddToCart(product, customPrice, quantity);
-      
-      console.log('✅ onAddToCart completed');
-      
-      toast.success(`${product.name} (${quantity}) added to cart`);
-      setQuantity(1);
-      setCustomPrice(product.basePrice); // Reset to base price
-      console.log('✅ Closing modal...');
-      onClose();
-    } catch (error: unknown) {
-      console.error('❌ ERROR in handleAddItem:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to add item: ${errorMessage}`);
-    } finally {
-      console.log('🏁 Setting processing to false');
-      setIsProcessing(false);
-    }
-    
-    console.log('=== HANDLE ADD ITEM COMPLETE ===');
-  };
-
-  const isAddButtonActive =
-    product &&
-    product.stockLeft > 0 &&
-    quantity > 0 &&
-    quantity <= product.stockLeft &&
-    customPrice > 0 &&
-    customPrice >= product.basePrice && // ✅ Must be >= base price
-    !isProcessing;
 
   if (!isOpen || !product) return null;
 
@@ -222,6 +166,17 @@ export default function ProductDetailModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#000', marginBottom: '8px' }}>{product.name}</h2>
+            {/* ✅ NEW: Display colour if available */}
+            {product.colour && (
+              <p style={{
+                fontSize: '14px',
+                color: '#6B7280',
+                margin: 0,
+                marginBottom: '8px'
+              }}>
+                Colour: <span style={{ fontWeight: 500 }}>{product.colour}</span>
+              </p>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.875rem' }}>
               <span style={{ color: '#4B5563' }}>SKU: {product.sku}</span>
               <span style={{ color: '#4B5563' }}>Category: {product.category}</span>
@@ -239,8 +194,8 @@ export default function ProductDetailModal({
                 {product.stockLeft === 0
                   ? 'Out of Stock'
                   : product.stockLeft <= 5
-                  ? `Low Stock (${product.stockLeft})`
-                  : `${product.stockLeft} in stock`}
+                    ? `Low Stock (${product.stockLeft})`
+                    : `${product.stockLeft} in stock`}
               </span>
             </div>
           </div>
@@ -439,164 +394,226 @@ export default function ProductDetailModal({
           </div>
 
           {/* Right side */}
-          <div style={{ width: '320px' }}>
-            
-            {/* ✅ UPDATED: Price Input with minimum validation */}
-            <div style={{ marginBottom: '24px' }}>
-              <label htmlFor="price" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
-                Selling Price (₦)
-              </label>
-              <input
-                type="text"
-                id="price"
-                value={priceDisplay}
-                onChange={handlePriceChange}
-                onBlur={handlePriceBlur}
-                disabled={product.stockLeft === 0 || isProcessing}
-                placeholder={`Minimum: ${formatCurrency(product.basePrice)}`}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: `2px solid ${
-                    customPrice > 0 && customPrice < product.basePrice
-                      ? '#EF4444' // Red if below minimum
-                      : '#E5E7EB'  // Gray if valid
-                  }`,
-                  borderRadius: '8px',
-                  outline: 'none',
-                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 
-                                   customPrice > 0 && customPrice < product.basePrice ? '#FEE2E2' : 'white',
-                  cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
-                  fontSize: '1rem'
-                }}
-              />
-              <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#6B7280' }}>
-                Base price: ₦{formatCurrency(product.basePrice)} • Cannot sell below this price
+          <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Stock Information */}
+            <div
+              style={{
+                padding: '16px',
+                backgroundColor: '#EFF6FF',
+                borderRadius: '8px'
+              }}
+            >
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', margin: 0 }}>
+                Stock Availability
+              </h3>
+              {/* ✅ NEW: Show both base and retail quantities if unit conversion exists */}
+              {hasUnitConversion ? (
+                <div>
+                  <p style={{ fontSize: '14px', color: '#374151', margin: '4px 0' }}>
+                    <strong>{product.stockLeft}</strong> {product.unitConversion!.baseUnit}(s) available
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6B7280', margin: '4px 0' }}>
+                    = <strong>{product.retailQuantity || 0}</strong> {product.unitConversion!.retailUnit}(s)
+                  </p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '8px', margin: '8px 0 0 0' }}>
+                    (1 {product.unitConversion!.baseUnit} = {product.unitConversion!.conversionRate} {product.unitConversion!.retailUnit}s)
+                  </p>
+                </div>
+              ) : (
+                <p style={{ fontSize: '14px', color: '#374151', margin: 0 }}>
+                  <strong>{product.stockLeft}</strong> unit(s) available
+                </p>
+              )}
+            </div>
+
+            {/* ✅ NEW: Unit Type Selection */}
+            {hasUnitConversion && (
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', margin: '0 0 12px 0' }}>
+                  Select Unit Type
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                  {/* Base Unit Button */}
+                  <button
+                    onClick={() => setSelectedUnitType('base')}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: `2px solid ${selectedUnitType === 'base' ? '#2563EB' : '#E5E7EB'}`,
+                      backgroundColor: selectedUnitType === 'base' ? '#EFF6FF' : 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <p style={{ fontSize: '16px', fontWeight: 600, color: '#000', margin: '0 0 4px 0' }}>
+                      {product.unitConversion!.baseUnit}
+                    </p>
+                    <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>
+                      ₦{product.unitConversion!.basePricePerUnit.toLocaleString()}/{product.unitConversion!.baseUnit}
+                    </p>
+                  </button>
+
+                  {/* Retail Unit Button */}
+                  <button
+                    onClick={() => setSelectedUnitType('retail')}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: `2px solid ${selectedUnitType === 'retail' ? '#2563EB' : '#E5E7EB'}`,
+                      backgroundColor: selectedUnitType === 'retail' ? '#EFF6FF' : 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <p style={{ fontSize: '16px', fontWeight: 600, color: '#000', margin: '0 0 4px 0' }}>
+                      {product.unitConversion!.retailUnit}
+                    </p>
+                    <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>
+                      ₦{product.unitConversion!.retailPricePerUnit.toLocaleString()}/{product.unitConversion!.retailUnit}
+                    </p>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Price Display */}
+            <div
+              style={{
+                padding: '16px',
+                backgroundColor: '#F0FDF4',
+                borderRadius: '8px'
+              }}
+            >
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', margin: '0 0 8px 0' }}>
+                Pricing
+              </h3>
+              <p style={{ fontSize: '28px', fontWeight: 700, color: '#059669', margin: '0 0 4px 0' }}>
+                ₦{currentPricePerUnit.toLocaleString()}
               </p>
-              {customPrice > 0 && customPrice < product.basePrice && (
-                <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#EF4444', fontWeight: 500 }}>
-                  ⚠️ Price cannot be below base price
-                </p>
-              )}
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                per {currentUnitName}
+              </p>
             </div>
 
-            {/* Quantity Input */}
-            <div style={{ marginBottom: '24px' }}>
-              <label htmlFor="quantity" style={{ display: 'block', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 500, color: '#000' }}>
-                Product Quantity
-              </label>
-              <input
-                type="number"
-                id="quantity"
-                min="1"
-                max={product.stockLeft}
-                value={quantity === 0 ? '' : quantity}
-                onChange={handleQuantityChange}
-                disabled={product.stockLeft === 0 || isProcessing}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  backgroundColor: product.stockLeft === 0 || isProcessing ? '#F3F4F6' : 'white',
-                  cursor: product.stockLeft === 0 || isProcessing ? 'not-allowed' : 'text',
-                  textAlign: 'center'
-                }}
-              />
-              {product.stockLeft === 0 && (
-                <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#DC2626' }}>
-                  This item is out of stock and cannot be added to cart.
-                </p>
-              )}
-              {quantity > product.stockLeft && (
-                <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#DC2626' }}>
-                  Quantity exceeds available stock ({product.stockLeft} available).
-                </p>
-              )}
-            </div>
-
-            {/* ✅ Total Preview */}
-            <div style={{ 
-              marginBottom: '24px', 
-              padding: '16px', 
-              backgroundColor: '#F3F4F6', 
-              borderRadius: '8px' 
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>Price per item:</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>₦{formatCurrency(customPrice)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>Quantity:</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>×{quantity}</span>
-              </div>
-              <div style={{ 
-                borderTop: '1px solid #D1D5DB', 
-                paddingTop: '8px', 
-                display: 'flex', 
-                justifyContent: 'space-between' 
-              }}>
-                <span style={{ fontSize: '1rem', fontWeight: 600 }}>Total:</span>
-                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#2563EB' }}>
-                  ₦{formatCurrency(customPrice * quantity)}
+            {/* Quantity Selection */}
+            <div>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', margin: '0 0 12px 0' }}>
+                Quantity ({currentUnitName}s)
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid #E5E7EB',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setQuantity(Math.max(1, Math.min(availableQuantity, val)));
+                  }}
+                  style={{
+                    width: '80px',
+                    height: '40px',
+                    textAlign: 'center',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px'
+                  }}
+                  min="1"
+                  max={availableQuantity}
+                />
+                <button
+                  onClick={() => setQuantity(Math.min(availableQuantity, quantity + 1))}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid #E5E7EB',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  +
+                </button>
+                <span style={{ fontSize: '14px', color: '#6B7280' }}>
+                  Max: {availableQuantity} {currentUnitName}(s)
                 </span>
               </div>
             </div>
 
-            {/* Add Button */}
-            <button
-              onClick={handleAddItem}
-              disabled={!isAddButtonActive}
+            {/* Total Price */}
+            <div
               style={{
+                padding: '16px',
+                backgroundColor: '#F3F4F6',
+                borderRadius: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Total:</span>
+                <span style={{ fontSize: '24px', fontWeight: 700, color: '#000' }}>
+                  ₦{totalPrice.toLocaleString()}
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px', margin: '4px 0 0 0' }}>
+                {quantity} {currentUnitName}(s) × ₦{currentPricePerUnit.toLocaleString()}
+              </p>
+            </div>
+
+            {/* Add to Cart Button */}
+            <button
+              onClick={handleAddToCart}
+              disabled={availableQuantity === 0}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: availableQuantity === 0 ? '#D1D5DB' : '#2563EB',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: availableQuantity === 0 ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '160px',
-                height: '40px',
-                borderRadius: '8px',
-                gap: '4px',
-                padding: '0 16px',
-                backgroundColor: isAddButtonActive ? '#2563EB' : '#D1D5DB',
-                cursor: isAddButtonActive ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s',
-                border: 'none'
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                if (availableQuantity > 0) e.currentTarget.style.backgroundColor = '#1D4ED8';
+              }}
+              onMouseLeave={(e) => {
+                if (availableQuantity > 0) e.currentTarget.style.backgroundColor = '#2563EB';
               }}
             >
-              {isProcessing ? (
-                <>
-                  <div
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid white',
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }}
-                  />
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'white', marginLeft: '4px' }}>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingCartIcon
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      color: isAddButtonActive ? 'white' : '#6B7280'
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: isAddButtonActive ? 'white' : '#6B7280'
-                    }}
-                  >
-                    Add item
-                  </span>
-                </>
-              )}
+              <ShoppingCartIcon style={{ width: '20px', height: '20px' }} />
+              {availableQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
         </div>
