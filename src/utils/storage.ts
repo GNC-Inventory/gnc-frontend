@@ -11,6 +11,9 @@ interface CartItem {
   image: string;
   price: number;
   quantity: number;
+  productId?: string;
+  unitType?: string;
+  unitName?: string;
 }
 
 interface PendingSale {

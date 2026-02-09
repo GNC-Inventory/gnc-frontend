@@ -5,6 +5,7 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface CartItem {
   id: string;
+  productId?: string;  // ✅ NEW: Original product ID (without unit type suffix)
   name: string;
   make?: string;
   model?: string;
@@ -14,6 +15,8 @@ interface CartItem {
   image: string;
   price: number;
   quantity: number;
+  unitType?: string;  // ✅ NEW: 'base' or 'retail'
+  unitName?: string;  // ✅ NEW: e.g., "Roll" or "Yard"
 }
 
 interface CartSidebarProps {
@@ -55,7 +58,6 @@ export default function CartSidebar({
             ? `${(window.innerWidth - 1440) / 2 + 1056}px`
             : '1056px',
         borderRadius: '32px',
-        // keep your original var fallback
         background: 'var(--bg-white-0, #FFFFFF)',
       }}
     >
@@ -147,7 +149,7 @@ export default function CartSidebar({
               alignItems: 'center',
               justifyContent: 'space-between',
               width: '304px',
-              height: '90px',
+              minHeight: '90px',
               paddingTop: '12px',
               paddingBottom: '12px',
             }}
@@ -265,6 +267,19 @@ export default function CartSidebar({
                   {item.name}
                 </h3>
 
+                {/* ✅ NEW: Display unit information */}
+                {item.unitName && item.unitType && (
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-inter), Inter, sans-serif',
+                      fontSize: '11px',
+                      color: '#6B7280',
+                      margin: '2px 0 0 0',
+                    }}
+                  >
+                    {item.quantity} {item.unitName}(s) × ₦{item.price.toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -321,7 +336,7 @@ export default function CartSidebar({
           borderTop: '1px solid #E5E7EB',
         }}
       >
-      
+
         {/* Complete Sale Button */}
         <button
           onClick={onCompleteSale}
