@@ -8,11 +8,11 @@ import { useCart } from '../../../../hooks/useCart';
 import ProductDetailModal from '../../../components/ProductDetailModal';
 import EmptyState from '../../../components/EmptyState';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { 
-  toggleProductSelection, 
-  selectAllProducts, 
+import {
+  toggleProductSelection,
+  selectAllProducts,
   setSelectionMode,
-  type SelectedProduct 
+  type SelectedProduct
 } from '../../../../store/selectionSlice';
 import { showToast } from '../../../../utils/toast';
 import BulkCartModal from '../../../components/BulkCartModal';
@@ -44,7 +44,7 @@ export default function CategoryPage() {
 
   // Filter products by category
   const categoryProducts = useMemo(() => {
-    return localProducts.filter(product => 
+    return localProducts.filter(product =>
       product.category.toLowerCase() === categoryName.toLowerCase()
     );
   }, [localProducts, categoryName]);
@@ -56,8 +56,8 @@ export default function CategoryPage() {
     // Apply search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
-        [p.name, p.sku, p.make, p.model].some(field => 
+      filtered = filtered.filter(p =>
+        [p.name, p.sku, p.make, p.model].some(field =>
           field?.toLowerCase().includes(query)
         )
       );
@@ -88,7 +88,7 @@ export default function CategoryPage() {
 
   const handleSelectProduct = (productId: string) => {
     if (isSelectionMode) return; // Prevent opening modal in selection mode
-    
+
     const product = localProducts.find(p => p.id === productId);
     if (product && product.stockLeft > 0) {
       setSelectedProduct(product);
@@ -96,8 +96,8 @@ export default function CategoryPage() {
     }
   };
 
-  const handleAddToCart = (product: Product, price: number, quantity: number) => {
-    const success = cart.addToCart(product, price, quantity);
+  const handleAddToCart = (product: Product, price: number, quantity: number, unitType?: string, unitName?: string) => {
+    const success = cart.addToCart(product, price, quantity, unitType, unitName);
     if (success) {
       setIsModalOpen(false);
       setSelectedProduct(null);
@@ -143,22 +143,22 @@ export default function CategoryPage() {
   };
 
   const handleBulkAddToCart = (items: Array<{
-    product: { 
-      id: string; 
-      name: string; 
-      image: string; 
-      category: string; 
-      basePrice: number; 
-      stockLeft: number; 
-      make?: string; 
-      model?: string; 
+    product: {
+      id: string;
+      name: string;
+      image: string;
+      category: string;
+      basePrice: number;
+      stockLeft: number;
+      make?: string;
+      model?: string;
     };
     price: number;
     quantity: number;
   }>) => {
     let successCount = 0;
     const failedProducts: string[] = [];
-    
+
     // Try to add each product
     for (const item of items) {
       const fullProduct = localProducts.find(p => p.id === item.product.id);
@@ -166,7 +166,7 @@ export default function CategoryPage() {
         failedProducts.push(item.product.name);
         continue;
       }
-      
+
       const success = cart.addToCart(fullProduct, item.price, item.quantity);
       if (!success) {
         failedProducts.push(item.product.name);
@@ -174,17 +174,17 @@ export default function CategoryPage() {
       }
       successCount++;
     }
-    
+
     // Show detailed feedback
     if (failedProducts.length > 0) {
       showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
     }
-    
+
     if (successCount === 0) {
       showToast('No products were added to cart', 'error');
       return; // Don't close modal if nothing was added
     }
-    
+
     // Success - close modal and show success message
     setShowBulkCartModal(false);
     showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
@@ -192,10 +192,10 @@ export default function CategoryPage() {
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '32px', 
-        maxWidth: '1280px', 
-        margin: '0 auto' 
+      <div style={{
+        padding: '32px',
+        maxWidth: '1280px',
+        margin: '0 auto'
       }}>
         <EmptyState type="loading" />
       </div>
@@ -228,7 +228,7 @@ export default function CategoryPage() {
           <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
           Back to Products
         </button>
-        
+
         <h1 style={{
           fontSize: '28px',
           fontWeight: 700,
@@ -237,7 +237,7 @@ export default function CategoryPage() {
         }}>
           {formattedCategoryName}
         </h1>
-        
+
         <p style={{
           color: '#6B7280',
           fontSize: '16px',
@@ -273,7 +273,7 @@ export default function CategoryPage() {
         >
           {isSelectionMode ? 'Exit Selection Mode' : 'Select Multiple'}
         </button>
-        
+
         {isSelectionMode && (
           <>
             <button
@@ -290,7 +290,7 @@ export default function CategoryPage() {
             >
               Select All ({filteredProducts.length})
             </button>
-            
+
             {Object.keys(selectedProducts).length > 0 && (
               <button
                 onClick={() => setShowBulkCartModal(true)}
@@ -467,34 +467,34 @@ export default function CategoryPage() {
                 position: 'relative'
               }}>
                 {product.image && product.image.trim() !== '' ? (
-  <img
-    src={product.image}
-    alt={product.name}
-    style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain'
-    }}
-    onError={(e) => {
-      console.error('Image failed to load:', e.currentTarget.src);
-      e.currentTarget.style.display = 'none';
-    }}
-    // eslint-disable-next-line @next/next/no-img-element
-  />
-) : (
-  <div style={{
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#E5E7EB',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9CA3AF',
-    fontSize: '14px'
-  }}>
-    No Image
-  </div>
-)}
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                    onError={(e) => {
+                      console.error('Image failed to load:', e.currentTarget.src);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  // eslint-disable-next-line @next/next/no-img-element
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#E5E7EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9CA3AF',
+                    fontSize: '14px'
+                  }}>
+                    No Image
+                  </div>
+                )}
               </div>
 
               {/* Product Info */}
@@ -559,10 +559,10 @@ export default function CategoryPage() {
       )}
 
       {/* Product Detail Modal */}
-      <ProductDetailModal 
-        product={selectedProduct} 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
         onAddToCart={handleAddToCart}
       />
 

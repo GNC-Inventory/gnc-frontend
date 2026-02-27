@@ -15,11 +15,11 @@ import ReceiptModal from '../components/ReceiptModal';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store/store';
-import { 
-  toggleProductSelection, 
-  selectAllProducts,  
+import {
+  toggleProductSelection,
+  selectAllProducts,
   setSelectionMode,
-  type SelectedProduct 
+  type SelectedProduct
 } from '../../store/selectionSlice';
 import BulkCartModal from '../components/BulkCartModal';
 
@@ -34,6 +34,9 @@ interface CartItem {
   image: string;
   price: number;
   quantity: number;
+  productId?: string;
+  unitType?: string;
+  unitName?: string;
 }
 
 interface CustomerDetails {
@@ -80,7 +83,7 @@ export default function ProductsPage() {
   // Hooks
   const { products, loading, error, refetch } = useInventory();
   const router = useRouter();
-  
+
   // Update local products when products change
   useEffect(() => {
     setLocalProducts(products);
@@ -123,11 +126,11 @@ export default function ProductsPage() {
     console.log('Items being sent to API:', items);
     const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY!
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         items: items.map(item => ({
           ...item,
           id: parseInt(item.id)
@@ -144,22 +147,22 @@ export default function ProductsPage() {
 
     const result = await response.json();
     console.log('API Response:', result);
-    
+
     if (!result.success) {
-      const errorMessage = typeof result.error === 'object' 
+      const errorMessage = typeof result.error === 'object'
         ? result.error.message || result.error.code || 'Failed to process sale'
         : result.error || 'Failed to process sale';
       throw new Error(errorMessage);
     }
-    
+
     return result.data;
   };
 
   // New handler for inventory updates from ProductDetailModal
   const handleInventoryUpdate = useCallback((productId: string, newStockLeft: number) => {
-    setLocalProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
+    setLocalProducts(prev =>
+      prev.map(product =>
+        product.id === productId
           ? { ...product, stockLeft: newStockLeft }
           : product
       )
@@ -177,8 +180,8 @@ export default function ProductsPage() {
     }
   }, [localProducts]);
 
-  const handleAddToCart = useCallback((product: Product, price: number, quantity: number) => {
-    const success = cart.addToCart(product, price, quantity);
+  const handleAddToCart = useCallback((product: Product, price: number, quantity: number, unitType?: string, unitName?: string) => {
+    const success = cart.addToCart(product, price, quantity, unitType, unitName);
     if (success) {
       setIsModalOpen(false);
       setSelectedProduct(null);
@@ -249,14 +252,14 @@ export default function ProductsPage() {
   }>) => {
     let successCount = 0;
     const failedProducts: string[] = [];
-    
+
     for (const item of items) {
       const fullProduct = localProducts.find(p => p.id === item.product.id);
       if (!fullProduct) {
         failedProducts.push(item.product.name);
         continue;
       }
-      
+
       const success = cart.addToCart(fullProduct, item.price, item.quantity);
       if (!success) {
         failedProducts.push(item.product.name);
@@ -264,16 +267,16 @@ export default function ProductsPage() {
       }
       successCount++;
     }
-    
+
     if (failedProducts.length > 0) {
       showToast(`Failed to add: ${failedProducts.join(', ')}`, 'error');
     }
-    
+
     if (successCount === 0) {
       showToast('No products were added to cart', 'error');
       return;
     }
-    
+
     setShowBulkCartModal(false);
     showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
   }, [cart, localProducts]);
@@ -282,7 +285,7 @@ export default function ProductsPage() {
   const handleCompleteSale = useCallback(() => {
     console.log('=== COMPLETE SALE CLICKED ===');
     console.log('Cart items:', cart.cartItems);
-    
+
     if (cart.cartItems.length === 0) {
       showToast('Cart is empty', 'error');
       return;
@@ -292,7 +295,7 @@ export default function ProductsPage() {
     // Inventory will be deducted when receipt is printed
     setShowCheckout(true);
     setShowCart(false);
-    
+
     console.log('=== MOVED TO CHECKOUT - INVENTORY NOT DEDUCTED ===');
   }, [cart]);
 
@@ -322,15 +325,15 @@ export default function ProductsPage() {
     console.log('Customer details:', customerDetails);
     console.log('Payment breakdown:', paymentBreakdown);
     console.log('Cart items:', cart.cartItems);
-    
+
     setIsProcessingSale(true);
-    
+
     try {
       // ✅ NEW: NOW we process the sale and deduct inventory
       console.log('Processing sale and deducting inventory...');
-      
+
       const transaction = await processSaleAPI(cart.cartItems, customerDetails.name, paymentBreakdown);
-      
+
       // Store complete transaction with customer details
       const enhancedTransaction = {
         ...transaction,
@@ -351,19 +354,19 @@ export default function ProductsPage() {
           quantity: item.quantity
         }))
       };
-      
+
       console.log('✅ Sale processed successfully, inventory deducted');
       setCompletedTransaction(enhancedTransaction);
       showToast('Sale completed! Receipt ready to print.', 'success');
-      
+
       // ✅ Clear cart WITHOUT restoring inventory (it was never deducted until now)
       await cart.clearCart(false);
       setShowCheckout(false);
-      
+
     } catch (error: unknown) {
       console.error('❌ Error processing sale:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       if (errorMessage.includes('Insufficient stock')) {
         showToast('Insufficient stock for some items. Please check inventory and try again.', 'error');
       } else if (errorMessage.includes('not found')) {
@@ -375,16 +378,16 @@ export default function ProductsPage() {
     } finally {
       setIsProcessingSale(false);
     }
-    
+
     console.log('=== PRINT RECEIPT COMPLETE ===');
   }, [cart, refetch, processSaleAPI]);
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '32px', 
-        maxWidth: '1280px', 
-        margin: '0 auto' 
+      <div style={{
+        padding: '32px',
+        maxWidth: '1280px',
+        margin: '0 auto'
       }}>
         <EmptyState type="loading" />
       </div>
@@ -408,15 +411,15 @@ export default function ProductsPage() {
           border: '1px solid #FECACA',
           borderRadius: '8px'
         }}>
-          <p style={{ 
-            color: '#B91C1C', 
+          <p style={{
+            color: '#B91C1C',
             marginBottom: '8px',
             margin: '0 0 8px 0'
           }}>
             Failed to load products: {error}
           </p>
-          <button 
-            onClick={refetch} 
+          <button
+            onClick={refetch}
             style={{
               padding: '8px 16px',
               backgroundColor: '#FEE2E2',
@@ -476,7 +479,7 @@ export default function ProductsPage() {
               }}
             />
           </div>
-          <button 
+          <button
             onClick={refetch}
             disabled={loading}
             style={{
@@ -518,7 +521,7 @@ export default function ProductsPage() {
       )}
 
       {/* Products Container */}
-      <div 
+      <div
         style={{
           backgroundColor: 'white',
           borderRadius: '32px',
@@ -529,8 +532,8 @@ export default function ProductsPage() {
           width: isCompact ? '728px' : '100%',
           height: isCompact ? '716px' : '600px',
           top: isCompact ? '172px' : 'auto',
-          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440 
-            ? `${(window.innerWidth - 1440) / 2 + 304}px` 
+          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440
+            ? `${(window.innerWidth - 1440) / 2 + 304}px`
             : '304px') : 'auto'
         }}
       >
@@ -549,7 +552,7 @@ export default function ProductsPage() {
                 </span>
               )}
             </h2>
-            
+
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => handleSetSelectionMode(!isSelectionMode)}
@@ -565,7 +568,7 @@ export default function ProductsPage() {
               >
                 {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
               </button>
-              
+
               {isSelectionMode && (
                 <>
                   <button
@@ -582,7 +585,7 @@ export default function ProductsPage() {
                   >
                     Select All
                   </button>
-                  
+
                   {Object.keys(selectedProducts).length > 0 && (
                     <button
                       onClick={addSelectedToCart}
@@ -623,21 +626,21 @@ export default function ProductsPage() {
             {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
               <div key={category} style={{ marginBottom: '24px' }}>
                 {/* Category Header */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  marginBottom: '16px' 
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px'
                 }}>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: 600, 
-                    color: '#000', 
-                    margin: 0 
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: '#000',
+                    margin: 0
                   }}>
                     {category} ({categoryProducts.length})
                   </h3>
-                  <button 
+                  <button
                     onClick={() => router.push(`/products/category/${encodeURIComponent(category.toLowerCase())}`)}
                     style={{
                       color: '#2563EB',
@@ -650,7 +653,7 @@ export default function ProductsPage() {
                     See All →
                   </button>
                 </div>
-                
+
                 {/* Horizontal Scrolling Products */}
                 <div style={{
                   display: 'flex',
@@ -753,7 +756,7 @@ export default function ProductsPage() {
                             <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
                           )}
                         </div>
-                      )}              
+                      )}
                       {/* Product Info */}
                       <div>
                         <h4 style={{
@@ -767,7 +770,7 @@ export default function ProductsPage() {
                         }}>
                           {product.name}
                         </h4>
-                        
+
                         <p style={{
                           fontSize: '16px',
                           fontWeight: 600,
@@ -776,7 +779,7 @@ export default function ProductsPage() {
                         }}>
                           ₦{product.basePrice.toLocaleString()}
                         </p>
-                        
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{
                             fontSize: '12px',
@@ -797,14 +800,14 @@ export default function ProductsPage() {
       </div>
 
       {/* Modals & Sidebar */}
-      <ProductDetailModal 
-        product={selectedProduct} 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
         onAddToCart={handleAddToCart}
         onInventoryUpdate={handleInventoryUpdate}
       />
-      
+
       {showCart && (
         <CartSidebar
           cartItems={cart.cartItems}
@@ -824,7 +827,7 @@ export default function ProductsPage() {
       )}
 
       {completedTransaction && !showCheckout && (
-        <ReceiptModal 
+        <ReceiptModal
           transaction={{
             ...completedTransaction,
             createdAt: new Date(completedTransaction.createdAt)
