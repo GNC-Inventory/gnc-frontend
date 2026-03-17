@@ -338,15 +338,18 @@ export default function ProductsPage() {
       // ✅ NEW: NOW we process the sale and deduct inventory
       console.log('Processing sale and deducting inventory...');
 
-      const transaction = await processSaleAPI(cart.cartItems, customerDetails, paymentBreakdown);
+      const result = await processSaleAPI(cart.cartItems, customerDetails, paymentBreakdown);
 
-      // Store complete transaction with customer details
-      const enhancedTransaction = {
-        ...transaction,
+      // ✅ NORMALIZE: Ensure the transaction object has fields the ReceiptModal expects
+      const enhancedTransaction: CompletedTransaction = {
+        id: result.transactionId || result.id || `T-${Date.now()}`,
         customer: customerDetails.name,
         customerAddress: customerDetails.address,
         customerPhone: customerDetails.phone,
         paymentBreakdown,
+        total: Number(result.totalAmount || result.total || 0),
+        createdAt: result.createdAt || new Date().toISOString(),
+        status: 'Successful',
         items: cart.cartItems.map(item => ({
           id: item.id,
           name: item.name,

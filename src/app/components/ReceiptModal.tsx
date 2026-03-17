@@ -55,16 +55,20 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
     window.print();
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return 'Invalid Date';
+    return d.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+  const formatTime = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -210,10 +214,10 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
                 <span style={{ fontWeight: 'bold' }}>Payment:</span>
                 {transaction.paymentBreakdown ? (
                   <div style={{ marginLeft: '4px', fontSize: '9px' }}>
-                    {transaction.paymentBreakdown.pos > 0 && <div>POS: ₦{transaction.paymentBreakdown.pos.toLocaleString()}</div>}
-                    {transaction.paymentBreakdown.transfer > 0 && <div>Transfer: ₦{transaction.paymentBreakdown.transfer.toLocaleString()}</div>}
-                    {transaction.paymentBreakdown.cashInHand > 0 && <div>Cash: ₦{transaction.paymentBreakdown.cashInHand.toLocaleString()}</div>}
-                    {transaction.paymentBreakdown.salesOnReturn > 0 && <div>Return: ₦{transaction.paymentBreakdown.salesOnReturn.toLocaleString()}</div>}
+                    {transaction.paymentBreakdown.pos > 0 && <div>POS: ₦{transaction.paymentBreakdown.pos?.toLocaleString()}</div>}
+                    {transaction.paymentBreakdown.transfer > 0 && <div>Transfer: ₦{transaction.paymentBreakdown.transfer?.toLocaleString()}</div>}
+                    {transaction.paymentBreakdown.cashInHand > 0 && <div>Cash: ₦{transaction.paymentBreakdown.cashInHand?.toLocaleString()}</div>}
+                    {transaction.paymentBreakdown.salesOnReturn > 0 && <div>Return: ₦{transaction.paymentBreakdown.salesOnReturn?.toLocaleString()}</div>}
                   </div>
                 ) : (
                   <span> {transaction.paymentMethod || 'Not specified'}</span>
@@ -246,8 +250,8 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '3px' }}>
-                  <span>₦{item.price.toLocaleString()} × {item.quantity}</span>
-                  <span style={{ fontWeight: 'bold' }}>₦{(item.price * item.quantity).toLocaleString()}</span>
+                  <span>₦{item.price?.toLocaleString() || '0.00'} × {item.quantity}</span>
+                  <span style={{ fontWeight: 'bold' }}>₦{(item.price * item.quantity)?.toLocaleString() || '0.00'}</span>
                 </div>
                 {item.description && (
                   <div style={{ fontSize: '8px', color: '#666', marginTop: '2px', fontStyle: 'italic' }}>
@@ -262,7 +266,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           <div style={{ borderTop: '2px solid #000', paddingTop: '8px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
               <span>TOTAL</span>
-              <span>₦{transaction.total.toLocaleString()}</span>
+              <span>₦{(transaction.total || 0).toLocaleString()}</span>
             </div>
           </div>
 
