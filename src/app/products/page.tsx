@@ -13,6 +13,7 @@ import { usePendingSales } from '../../hooks/usePendingSales';
 import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store/store';
 import {
@@ -82,6 +83,7 @@ export default function ProductsPage() {
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
+  const { user } = useAuth();
   const router = useRouter();
 
   // Update local products when products change
@@ -141,7 +143,8 @@ export default function ProductsPage() {
           phone: ''
         },
         paymentBreakdown,
-        paymentMethod: 'Mixed'
+        paymentMethod: 'Mixed',
+        userId: user?.id ? parseInt(user.id) : undefined
       })
     });
 
