@@ -124,9 +124,10 @@ export default function ProductsPage() {
   }, [filteredProducts]);
 
   // API call
-  const processSaleAPI = async (items: CartItem[], customer: string, paymentBreakdown: PaymentBreakdown) => {
+  const processSaleAPI = async (items: CartItem[], customer: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
     console.log('Items being sent to API:', items);
-    const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/sales', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
+    const response = await fetch(`${apiUrl}/api/sales`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,13 +136,15 @@ export default function ProductsPage() {
       body: JSON.stringify({
         items: items.map(item => ({
           ...item,
-          id: parseInt(item.id)
+          productId: parseInt(item.id),
+          quantity: item.quantity,
+          unitPrice: item.price,
+          unitType: item.unitType,
+          unitName: item.unitName
         })),
-        customer: {
-          name: customer,
-          address: '',
-          phone: ''
-        },
+        customerName: customer.name,
+        customerAddress: customer.address,
+        customerPhone: customer.phone,
         paymentBreakdown,
         paymentMethod: 'Mixed',
         userId: user?.id ? parseInt(user.id) : undefined
@@ -335,7 +338,7 @@ export default function ProductsPage() {
       // ✅ NEW: NOW we process the sale and deduct inventory
       console.log('Processing sale and deducting inventory...');
 
-      const transaction = await processSaleAPI(cart.cartItems, customerDetails.name, paymentBreakdown);
+      const transaction = await processSaleAPI(cart.cartItems, customerDetails, paymentBreakdown);
 
       // Store complete transaction with customer details
       const enhancedTransaction = {
