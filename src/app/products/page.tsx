@@ -50,6 +50,8 @@ interface CompletedTransaction {
   id: string;
   items: CartItem[];
   customer: string;
+  customerAddress?: string;
+  customerPhone?: string;
   paymentBreakdown?: {
     pos: number;
     transfer: number;
