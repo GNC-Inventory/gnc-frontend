@@ -12,7 +12,7 @@ import { useCart } from '../../hooks/useCart';
 import { usePendingSales } from '../../hooks/usePendingSales';
 import { showToast } from '../../utils/toast';
 import ReceiptModal from '../components/ReceiptModal';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store/store';
@@ -87,6 +87,7 @@ export default function ProductsPage() {
   const { products, loading, error, refetch } = useInventory();
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Update local products when products change
   useEffect(() => {
@@ -95,6 +96,18 @@ export default function ProductsPage() {
 
   const cart = useCart(localProducts);
   const pendingSales = usePendingSales();
+
+  // Handle checkout query param
+  useEffect(() => {
+    const isCheckout = searchParams.get('checkout') === 'true';
+    if (isCheckout) {
+      setShowCheckout(true);
+      setShowCart(false);
+      // Clean up the URL
+      const newPath = window.location.pathname;
+      window.history.replaceState({}, '', newPath);
+    }
+  }, [searchParams]);
 
   // Computed - use localProducts instead of products for real-time updates
   const [showCart, setShowCart] = useState(false);

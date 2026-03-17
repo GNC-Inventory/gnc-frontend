@@ -190,6 +190,24 @@ export default function CategoryPage() {
     showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
   };
 
+  const handleAddAndCheckout = (items: Array<{
+    product: {
+      id: string;
+      name: string;
+      image: string;
+      category: string;
+      basePrice: number;
+      stockLeft: number;
+      make?: string;
+      model?: string;
+    };
+    price: number;
+    quantity: number;
+  }>) => {
+    handleBulkAddToCart(items);
+    router.push('/products?checkout=true');
+  };
+
   if (loading) {
     return (
       <div style={{
@@ -209,185 +227,197 @@ export default function CategoryPage() {
       margin: '0 auto',
       minHeight: '100vh'
     }}>
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            marginBottom: '16px',
-            color: '#2563EB',
-            fontSize: '14px'
-          }}
-        >
-          <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
-          Back to Products
-        </button>
-
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          color: '#000',
-          margin: '0 0 8px 0'
-        }}>
-          {formattedCategoryName}
-        </h1>
-
-        <p style={{
-          color: '#6B7280',
-          fontSize: '16px',
-          margin: 0
-        }}>
-          {filteredProducts.length} products available
-          {Object.keys(selectedProducts).length > 0 && (
-            <span style={{ color: '#2563EB', marginLeft: '8px' }}>
-              • {Object.keys(selectedProducts).length} selected globally
-            </span>
-          )}
-        </p>
-      </div>
-
-      {/* Selection Controls */}
+      {/* Sticky Header Section */}
       <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '16px',
-        alignItems: 'center'
+        position: 'sticky',
+        top: 0,
+        backgroundColor: '#F3F4F6', // Match background color to prevent overlap visibility
+        zIndex: 10,
+        paddingTop: '32px',
+        marginTop: '-32px',
+        paddingBottom: '16px',
+        marginBottom: '24px',
+        borderBottom: '1px solid #E5E7EB'
       }}>
-        <button
-          onClick={() => handleSetSelectionMode(!isSelectionMode)}
-          style={{
-            padding: '8px 16px',
-            fontSize: '14px',
-            backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          {isSelectionMode ? 'Exit Selection Mode' : 'Select Multiple'}
-        </button>
+        {/* Header */}
+        <div style={{ marginBottom: '24px' }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              marginBottom: '16px',
+              color: '#2563EB',
+              fontSize: '14px'
+            }}
+          >
+            <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
+            Back to Products
+          </button>
 
-        {isSelectionMode && (
-          <>
-            <button
-              onClick={handleSelectAll}
-              style={{
-                padding: '8px 16px',
-                fontSize: '14px',
-                backgroundColor: '#10B981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              Select All ({filteredProducts.length})
-            </button>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#000',
+            margin: '0 0 8px 0'
+          }}>
+            {formattedCategoryName}
+          </h1>
 
+          <p style={{
+            color: '#6B7280',
+            fontSize: '16px',
+            margin: 0
+          }}>
+            {filteredProducts.length} products available
             {Object.keys(selectedProducts).length > 0 && (
+              <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+                • {Object.keys(selectedProducts).length} selected globally
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Selection Controls */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '16px',
+          alignItems: 'center'
+        }}>
+          <button
+            onClick={() => handleSetSelectionMode(!isSelectionMode)}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            {isSelectionMode ? 'Exit Selection Mode' : 'Select Multiple'}
+          </button>
+
+          {isSelectionMode && (
+            <>
               <button
-                onClick={() => setShowBulkCartModal(true)}
+                onClick={handleSelectAll}
                 style={{
                   padding: '8px 16px',
                   fontSize: '14px',
-                  backgroundColor: '#F59E0B',
+                  backgroundColor: '#10B981',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
               >
-                Add Selected ({Object.keys(selectedProducts).length})
+                Select All ({filteredProducts.length})
               </button>
-            )}
-          </>
-        )}
-      </div>
 
-      {/* Search and Filters */}
-      <div style={{
-        display: 'flex',
-        gap: '16px',
-        marginBottom: '32px',
-        flexWrap: 'wrap',
-        alignItems: 'center'
-      }}>
-        {/* Search Bar */}
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #E5E7EB',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          flex: 1,
-          minWidth: '300px',
-          height: '40px',
-          padding: '0 12px',
-          gap: '8px'
-        }}>
-          <MagnifyingGlassIcon style={{
-            width: '20px',
-            height: '20px',
-            color: '#9CA3AF',
-            flexShrink: 0
-          }} />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              outline: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '14px',
-              border: 'none'
-            }}
-          />
+              {Object.keys(selectedProducts).length > 0 && (
+                <button
+                  onClick={() => setShowBulkCartModal(true)}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    backgroundColor: '#F59E0B',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Add Selected ({Object.keys(selectedProducts).length})
+                </button>
+              )}
+            </>
+          )}
         </div>
 
-        {/* Sort Dropdown */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'stock')}
-          style={{
-            padding: '8px 12px',
+        {/* Search and Filters */}
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
+          {/* Search Bar */}
+          <div style={{
+            backgroundColor: 'white',
             border: '1px solid #E5E7EB',
             borderRadius: '8px',
-            backgroundColor: 'white',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="name">Sort by Name</option>
-          <option value="price">Sort by Price</option>
-          <option value="stock">Sort by Stock</option>
-        </select>
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            minWidth: '300px',
+            height: '40px',
+            padding: '0 12px',
+            gap: '8px'
+          }}>
+            <MagnifyingGlassIcon style={{
+              width: '20px',
+              height: '20px',
+              color: '#9CA3AF',
+              flexShrink: 0
+            }} />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                flex: 1,
+                outline: 'none',
+                backgroundColor: 'transparent',
+                fontSize: '14px',
+                border: 'none'
+              }}
+            />
+          </div>
 
-        {/* Filter Dropdown */}
-        <select
-          value={filterBy}
-          onChange={(e) => setFilterBy(e.target.value as 'all' | 'low-stock' | 'in-stock')}
-          style={{
-            padding: '8px 12px',
-            border: '1px solid #E5E7EB',
-            borderRadius: '8px',
-            backgroundColor: 'white',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="all">All Products</option>
-          <option value="in-stock">In Stock</option>
-          <option value="low-stock">Low Stock</option>
-        </select>
+          {/* Sort Dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'stock')}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #E5E7EB',
+              borderRadius: '8px',
+              backgroundColor: 'white',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="price">Sort by Price</option>
+            <option value="stock">Sort by Stock</option>
+          </select>
+
+          {/* Filter Dropdown */}
+          <select
+            value={filterBy}
+            onChange={(e) => setFilterBy(e.target.value as 'all' | 'low-stock' | 'in-stock')}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #E5E7EB',
+              borderRadius: '8px',
+              backgroundColor: 'white',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">All Products</option>
+            <option value="in-stock">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+          </select>
+        </div>
       </div>
 
       {/* Products Grid */}
@@ -566,11 +596,11 @@ export default function CategoryPage() {
         onAddToCart={handleAddToCart}
       />
 
-      {/* Bulk Cart Modal */}
       <BulkCartModal
         isOpen={showBulkCartModal}
         onClose={() => setShowBulkCartModal(false)}
         onAddToCart={handleBulkAddToCart}
+        onAddAndCheckout={handleAddAndCheckout}
       />
     </div>
   );

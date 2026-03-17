@@ -23,6 +23,20 @@ interface BulkCartModalProps {
     price: number;
     quantity: number;
   }>) => void;
+  onAddAndCheckout?: (items: Array<{
+    product: {
+      id: string;
+      name: string;
+      image: string;
+      category: string;
+      basePrice: number;
+      stockLeft: number;
+      make?: string;
+      model?: string;
+    };
+    price: number;
+    quantity: number;
+  }>) => void;
 }
 
 interface ProductPricing {
@@ -30,7 +44,7 @@ interface ProductPricing {
   quantity: number;
 }
 
-export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCartModalProps) {
+export default function BulkCartModal({ isOpen, onClose, onAddToCart, onAddAndCheckout }: BulkCartModalProps) {
   const dispatch = useAppDispatch();
   const { selectedProducts } = useAppSelector(state => state.selection);
   const [productPrices, setProductPrices] = useState<Record<string, ProductPricing>>({});
@@ -66,7 +80,7 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
     }, 0);
   };
 
-  const handleAddAllToCart = () => {
+  const handleAddAllToCart = (shouldCheckout = false) => {
     if (selectedProductsArray.length === 0) {
       showToast('No products selected', 'error');
       return;
@@ -101,7 +115,12 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
         quantity: getProductPricing(product.id).quantity
       }));
 
-      onAddToCart(items); // Parent handles success/failure and modal closing
+      if (shouldCheckout && onAddAndCheckout) {
+        onAddAndCheckout(items);
+      } else {
+        onAddToCart(items);
+      }
+      
       dispatch(clearAllSelections());
     } catch (error) {
       console.error('Error adding products to cart:', error);
@@ -333,62 +352,90 @@ export default function BulkCartModal({ isOpen, onClose, onAddToCart }: BulkCart
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={onClose}
-              disabled={isProcessing}
-              style={{
-                flex: 1,
-                padding: '12px 16px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: isProcessing ? 'not-allowed' : 'pointer',
-                opacity: isProcessing ? 0.5 : 1,
-                transition: 'all 0.2s'
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddAllToCart}
-              disabled={isProcessing || selectedProductsArray.length === 0}
-              style={{
-                flex: 2,
-                padding: '12px 16px',
-                backgroundColor: isProcessing ? '#93C5FD' : '#2563EB',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: isProcessing || selectedProductsArray.length === 0 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {isProcessing ? (
-                <>
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid white',
-                    borderTopColor: 'transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }} />
-                  Adding to Cart...
-                </>
-              ) : (
-                `Add All ${selectedProductsArray.length} Products`
-              )}
-            </button>
+          <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={onClose}
+                disabled={isProcessing}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  opacity: isProcessing ? 0.5 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleAddAllToCart(false)}
+                disabled={isProcessing || selectedProductsArray.length === 0}
+                style={{
+                  flex: 2,
+                  padding: '12px 16px',
+                  backgroundColor: isProcessing ? '#93C5FD' : '#2563EB',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: isProcessing || selectedProductsArray.length === 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isProcessing ? (
+                  <>
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid white',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Adding...
+                  </>
+                ) : (
+                  `Add All ${selectedProductsArray.length} to Cart`
+                )}
+              </button>
+            </div>
+
+            {onAddAndCheckout && (
+              <button
+                onClick={() => handleAddAllToCart(true)}
+                disabled={isProcessing || selectedProductsArray.length === 0}
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  backgroundColor: isProcessing ? '#FCD34D' : '#F59E0B',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: isProcessing || selectedProductsArray.length === 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+              >
+                {isProcessing ? 'Processing...' : `Add & Proceed to Checkout`}
+              </button>
+            )}
           </div>
         </div>
       </div>
