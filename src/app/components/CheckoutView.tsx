@@ -95,22 +95,37 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // ✅ IMPROVED: Handle payment amount changes - update both display and internal value
+  // ✅ IMPROVED: Continuous decimal formatting (e.g., typing '1' results in '0.01')
   const handlePaymentAmountChange = (field: keyof PaymentBreakdown, value: string) => {
-    // Update display immediately (what user sees)
-    setDisplayValues(prev => ({ ...prev, [field]: value }));
+    // Remove all non-numeric characters
+    const numericOnly = value.replace(/\D/g, '');
     
-    // Parse and store the numeric value
-    const numericValue = parseCurrencyInput(value);
+    if (numericOnly === '') {
+      setDisplayValues(prev => ({ ...prev, [field]: '' }));
+      setPaymentAmounts(prev => ({ ...prev, [field]: 0 }));
+      return;
+    }
+
+    // Convert to number and shift decimal 2 places (e.g., 123 -> 1.23)
+    const numericValue = parseInt(numericOnly) / 100;
+    
+    // Update display with commas and 2 decimals
+    setDisplayValues(prev => ({ 
+      ...prev, 
+      [field]: numericValue.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    }));
+    
+    // Update internal numeric state
     setPaymentAmounts((prev) => ({ ...prev, [field]: numericValue }));
   };
 
-  // ✅ NEW: Format on blur (when user leaves the input)
+  // ✅ Blur handling - remains simple as formatting is real-time
   const handleBlur = (field: keyof PaymentBreakdown) => {
     const amount = paymentAmounts[field];
-    if (amount > 0) {
-      setDisplayValues(prev => ({ ...prev, [field]: formatCurrency(amount) }));
-    } else {
+    if (amount === 0) {
       setDisplayValues(prev => ({ ...prev, [field]: '' }));
     }
   };
@@ -130,7 +145,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
     customerDetails.name.trim() &&
     customerDetails.address.trim() &&
     customerDetails.phone.trim() &&
-    paymentTotal > 0;
+    Math.abs(paymentTotal - cartTotal) < 0.01;
 
   return (
     <div
@@ -495,19 +510,47 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
           borderTop: '1px solid #E5E7EB',
         }}
       >
-        {/* Cart Total */}
+        {/* Payment Comparison Verification */}
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
+            flexDirection: 'column',
+            rowGap: '8px',
+            marginBottom: '16px'
           }}
         >
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            ₦ {cartTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
+          {/* Payment Sum Total (Verification) */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#6B7280' }}>Payment Total</span>
+            <span style={{ 
+              fontSize: '14px', 
+              fontWeight: 700, 
+              color: Math.abs(paymentTotal - cartTotal) < 0.01 ? '#10B981' : '#EF4444',
+              transition: 'color 0.2s ease'
+            }}>
+              ₦ {paymentTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          {/* Cart Total */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>Cart Total</span>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+              ₦ {cartTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
 
         {/* Go to Checkout Button */}
