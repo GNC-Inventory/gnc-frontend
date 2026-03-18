@@ -410,8 +410,7 @@ function ProductsPageContent() {
     return (
       <div style={{
         padding: '32px',
-        maxWidth: '1280px',
-        margin: '0 auto'
+        width: '100%'
       }}>
         <EmptyState type="loading" />
       </div>
@@ -422,9 +421,7 @@ function ProductsPageContent() {
     <div style={{
       padding: '32px',
       transition: 'all 0.3s',
-      marginLeft: showCart ? '16px' : '0',
-      maxWidth: showCart ? 'none' : '1280px',
-      margin: showCart ? '0 0 0 16px' : '0 auto'
+      width: '100%'
     }}>
       {/* Error Message */}
       {error && (
@@ -469,7 +466,7 @@ function ProductsPageContent() {
           alignItems: 'center',
           gap: '16px',
           width: '100%',
-          maxWidth: '672px'
+          maxWidth: '1000px'
         }}>
           <div style={{
             backgroundColor: 'white',
@@ -552,13 +549,11 @@ function ProductsPageContent() {
           padding: '32px',
           transition: 'all 0.3s',
           position: isCompact ? 'fixed' : 'relative',
-          overflow: isCompact ? 'auto' : 'auto',
-          width: isCompact ? '728px' : '100%',
-          height: isCompact ? '716px' : '600px',
+          overflow: 'auto',
+          width: isCompact ? 'calc(100% - 400px)' : '100%',
+          height: isCompact ? 'calc(100vh - 200px)' : '600px',
           top: isCompact ? '172px' : 'auto',
-          left: isCompact ? (typeof window !== 'undefined' && window.innerWidth > 1440
-            ? `${(window.innerWidth - 1440) / 2 + 304}px`
-            : '304px') : 'auto'
+          left: isCompact ? '32px' : 'auto'
         }}
       >
         <div style={{ marginBottom: '16px' }}>

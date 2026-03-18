@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -9,31 +10,32 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
     <ProtectedRoute>
       <div style={{
-        display: 'flex',
         height: '100vh',
-        backgroundColor: '#F9FAFB'
+        backgroundColor: '#F9FAFB',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <Sidebar />
-        <div style={{
+        <Navbar 
+          title="Dashboard" 
+          subtitle="View your recent activities."
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
+        <main style={{
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'auto',
+          width: '100%'
         }}>
-          <Navbar 
-            title="Dashboard" 
-            subtitle="View your recent activities."
-          />
-          <main style={{
-            flex: 1,
-            overflow: 'auto'
-          }}>
-            {children}
-          </main>
-        </div>
+          {children}
+        </main>
       </div>
     </ProtectedRoute>
   );
