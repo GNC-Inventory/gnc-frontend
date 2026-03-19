@@ -70,6 +70,14 @@ interface PaymentBreakdown {
   salesOnReturn: number;
 }
 
+// Helper to convert string to Title Case
+const toTitleCase = (str: string) => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+};
+
 // Reuseable Custom Dropdown to avoid "floating" OS-native select issues
 const CustomDropdown = ({ 
   label, 
@@ -863,7 +871,7 @@ function ProductsPageContent() {
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden'
                   }}>
-                    {[product.make, product.type, product.model].filter(Boolean).join(' ') || product.name}
+                    {toTitleCase([product.make, product.type, product.model].filter(Boolean).join(' ')) || toTitleCase(product.name)}
                   </h4>
 
                   {/* Line 2: Price */}

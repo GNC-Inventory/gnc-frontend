@@ -46,6 +46,14 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
+// Helper to convert string to Title Case
+const toTitleCase = (str: string) => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+};
+
 export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   const [printHover, setPrintHover] = useState(false);
   const [closeBtnHover, setCloseBtnHover] = useState(false);
@@ -233,7 +241,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               <div key={index} style={{ marginBottom: '8px', borderBottom: index < transaction.items.length - 1 ? '1px dashed #ccc' : 'none', paddingBottom: '6px' }}>
                 {/* Line 1: Combined Name (Make Type Model) */}
                 <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '3px' }}>
-                  {[item.make, item.type, item.model].filter(Boolean).join(' ') || item.name}
+                  {toTitleCase([item.make, item.type, item.model].filter(Boolean).join(' ')) || toTitleCase(item.name)}
                 </div>
                 
                 {/* Line 2: Price x Quantity and Subtotal */}
