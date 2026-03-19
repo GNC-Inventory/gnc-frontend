@@ -231,33 +231,16 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
             <h4 style={{ fontWeight: 'bold', color: '#000', marginBottom: '6px', fontSize: '11px' }}>ITEMS</h4>
             {transaction.items.map((item, index: number) => (
               <div key={index} style={{ marginBottom: '8px', borderBottom: index < transaction.items.length - 1 ? '1px dashed #ccc' : 'none', paddingBottom: '6px' }}>
-                <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '2px' }}>
-                  {item.name}
+                {/* Line 1: Combined Name (Make Type Model) */}
+                <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '3px' }}>
+                  {[item.make, item.type, item.model].filter(Boolean).join(' ') || item.name}
                 </div>
-                {(item.make || item.model) && (
-                  <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
-                    {[item.make, item.model].filter(Boolean).join(' ')}
-                  </div>
-                )}
-                {item.type && (
-                  <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
-                    Type: {item.type}
-                  </div>
-                )}
-                {item.capacity && (
-                  <div style={{ fontSize: '9px', color: '#666', marginBottom: '1px' }}>
-                    Capacity: {item.capacity}
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '3px' }}>
+                
+                {/* Line 2: Price x Quantity and Subtotal */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
                   <span>₦{item.price?.toLocaleString() || '0.00'} × {item.quantity}</span>
                   <span style={{ fontWeight: 'bold' }}>₦{(item.price * item.quantity)?.toLocaleString() || '0.00'}</span>
                 </div>
-                {item.description && (
-                  <div style={{ fontSize: '8px', color: '#666', marginTop: '2px', fontStyle: 'italic' }}>
-                    {item.description}
-                  </div>
-                )}
               </div>
             ))}
           </div>
