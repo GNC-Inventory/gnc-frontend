@@ -34,11 +34,11 @@ const getCompanyContext = (pathname: string) => {
 };
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen = false, onClose = () => {} }: SidebarProps) {
   const pathname = usePathname();
   const companyContext = getCompanyContext(pathname);
   const { user } = useAuth();

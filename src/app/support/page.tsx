@@ -3,9 +3,16 @@
 import { useState, useEffect } from 'react';
 import { WifiIcon, PrinterIcon, CircleStackIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
+
+interface User {
+  firstName: string;
+  lastName?: string;
+}
 
 export default function SupportPage() {
-  const [user, setUser] = useState<any>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [networkStatus, setNetworkStatus] = useState({ connected: false, ping: 0 });
   const [printerStatus, setPrinterStatus] = useState({ connected: false, name: 'Not detected' });
   const [testing, setTesting] = useState({ network: false, printer: false });
@@ -49,6 +56,7 @@ If you can read this,
 your printer works! ✓
 =============================`;
       
+      console.log('Sending test content to printer:', testContent);
       window.print();
       alert('✓ Print command sent! Check your printer.');
       setPrinterStatus({ connected: true, name: 'Default Printer' });
@@ -82,8 +90,16 @@ your printer works! ✓
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#F9FAFB' }}>
-      <Sidebar />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#F9FAFB' }}>
+      <Navbar 
+        title="Support & Help" 
+        subtitle="Diagnostics and support contact information"
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       
       <div style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -256,7 +272,7 @@ your printer works! ✓
             <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#374151' }}>
               <div style={{ marginBottom: '12px' }}>
                 <strong>Printer not responding:</strong><br/>
-                Check power and USB connection, then click "Test Print"
+                Check power and USB connection, then click &quot;Test Print&quot;
               </div>
               <div style={{ marginBottom: '12px' }}>
                 <strong>Internet connection lost:</strong><br/>

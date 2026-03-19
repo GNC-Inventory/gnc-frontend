@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 interface Transaction {
   id: string;
@@ -19,6 +20,7 @@ interface Transaction {
 }
 
 export default function ReturnsPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchId, setSearchId] = useState('');
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -92,11 +94,19 @@ export default function ReturnsPage() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#F9FAFB' }}>
-      <Sidebar />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#F9FAFB' }}>
+      <Navbar 
+        title="Returns Management" 
+        subtitle="Process customer returns and restore inventory"
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       
       <div style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ width: '100%', margin: '0' }}>
           {/* Header */}
           <div style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>

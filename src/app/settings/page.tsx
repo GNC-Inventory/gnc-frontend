@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon, UserIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 interface User {
   id: number;
@@ -16,6 +17,7 @@ interface User {
 }
 
 export default function SettingsPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [isLoading, setIsLoading] = useState(false);
@@ -98,10 +100,19 @@ export default function SettingsPage() {
     return (
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         height: '100vh',
         backgroundColor: '#F9FAFB'
       }}>
-        <Sidebar />
+        <Navbar 
+          title="Settings" 
+          subtitle="Loading your profile..."
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
         <div style={{
           flex: 1,
           display: 'flex',
@@ -124,40 +135,25 @@ export default function SettingsPage() {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       height: '100vh',
       backgroundColor: '#F9FAFB'
     }}>
-      <Sidebar />
+      <Navbar 
+        title="Settings" 
+        subtitle="Manage your account settings and preferences."
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       
       <div style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {/* Header */}
-        <div style={{
-          backgroundColor: 'white',
-          borderBottom: '1px solid #E5E7EB',
-          padding: '24px 32px'
-        }}>
-          <h1 style={{
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontSize: '24px',
-            fontWeight: 600,
-            color: '#111827',
-            margin: '0 0 4px 0'
-          }}>
-            Settings
-          </h1>
-          <p style={{
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontSize: '14px',
-            color: '#6B7280',
-            margin: 0
-          }}>
-            Manage your account settings and preferences.
-          </p>
-        </div>
         
         <div style={{ 
           flex: 1, 
@@ -165,8 +161,8 @@ export default function SettingsPage() {
           overflow: 'auto'
         }}>
           <div style={{
-            maxWidth: '800px',
-            margin: '0 auto'
+            width: '100%',
+            margin: '0'
           }}>
             {/* Tabs */}
             <div style={{

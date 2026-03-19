@@ -55,6 +55,7 @@ interface ApiResponse {
 }
 
 export default function TransactionsPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('Today');
@@ -177,10 +178,20 @@ export default function TransactionsPage() {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       height: '100vh',
       backgroundColor: '#F9FAFB'
     }}>
-      <Sidebar />
+      <Navbar 
+        title="Transactions" 
+        subtitle="Track and reference completed sales."
+        showNewSaleButton={false}
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       
       <div style={{
         flex: 1,
@@ -188,11 +199,6 @@ export default function TransactionsPage() {
         flexDirection: 'column',
         overflow: 'hidden'
       }}>
-        <Navbar 
-          title="Transactions" 
-          subtitle="Track and reference completed sales."
-          showNewSaleButton={false}
-        />
         
         <div style={{ 
           flex: 1, 
