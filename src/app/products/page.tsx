@@ -72,15 +72,8 @@ interface PaymentBreakdown {
 
 function ProductsPageContent() {
   // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [isProcessingSale, setIsProcessingSale] = useState(false);
-  const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
-  const [localProducts, setLocalProducts] = useState<Product[]>([]);
-  const dispatch = useAppDispatch();
-  const { selectedProducts, isSelectionMode } = useAppSelector((state: RootState) => state.selection);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedProductKind, setSelectedProductKind] = useState<string>('All');
   const [showBulkCartModal, setShowBulkCartModal] = useState(false);
 
   // Hooks
@@ -124,19 +117,35 @@ function ProductsPageContent() {
   const showPendingSales = useMemo(() => pendingSales.pendingSales.length > 0 && cart.cartItems.length === 0 && !showCheckout, [pendingSales.pendingSales.length, cart.cartItems.length, showCheckout]);
   const isCompact = showCart || showCheckout;
 
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return localProducts;
-    const query = searchQuery.toLowerCase();
-    return localProducts.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
-  }, [localProducts, searchQuery]);
+  const categories = useMemo(() => {
+    const cats = new Set(localProducts.map(p => p.category).filter(Boolean));
+    return Array.from(cats).sort();
+  }, [localProducts]);
 
-  const groupedProducts = useMemo(() => {
-    return filteredProducts.reduce((acc, product) => {
-      if (!acc[product.category]) acc[product.category] = [];
-      acc[product.category].push(product);
-      return acc;
-    }, {} as Record<string, Product[]>);
-  }, [filteredProducts]);
+  const productKinds = useMemo(() => {
+    // Extract unique product types/kinds
+    const kinds = new Set(localProducts.map(p => p.type || (p.name ? p.name.split(' ')[0] : '')).filter(Boolean));
+    return Array.from(kinds).sort();
+  }, [localProducts]);
+
+  const filteredProducts = useMemo(() => {
+    let result = localProducts;
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => [p.name, p.sku, p.category].some(field => field?.toLowerCase().includes(query)));
+    }
+    
+    if (selectedCategory !== 'All') {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+    
+    if (selectedProductKind !== 'All') {
+      result = result.filter(p => (p.type || (p.name ? p.name.split(' ')[0] : '')) === selectedProductKind);
+    }
+    
+    return result;
+  }, [localProducts, searchQuery, selectedCategory, selectedProductKind]);
 
   // API call
   const processSaleAPI = async (items: CartItem[], customer: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
@@ -558,21 +567,60 @@ function ProductsPageContent() {
       >
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{
-              fontWeight: 500,
-              fontSize: '14px',
-              color: 'black',
-              margin: 0
-            }}>
-              Showing items by category ({localProducts.length} products)
-              {Object.keys(selectedProducts).length > 0 && (
-                <span style={{ color: '#2563EB', marginLeft: '8px' }}>
-                  • {Object.keys(selectedProducts).length} selected
-                </span>
-              )}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <select 
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  backgroundColor: '#F9FAFB',
+                  color: '#374151',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="All">Select Category (All)</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+              <span style={{ fontSize: '14px', color: '#6B7280' }}>
+                ({filteredProducts.length} products found)
+                {Object.keys(selectedProducts).length > 0 && (
+                  <span style={{ color: '#2563EB', marginLeft: '8px' }}>
+                    • {Object.keys(selectedProducts).length} selected
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <select 
+                value={selectedProductKind}
+                onChange={(e) => setSelectedProductKind(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  backgroundColor: '#F9FAFB',
+                  color: '#374151',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="All">Product Kind (All)</option>
+                {productKinds.map(kind => (
+                  <option key={kind} value={kind}>{kind}</option>
+                ))}
+              </select>
+
               <button
                 onClick={() => handleSetSelectionMode(!isSelectionMode)}
                 style={{
@@ -631,186 +679,152 @@ function ProductsPageContent() {
           marginBottom: '24px'
         }}></div>
 
-        {/* Products Content */}
-        {Object.keys(groupedProducts).length === 0 ? (
+        {filteredProducts.length === 0 ? (
           error ? (
             <EmptyState type="error" error={error} onRetry={refetch} />
-          ) : searchQuery ? (
+          ) : searchQuery || selectedCategory !== 'All' || selectedProductKind !== 'All' ? (
             <EmptyState type="no-search-results" searchQuery={searchQuery} />
           ) : (
             <EmptyState type="no-products" onRetry={refetch} />
           )
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-              <div key={category} style={{ marginBottom: '24px' }}>
-                {/* Category Header */}
-                <div style={{
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+            gap: '24px',
+            paddingBottom: '32px'
+          }}>
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                onClick={(e) => {
+                  if (isSelectionMode) {
+                    e.stopPropagation();
+                    handleToggleSelection(product);
+                  } else {
+                    handleSelectProduct(product.id);
+                  }
+                }}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.05)';
+                  e.currentTarget.style.borderColor = '#2563EB';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = '#E5E7EB';
+                }}
+              >
+                {/* Product Image */}
+                <div style={{
+                  width: '100%',
+                  aspectRatio: '1/1',
+                  backgroundColor: '#F9FAFB',
+                  borderRadius: '8px',
+                  display: 'flex',
                   alignItems: 'center',
-                  marginBottom: '16px'
+                  justifyContent: 'center',
+                  overflow: 'hidden'
                 }}>
-                  <h3 style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: '#000',
-                    margin: 0
-                  }}>
-                    {category} ({categoryProducts.length})
-                  </h3>
-                  <button
-                    onClick={() => router.push(`/products/category/${encodeURIComponent(category.toLowerCase())}`)}
-                    style={{
-                      color: '#2563EB',
-                      fontSize: '14px',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    See All →
-                  </button>
+                  {product.image && product.image.trim() !== '' ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        padding: '12px'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      color: '#9CA3AF',
+                      fontSize: '12px',
+                      textAlign: 'center'
+                    }}>
+                      No Image
+                    </div>
+                  )}
                 </div>
 
-                {/* Horizontal Scrolling Products */}
-                <div style={{
-                  display: 'flex',
-                  gap: '16px',
-                  overflowX: 'auto',
-                  paddingBottom: '8px',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#CBD5E1 #F1F5F9'
-                }}>
-                  {categoryProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      onClick={(e) => {
-                        if (isSelectionMode) {
-                          e.stopPropagation();
-                          handleToggleSelection(product);
-                        } else {
-                          handleSelectProduct(product.id);
-                        }
-                      }}
-                      style={{
-                        minWidth: '180px',
-                        backgroundColor: 'white',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        position: 'relative'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      {/* Product Image */}
-                      <div style={{
-                        width: '100%',
-                        height: '120px',
-                        backgroundColor: '#F9FAFB',
-                        borderRadius: '6px',
-                        marginBottom: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden'
-                      }}>
-                        {product.image && product.image.trim() !== '' ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            style={{
-                              width: '120px',
-                              height: '120px',
-                              objectFit: 'contain'
-                            }}
-                            onError={(e) => {
-                              console.error('Image failed to load:', e.currentTarget.src);
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div style={{
-                            width: '120px',
-                            height: '120px',
-                            backgroundColor: '#E5E7EB',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#9CA3AF',
-                            fontSize: '12px',
-                            textAlign: 'center'
-                          }}>
-                            No Image
-                          </div>
-                        )}
-                      </div>
+                {/* Selection Checkbox */}
+                {isSelectionMode && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    width: '24px',
+                    height: '24px',
+                    backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
+                    border: '2px solid #2563EB',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10
+                  }}>
+                    {selectedProducts[product.id] && (
+                      <span style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                    )}
+                  </div>
+                )}
 
-                      {/* Selection Checkbox */}
-                      {isSelectionMode && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          width: '20px',
-                          height: '20px',
-                          backgroundColor: selectedProducts[product.id] ? '#2563EB' : 'white',
-                          border: '2px solid #2563EB',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer'
-                        }}>
-                          {selectedProducts[product.id] && (
-                            <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
-                          )}
-                        </div>
-                      )}
-                      {/* Product Info */}
-                      <div>
-                        <h4 style={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#000',
-                          margin: '0 0 4px 0',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {product.name}
-                        </h4>
+                {/* Product Info */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <h4 style={{
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: '#111827',
+                    margin: 0,
+                    lineHeight: '1.4'
+                  }}>
+                    {product.name}
+                  </h4>
+                  <p style={{
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    margin: 0
+                  }}>
+                    {product.category}
+                  </p>
+                  <p style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#2563EB',
+                    margin: '4px 0 0 0'
+                  }}>
+                    ₦{product.basePrice.toLocaleString()}
+                  </p>
 
-                        <p style={{
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          color: '#000',
-                          margin: '0 0 4px 0'
-                        }}>
-                          ₦{product.basePrice.toLocaleString()}
-                        </p>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{
-                            fontSize: '12px',
-                            color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
-                            fontWeight: 500
-                          }}>
-                            {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
+                      fontWeight: 600,
+                      backgroundColor: product.stockLeft <= 5 ? '#FEF2F2' : '#F0FDF4',
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
