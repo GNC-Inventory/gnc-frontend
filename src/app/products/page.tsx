@@ -750,9 +750,10 @@ function ProductsPageContent() {
                 {/* Tooltip for Description */}
                 <div className="product-tooltip" style={{
                   position: 'absolute',
-                  top: '0',
-                  left: '102%',
-                  width: '260px',
+                  bottom: '105%',
+                  left: '50%',
+                  transform: 'translateX(-50%) translateY(10px)',
+                  width: '280px',
                   backgroundColor: 'white',
                   border: '1px solid #E5E7EB',
                   borderRadius: '12px',
@@ -761,13 +762,13 @@ function ProductsPageContent() {
                   zIndex: 150,
                   visibility: 'hidden',
                   opacity: 0,
-                  transition: 'opacity 0.2s, visibility 0.2s',
+                  transition: 'opacity 0.2s, visibility 0.2s, transform 0.2s',
                   pointerEvents: 'none'
                 }}>
                   <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '4px' }}>
                     Full Description
                   </h5>
-                  <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0 }}>
+                  <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0, fontWeight: 400 }}>
                     {product.description || 'No detailed description available for this product.'}
                   </p>
                   {product.sku && (
@@ -775,6 +776,18 @@ function ProductsPageContent() {
                       SKU: {product.sku}
                     </div>
                   )}
+                  {/* Tooltip Arrow */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-6px',
+                    left: '50%',
+                    transform: 'translateX(-50%) rotate(45deg)',
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: 'white',
+                    borderRight: '1px solid #E5E7EB',
+                    borderBottom: '1px solid #E5E7EB'
+                  }}></div>
                 </div>
 
                 {/* Product Image */}
@@ -840,8 +853,8 @@ function ProductsPageContent() {
                   {/* Line 1: Brand, Type, and Model */}
                   <h4 style={{
                     fontSize: '15px',
-                    fontWeight: 600,
-                    color: '#111827',
+                    fontWeight: 500,
+                    color: '#374151',
                     margin: 0,
                     lineHeight: '1.4',
                     display: '-webkit-box',
@@ -971,11 +984,10 @@ function ProductsPageContent() {
         .product-card:hover .product-tooltip {
           visibility: visible !important;
           opacity: 1 !important;
-          transform: translateX(0) !important;
+          transform: translateX(-50%) translateY(0) !important;
         }
         .product-tooltip {
-          transform: translateX(-10px);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          pointer-events: none;
         }
       `}</style>
     </div>
