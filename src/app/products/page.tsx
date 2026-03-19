@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useState, useMemo, useCallback, useEffect, Suspense, useRef } from 'react';
+import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import ProductDetailModal from '../components/ProductDetailModal';
 import CartSidebar from '../components/CartSidebar';
 import CheckoutView from '../components/CheckoutView';
@@ -69,6 +69,122 @@ interface PaymentBreakdown {
   cashInHand: number;
   salesOnReturn: number;
 }
+
+// Reuseable Custom Dropdown to avoid "floating" OS-native select issues
+const CustomDropdown = ({ 
+  label, 
+  value, 
+  options, 
+  onChange, 
+  width = '160px', 
+  placeholder 
+}: { 
+  label: string; 
+  value: string; 
+  options: string[]; 
+  onChange: (value: string) => void; 
+  width?: string; 
+  placeholder?: string; 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative', width, flexShrink: 0 }}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          padding: '10px 16px',
+          fontSize: '14px',
+          fontWeight: 500,
+          border: '1px solid #E5E7EB',
+          borderRadius: '10px',
+          backgroundColor: '#F9FAFB',
+          color: '#374151',
+          outline: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          textAlign: 'left',
+          gap: '8px'
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value === 'All' ? placeholder || label : value}
+        </span>
+        <ChevronDownIcon style={{ 
+          width: '16px', 
+          height: '16px', 
+          transform: isOpen ? 'rotate(180deg)' : 'none', 
+          transition: 'transform 0.2s',
+          color: '#9CA3AF'
+        }} />
+      </button>
+
+      {isOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          marginTop: '4px',
+          backgroundColor: 'white',
+          border: '1px solid #E5E7EB',
+          borderRadius: '10px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          zIndex: 100,
+          maxHeight: '240px',
+          overflowY: 'auto'
+        }}>
+          <div
+            onClick={() => { onChange('All'); setIsOpen(false); }}
+            style={{
+              padding: '10px 16px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              backgroundColor: value === 'All' ? '#F3F4F6' : 'transparent',
+              fontWeight: value === 'All' ? 600 : 400
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = value === 'All' ? '#F3F4F6' : 'transparent'}
+          >
+            {placeholder || label}
+          </div>
+          {options.map(option => (
+            <div
+              key={option}
+              onClick={() => { onChange(option); setIsOpen(false); }}
+              style={{
+                padding: '10px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: value === option ? '#F3F4F6' : 'transparent',
+                fontWeight: value === option ? 600 : 400
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = value === option ? '#F3F4F6' : 'transparent'}
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 function ProductsPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -491,35 +607,20 @@ function ProductsPageContent() {
             gap: '12px',
             width: '100%'
           }}>
-            {/* Category Dropdown */}
-            <select 
+            {/* Category Custom Dropdown */}
+            <CustomDropdown 
+              label="All Categories"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                backgroundColor: '#F9FAFB',
-                color: '#374151',
-                outline: 'none',
-                cursor: 'pointer',
-                width: '160px',
-                flexShrink: 0
-              }}
-            >
-              <option value="All">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              options={categories}
+              onChange={setSelectedCategory}
+              width="180px"
+            />
 
             {/* Search Field with Icon */}
             <div style={{
               position: 'relative',
               flex: 1,
-              maxWidth: '400px'
+              minWidth: '200px'
             }}>
               <MagnifyingGlassIcon style={{
                 position: 'absolute',
@@ -547,29 +648,14 @@ function ProductsPageContent() {
               />
             </div>
 
-            {/* Product Type Dropdown */}
-            <select 
+            {/* Product Type Custom Dropdown */}
+            <CustomDropdown 
+              label="Select Product Type"
               value={selectedProductKind}
-              onChange={(e) => setSelectedProductKind(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                backgroundColor: '#F9FAFB',
-                color: '#374151',
-                outline: 'none',
-                cursor: 'pointer',
-                width: '180px',
-                flexShrink: 0
-              }}
-            >
-              <option value="All">Select Product Type (All)</option>
-              {productKinds.map(kind => (
-                <option key={kind} value={kind}>{kind}</option>
-              ))}
-            </select>
+              options={productKinds}
+              onChange={setSelectedProductKind}
+              width="220px"
+            />
 
             <button
               onClick={() => handleSetSelectionMode(!isSelectionMode)}
