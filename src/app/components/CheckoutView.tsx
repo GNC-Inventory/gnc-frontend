@@ -519,7 +519,7 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
             marginBottom: '16px'
           }}
         >
-          {/* Payment Sum Total (Verification) */}
+          {/* Remaining Balance (Calculated as Cart Total - Payments) */}
           <div
             style={{
               display: 'flex',
@@ -527,14 +527,14 @@ export default function CheckoutView({ cartItems, onBack, onPrintReceipt }: Chec
               alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#6B7280' }}>Payment Total</span>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#6B7280' }}>Remaining Balance</span>
             <span style={{ 
               fontSize: '14px', 
               fontWeight: 700, 
-              color: Math.abs(paymentTotal - cartTotal) < 0.01 ? '#10B981' : '#EF4444',
+              color: Math.abs(cartTotal - paymentTotal) < 0.01 ? '#10B981' : '#EF4444',
               transition: 'color 0.2s ease'
             }}>
-              ₦ {paymentTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₦ {(cartTotal - paymentTotal).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
 
