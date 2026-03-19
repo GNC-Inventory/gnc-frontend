@@ -747,49 +747,6 @@ function ProductsPageContent() {
                   e.currentTarget.style.borderColor = '#E5E7EB';
                 }}
               >
-                {/* Tooltip for Description */}
-                <div className="product-tooltip" style={{
-                  position: 'absolute',
-                  bottom: '105%',
-                  left: '50%',
-                  transform: 'translateX(-50%) translateY(10px)',
-                  width: '280px',
-                  backgroundColor: 'white',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  zIndex: 150,
-                  visibility: 'hidden',
-                  opacity: 0,
-                  transition: 'opacity 0.2s, visibility 0.2s, transform 0.2s',
-                  pointerEvents: 'none'
-                }}>
-                  <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '4px' }}>
-                    Full Description
-                  </h5>
-                  <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0, fontWeight: 400 }}>
-                    {product.description || 'No detailed description available for this product.'}
-                  </p>
-                  {product.sku && (
-                    <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #F3F4F6', fontSize: '11px', color: '#9CA3AF' }}>
-                      SKU: {product.sku}
-                    </div>
-                  )}
-                  {/* Tooltip Arrow */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-6px',
-                    left: '50%',
-                    transform: 'translateX(-50%) rotate(45deg)',
-                    width: '12px',
-                    height: '12px',
-                    backgroundColor: 'white',
-                    borderRight: '1px solid #E5E7EB',
-                    borderBottom: '1px solid #E5E7EB'
-                  }}></div>
-                </div>
-
                 {/* Product Image */}
                 <div style={{
                   width: '100%',
@@ -849,7 +806,51 @@ function ProductsPageContent() {
                 )}
 
                 {/* Product Info */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
+                  {/* Tooltip for Description - Moved here to be above Name */}
+                  <div className="product-tooltip" style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%) translateY(10px)',
+                    width: '280px',
+                    backgroundColor: 'white',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    zIndex: 150,
+                    visibility: 'hidden',
+                    opacity: 0,
+                    transition: 'opacity 0.2s, visibility 0.2s, transform 0.2s',
+                    pointerEvents: 'none',
+                    marginBottom: '8px'
+                  }}>
+                    <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '4px' }}>
+                      Full Description
+                    </h5>
+                    <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0, fontWeight: 400 }}>
+                      {product.description || 'No detailed description available for this product.'}
+                    </p>
+                    {product.sku && (
+                      <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #F3F4F6', fontSize: '11px', color: '#9CA3AF' }}>
+                        SKU: {product.sku}
+                      </div>
+                    )}
+                    {/* Tooltip Arrow */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-6px',
+                      left: '50%',
+                      transform: 'translateX(-50%) rotate(45deg)',
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: 'white',
+                      borderRight: '1px solid #E5E7EB',
+                      borderBottom: '1px solid #E5E7EB'
+                    }}></div>
+                  </div>
+
                   {/* Line 1: Brand, Type, and Model */}
                   <h4 style={{
                     fontSize: '15px',
