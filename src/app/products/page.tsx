@@ -111,9 +111,6 @@ function ProductsPageContent() {
     }
   }, [searchParams]);
 
-  // Computed - use localProducts instead of products for real-time updates
-
-
   // Add this effect right after the useState
   useEffect(() => {
     if (!showCheckout && cart.cartItems.length > 0) {
@@ -320,22 +317,13 @@ function ProductsPageContent() {
     showToast(`Successfully added ${successCount} product${successCount > 1 ? 's' : ''} to cart!`, 'success');
   }, [cart, localProducts]);
 
-  // ✅ FIXED: handleCompleteSale - Just show checkout, DON'T process sale yet
   const handleCompleteSale = useCallback(() => {
-    console.log('=== COMPLETE SALE CLICKED ===');
-    console.log('Cart items:', cart.cartItems);
-
     if (cart.cartItems.length === 0) {
       showToast('Cart is empty', 'error');
       return;
     }
-
-    // ✅ CHANGED: Just move to checkout view, DON'T process the sale yet
-    // Inventory will be deducted when receipt is printed
     setShowCheckout(true);
     setShowCart(false);
-
-    console.log('=== MOVED TO CHECKOUT - INVENTORY NOT DEDUCTED ===');
   }, [cart]);
 
   const handleHoldSale = useCallback(async () => {
@@ -358,22 +346,10 @@ function ProductsPageContent() {
     }
   }, [completedTransaction, cart]);
 
-  // ✅ FIXED: handlePrintReceipt - THIS is where we process sale and deduct inventory
   const handlePrintReceipt = useCallback(async (customerDetails: CustomerDetails, paymentBreakdown: PaymentBreakdown) => {
-    console.log('=== PRINT RECEIPT CLICKED ===');
-    console.log('Customer details:', customerDetails);
-    console.log('Payment breakdown:', paymentBreakdown);
-    console.log('Cart items:', cart.cartItems);
-
     setIsProcessingSale(true);
-
     try {
-      // ✅ NEW: NOW we process the sale and deduct inventory
-      console.log('Processing sale and deducting inventory...');
-
       const result = await processSaleAPI(cart.cartItems, customerDetails, paymentBreakdown);
-
-      // ✅ NORMALIZE: Ensure the transaction object has fields the ReceiptModal expects
       const enhancedTransaction: CompletedTransaction = {
         id: result.transactionId || result.id || `T-${Date.now()}`,
         customer: customerDetails.name,
@@ -396,19 +372,13 @@ function ProductsPageContent() {
           quantity: item.quantity
         }))
       };
-
-      console.log('✅ Sale processed successfully, inventory deducted');
       setCompletedTransaction(enhancedTransaction);
       showToast('Sale completed! Receipt ready to print.', 'success');
-
-      // ✅ Clear cart WITHOUT restoring inventory (it was never deducted until now)
       await cart.clearCart(false);
       setShowCheckout(false);
-
     } catch (error: unknown) {
       console.error('❌ Error processing sale:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
       if (errorMessage.includes('Insufficient stock')) {
         showToast('Insufficient stock for some items. Please check inventory and try again.', 'error');
       } else if (errorMessage.includes('not found')) {
@@ -420,8 +390,6 @@ function ProductsPageContent() {
     } finally {
       setIsProcessingSale(false);
     }
-
-    console.log('=== PRINT RECEIPT COMPLETE ===');
   }, [cart, refetch, processSaleAPI]);
 
   if (loading) {
@@ -476,8 +444,6 @@ function ProductsPageContent() {
         </div>
       )}
 
-
-
       {/* Pending Sales */}
       {showPendingSales && (
         <div style={{
@@ -510,7 +476,7 @@ function ProductsPageContent() {
       >
         <div style={{ 
           position: 'sticky', 
-          top: '-32px', // Match container padding
+          top: '-32px', 
           zIndex: 20, 
           backgroundColor: 'white',
           padding: '16px 0',
@@ -522,149 +488,128 @@ function ProductsPageContent() {
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            gap: '24px'
+            gap: '12px',
+            width: '100%'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-              {/* Category Dropdown */}
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+            {/* Category Dropdown */}
+            <select 
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              style={{
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                backgroundColor: '#F9FAFB',
+                color: '#374151',
+                outline: 'none',
+                cursor: 'pointer',
+                width: '160px',
+                flexShrink: 0
+              }}
+            >
+              <option value="All">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            {/* Search Field with Icon */}
+            <div style={{
+              position: 'relative',
+              flex: 1,
+              maxWidth: '400px'
+            }}>
+              <MagnifyingGlassIcon style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '18px',
+                height: '18px',
+                color: '#9CA3AF'
+              }} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  padding: '10px 16px',
+                  width: '100%',
+                  padding: '10px 16px 10px 38px',
                   fontSize: '14px',
-                  fontWeight: 500,
                   border: '1px solid #E5E7EB',
                   borderRadius: '10px',
                   backgroundColor: '#F9FAFB',
-                  color: '#374151',
                   outline: 'none',
-                  cursor: 'pointer',
-                  minWidth: '180px'
                 }}
-              >
-                <option value="All">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-
-              {/* Search Field with Icon */}
-              <div style={{
-                position: 'relative',
-                flex: 1,
-                maxWidth: '450px'
-              }}>
-                <MagnifyingGlassIcon style={{
-                  position: 'absolute',
-                  left: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '18px',
-                  height: '18px',
-                  color: '#9CA3AF'
-                }} />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px 10px 44px',
-                    fontSize: '14px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '10px',
-                    backgroundColor: '#F9FAFB',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                />
-              </div>
+              />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {/* Product Type Dropdown */}
-              <select 
-                value={selectedProductKind}
-                onChange={(e) => setSelectedProductKind(e.target.value)}
+            {/* Product Type Dropdown */}
+            <select 
+              value={selectedProductKind}
+              onChange={(e) => setSelectedProductKind(e.target.value)}
+              style={{
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                backgroundColor: '#F9FAFB',
+                color: '#374151',
+                outline: 'none',
+                cursor: 'pointer',
+                width: '180px',
+                flexShrink: 0
+              }}
+            >
+              <option value="All">Select Product Type (All)</option>
+              {productKinds.map(kind => (
+                <option key={kind} value={kind}>{kind}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => handleSetSelectionMode(!isSelectionMode)}
+              style={{
+                padding: '10px 16px',
+                fontSize: '14px',
+                backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              {isSelectionMode ? 'Cancel' : 'Select Multiple'}
+            </button>
+
+            {isSelectionMode && Object.keys(selectedProducts).length > 0 && (
+              <button
+                onClick={() => setShowBulkCartModal(true)}
                 style={{
                   padding: '10px 16px',
                   fontSize: '14px',
-                  fontWeight: 500,
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
-                  backgroundColor: '#F9FAFB',
-                  color: '#374151',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  minWidth: '180px'
-                }}
-              >
-                <option value="All">Select Product Type (All)</option>
-                {productKinds.map(kind => (
-                  <option key={kind} value={kind}>{kind}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => handleSetSelectionMode(!isSelectionMode)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  backgroundColor: isSelectionMode ? '#EF4444' : '#2563EB',
+                  backgroundColor: '#059669',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
-                {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
+                Checkout ({Object.keys(selectedProducts).length})
               </button>
-
-              {isSelectionMode && (
-                <>
-                  <button
-                    onClick={handleSelectAll}
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: '12px',
-                      backgroundColor: '#10B981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Select All
-                  </button>
-
-                  {Object.keys(selectedProducts).length > 0 && (
-                    <button
-                      onClick={addSelectedToCart}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        backgroundColor: '#F59E0B',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Add Selected ({Object.keys(selectedProducts).length})
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        <div style={{
-          borderTop: '1px solid #E5E7EB',
-          marginBottom: '24px'
-        }}></div>
 
         {filteredProducts.length === 0 ? (
           error ? (
