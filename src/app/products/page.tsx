@@ -476,73 +476,7 @@ function ProductsPageContent() {
         </div>
       )}
 
-      {/* Search Bar & Refresh */}
-      {!showCheckout && (
-        <div style={{
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          width: '100%',
-          maxWidth: '1000px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            flex: 1,
-            maxWidth: '540px',
-            height: '36px',
-            padding: '0 8px',
-            gap: '8px'
-          }}>
-            <MagnifyingGlassIcon style={{
-              width: '20px',
-              height: '20px',
-              color: '#9CA3AF',
-              flexShrink: 0
-            }} />
-            <input
-              type="text"
-              placeholder="Search items by name or SKU or category"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                flex: 1,
-                outline: 'none',
-                backgroundColor: 'transparent',
-                fontSize: '14px',
-                minWidth: 0,
-                border: 'none'
-              }}
-            />
-          </div>
-          <button
-            onClick={refetch}
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: loading ? '#93C5FD' : '#2563EB',
-              color: 'white',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.2s',
-              fontSize: '14px',
-              flexShrink: 0
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = '#1D4ED8';
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = '#2563EB';
-            }}
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-      )}
+
 
       {/* Pending Sales */}
       {showPendingSales && (
@@ -574,57 +508,101 @@ function ProductsPageContent() {
           left: isCompact ? '32px' : 'auto'
         }}
       >
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ 
+          position: 'sticky', 
+          top: '-32px', // Match container padding
+          zIndex: 20, 
+          backgroundColor: 'white',
+          padding: '16px 0',
+          marginBottom: '24px',
+          borderBottom: '1px solid #F3F4F6',
+          marginTop: '-16px'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            gap: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+              {/* Category Dropdown */}
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 style={{
-                  padding: '8px 12px',
+                  padding: '10px 16px',
                   fontSize: '14px',
                   fontWeight: 500,
                   border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   backgroundColor: '#F9FAFB',
                   color: '#374151',
                   outline: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  minWidth: '180px'
                 }}
               >
-                <option value="All">Select Category (All)</option>
+                <option value="All">All Categories</option>
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
 
-              <span style={{ fontSize: '14px', color: '#6B7280' }}>
-                ({filteredProducts.length} products found)
-                {Object.keys(selectedProducts).length > 0 && (
-                  <span style={{ color: '#2563EB', marginLeft: '8px' }}>
-                    • {Object.keys(selectedProducts).length} selected
-                  </span>
-                )}
-              </span>
+              {/* Search Field with Icon */}
+              <div style={{
+                position: 'relative',
+                flex: 1,
+                maxWidth: '450px'
+              }}>
+                <MagnifyingGlassIcon style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '18px',
+                  height: '18px',
+                  color: '#9CA3AF'
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px 10px 44px',
+                    fontSize: '14px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '10px',
+                    backgroundColor: '#F9FAFB',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#2563EB'}
+                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                />
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {/* Product Type Dropdown */}
               <select 
                 value={selectedProductKind}
                 onChange={(e) => setSelectedProductKind(e.target.value)}
                 style={{
-                  padding: '8px 12px',
+                  padding: '10px 16px',
                   fontSize: '14px',
                   fontWeight: 500,
                   border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   backgroundColor: '#F9FAFB',
                   color: '#374151',
                   outline: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  minWidth: '180px'
                 }}
               >
-                <option value="All">Product Kind (All)</option>
+                <option value="All">Select Product Type (All)</option>
                 {productKinds.map(kind => (
                   <option key={kind} value={kind}>{kind}</option>
                 ))}
