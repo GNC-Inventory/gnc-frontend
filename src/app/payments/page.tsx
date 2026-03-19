@@ -41,28 +41,37 @@ export default function PaymentsPage() {
           new Date(t.createdAt).toDateString() === today
         );
 
-        const posAmount = todayTransactions.reduce((sum: number, t: any) => 
-          t.paymentMethod === 'POS' ? sum + t.total : sum, 0
-        );
-        const transferAmount = todayTransactions.reduce((sum: number, t: any) => 
-          t.paymentMethod === 'Transfer' ? sum + t.total : sum, 0
-        );
-        const cashAmount = todayTransactions.reduce((sum: number, t: any) => 
-          t.paymentMethod === 'Cash' ? sum + t.total : sum, 0
-        );
+        const posAmount = todayTransactions.reduce((sum: number, t: any) => {
+          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.pos || 0);
+          return t.paymentMethod === 'POS' ? sum + t.total : sum;
+        }, 0);
+        const transferAmount = todayTransactions.reduce((sum: number, t: any) => {
+          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.transfer || 0);
+          return t.paymentMethod === 'Transfer' ? sum + t.total : sum;
+        }, 0);
+        const cashAmount = todayTransactions.reduce((sum: number, t: any) => {
+          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.cashInHand || 0);
+          return t.paymentMethod === 'Cash' ? sum + t.total : sum;
+        }, 0);
 
         setStats({
           pos: { 
             amount: posAmount, 
-            count: todayTransactions.filter((t: any) => t.paymentMethod === 'POS').length 
+            count: todayTransactions.filter((t: any) => 
+              (t.paymentBreakdown && t.paymentBreakdown.pos > 0) || t.paymentMethod === 'POS'
+            ).length 
           },
           transfer: { 
             amount: transferAmount, 
-            count: todayTransactions.filter((t: any) => t.paymentMethod === 'Transfer').length 
+            count: todayTransactions.filter((t: any) => 
+              (t.paymentBreakdown && t.paymentBreakdown.transfer > 0) || t.paymentMethod === 'Transfer'
+            ).length 
           },
           cash: { 
             amount: cashAmount, 
-            count: todayTransactions.filter((t: any) => t.paymentMethod === 'Cash').length 
+            count: todayTransactions.filter((t: any) => 
+              (t.paymentBreakdown && t.paymentBreakdown.cashInHand > 0) || t.paymentMethod === 'Cash'
+            ).length 
           },
           total: { 
             amount: posAmount + transferAmount + cashAmount, 
