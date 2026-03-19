@@ -71,10 +71,19 @@ interface PaymentBreakdown {
 }
 
 function ProductsPageContent() {
-  // State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [isProcessingSale, setIsProcessingSale] = useState(false);
+  const [completedTransaction, setCompletedTransaction] = useState<CompletedTransaction | null>(null);
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const dispatch = useAppDispatch();
+  const { selectedProducts, isSelectionMode } = useAppSelector((state: RootState) => state.selection);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedProductKind, setSelectedProductKind] = useState<string>('All');
   const [showBulkCartModal, setShowBulkCartModal] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   // Hooks
   const { products, loading, error, refetch } = useInventory();
@@ -103,7 +112,7 @@ function ProductsPageContent() {
   }, [searchParams]);
 
   // Computed - use localProducts instead of products for real-time updates
-  const [showCart, setShowCart] = useState(false);
+
 
   // Add this effect right after the useState
   useEffect(() => {
