@@ -813,7 +813,7 @@ function ProductsPageContent() {
                     bottom: '100%',
                     left: '50%',
                     transform: 'translateX(-50%) translateY(10px)',
-                    width: '280px',
+                    width: '320px',
                     backgroundColor: 'white',
                     border: '1px solid #E5E7EB',
                     borderRadius: '12px',
@@ -826,10 +826,10 @@ function ProductsPageContent() {
                     pointerEvents: 'none',
                     marginBottom: '8px'
                   }}>
-                    <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '4px' }}>
+                    <h5 style={{ fontSize: '18px', fontWeight: 800, color: '#111827', marginBottom: '10px', borderBottom: '1px solid #F3F4F6', paddingBottom: '6px' }}>
                       Full Description
                     </h5>
-                    <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0, fontWeight: 400 }}>
+                    <p style={{ fontSize: '15px', color: '#374151', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
                       {product.description || 'No detailed description available for this product.'}
                     </p>
                     {product.sku && (
