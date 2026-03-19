@@ -715,6 +715,7 @@ function ProductsPageContent() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
+                className="product-card"
                 onClick={(e) => {
                   if (isSelectionMode) {
                     e.stopPropagation();
@@ -746,6 +747,36 @@ function ProductsPageContent() {
                   e.currentTarget.style.borderColor = '#E5E7EB';
                 }}
               >
+                {/* Tooltip for Description */}
+                <div className="product-tooltip" style={{
+                  position: 'absolute',
+                  top: '0',
+                  left: '102%',
+                  width: '260px',
+                  backgroundColor: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  zIndex: 150,
+                  visibility: 'hidden',
+                  opacity: 0,
+                  transition: 'opacity 0.2s, visibility 0.2s',
+                  pointerEvents: 'none'
+                }}>
+                  <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '4px' }}>
+                    Full Description
+                  </h5>
+                  <p style={{ fontSize: '12px', color: '#4B5563', lineHeight: '1.6', margin: 0 }}>
+                    {product.description || 'No detailed description available for this product.'}
+                  </p>
+                  {product.sku && (
+                    <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #F3F4F6', fontSize: '11px', color: '#9CA3AF' }}>
+                      SKU: {product.sku}
+                    </div>
+                  )}
+                </div>
+
                 {/* Product Image */}
                 <div style={{
                   width: '100%',
@@ -805,42 +836,45 @@ function ProductsPageContent() {
                 )}
 
                 {/* Product Info */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {/* Line 1: Brand, Type, and Model */}
                   <h4 style={{
                     fontSize: '15px',
                     fontWeight: 600,
                     color: '#111827',
                     margin: 0,
-                    lineHeight: '1.4'
+                    lineHeight: '1.4',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
                   }}>
-                    {product.name}
+                    {[product.make, product.type, product.model].filter(Boolean).join(' ') || product.name}
                   </h4>
-                  <p style={{
-                    fontSize: '13px',
-                    color: '#6B7280',
-                    margin: 0
-                  }}>
-                    {product.category}
-                  </p>
+
+                  {/* Line 2: Price */}
                   <p style={{
                     fontSize: '18px',
                     fontWeight: 700,
                     color: '#2563EB',
-                    margin: '4px 0 0 0'
+                    margin: 0
                   }}>
                     ₦{product.basePrice.toLocaleString()}
                   </p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  {/* Line 3: Low stock indicator */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 'auto' }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: '11px',
                       color: product.stockLeft <= 5 ? '#DC2626' : '#059669',
                       fontWeight: 600,
                       backgroundColor: product.stockLeft <= 5 ? '#FEF2F2' : '#F0FDF4',
-                      padding: '2px 8px',
-                      borderRadius: '12px'
+                      padding: '2px 10px',
+                      borderRadius: '12px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
                     }}>
-                      {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} left`}
+                      {product.stockLeft <= 5 ? `Low (${product.stockLeft})` : `${product.stockLeft} in stock`}
                     </span>
                   </div>
                 </div>
@@ -928,11 +962,20 @@ function ProductsPageContent() {
         </div>
       )}
 
-      {/* Add keyframes for loading spinner */}
+      {/* Add keyframes for loading spinner and tooltip effects */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        .product-card:hover .product-tooltip {
+          visibility: visible !important;
+          opacity: 1 !important;
+          transform: translateX(0) !important;
+        }
+        .product-tooltip {
+          transform: translateX(-10px);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
       `}</style>
     </div>
