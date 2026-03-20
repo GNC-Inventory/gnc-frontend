@@ -72,36 +72,40 @@ export default function PaymentsPage() {
           isDateInFilterRange(t.createdAt, dateFilter)
         );
 
+        // Helper: get the total from the breakdown object
+        const getBreakdownTotal = (pb: any) => (pb.pos || 0) + (pb.transfer || 0) + (pb.cashInHand || 0) + (pb.salesOnReturn || 0);
+
         const posAmount = filteredTransactions.reduce((sum: number, t: any) => {
-          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.pos || 0);
+          if (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0) return sum + (t.paymentBreakdown.pos || 0);
           return t.paymentMethod === 'POS' ? sum + t.total : sum;
         }, 0);
         const transferAmount = filteredTransactions.reduce((sum: number, t: any) => {
-          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.transfer || 0);
+          if (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0) return sum + (t.paymentBreakdown.transfer || 0);
           return t.paymentMethod === 'Transfer' ? sum + t.total : sum;
         }, 0);
         const cashAmount = filteredTransactions.reduce((sum: number, t: any) => {
-          if (t.paymentBreakdown) return sum + (t.paymentBreakdown.cashInHand || 0);
-          return t.paymentMethod === 'Cash' ? sum + t.total : sum;
+          if (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0) return sum + (t.paymentBreakdown.cashInHand || 0);
+          // Fallback: use total for cash/single-method transactions
+          return (t.paymentMethod === 'Cash' || t.paymentMethod === 'CASH' || t.paymentMethod === 'Mixed') ? sum + t.total : sum;
         }, 0);
 
         setStats({
           pos: { 
             amount: posAmount, 
             count: filteredTransactions.filter((t: any) => 
-              (t.paymentBreakdown && t.paymentBreakdown.pos > 0) || t.paymentMethod === 'POS'
+              (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0 && t.paymentBreakdown.pos > 0) || ((!t.paymentBreakdown || getBreakdownTotal(t.paymentBreakdown) === 0) && t.paymentMethod === 'POS')
             ).length 
           },
           transfer: { 
             amount: transferAmount, 
             count: filteredTransactions.filter((t: any) => 
-              (t.paymentBreakdown && t.paymentBreakdown.transfer > 0) || t.paymentMethod === 'Transfer'
+              (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0 && t.paymentBreakdown.transfer > 0) || ((!t.paymentBreakdown || getBreakdownTotal(t.paymentBreakdown) === 0) && t.paymentMethod === 'Transfer')
             ).length 
           },
           cash: { 
             amount: cashAmount, 
             count: filteredTransactions.filter((t: any) => 
-              (t.paymentBreakdown && t.paymentBreakdown.cashInHand > 0) || t.paymentMethod === 'Cash'
+              (t.paymentBreakdown && getBreakdownTotal(t.paymentBreakdown) > 0 && t.paymentBreakdown.cashInHand > 0) || ((!t.paymentBreakdown || getBreakdownTotal(t.paymentBreakdown) === 0) && (t.paymentMethod === 'Cash' || t.paymentMethod === 'CASH' || t.paymentMethod === 'Mixed'))
             ).length 
           },
           total: { 
