@@ -403,7 +403,7 @@ export default function TransactionsPage() {
                     fontWeight: 500,
                     fontSize: '12px',
                     color: '#6B7280',
-                    width: '100px'
+                    width: '140px'
                   }}>
                     Time
                   </th>
