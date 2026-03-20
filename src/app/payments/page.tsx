@@ -22,12 +22,44 @@ export default function PaymentsPage() {
   });
   const [actualCash, setActualCash] = useState('');
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState('Today');
+
+  // Helper to check if a date falls within a selected range
+  const isDateInFilterRange = (dateStr: string, filter: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    
+    // Reset times for date-only comparisons
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    switch (filter) {
+      case 'Today':
+        return itemDate.getTime() === today.getTime();
+      case 'Yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return itemDate.getTime() === yesterday.getTime();
+      case 'This Week':
+        const sun = new Date(today);
+        sun.setDate(today.getDate() - today.getDay());
+        return itemDate >= sun;
+      case 'This Month':
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        return itemDate >= firstDay;
+      case 'All Time':
+        return true;
+      default:
+        return itemDate.getTime() === today.getTime();
+    }
+  };
 
   useEffect(() => {
     loadPaymentStats();
-  }, []);
+  }, [dateFilter]);
 
   const loadPaymentStats = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sales`, {
         headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY! }
@@ -35,13 +67,12 @@ export default function PaymentsPage() {
       const result = await response.json();
       
       if (result.success) {
-        // Calculate stats from transactions
-        const today = new Date().toDateString();
-        const todayTransactions = result.data.filter((t: any) => 
-          new Date(t.createdAt).toDateString() === today
+        // Calculate stats from transactions based on filter
+        const filteredTransactions = result.data.filter((t: any) => 
+          isDateInFilterRange(t.createdAt, dateFilter)
         );
 
-        const posAmount = todayTransactions.reduce((sum: number, t: any) => {
+        const posAmount = filteredTransactions.reduce((sum: number, t: any) => {
           if (t.paymentBreakdown) return sum + (t.paymentBreakdown.pos || 0);
           return t.paymentMethod === 'POS' ? sum + t.total : sum;
         }, 0);
@@ -57,25 +88,25 @@ export default function PaymentsPage() {
         setStats({
           pos: { 
             amount: posAmount, 
-            count: todayTransactions.filter((t: any) => 
+            count: filteredTransactions.filter((t: any) => 
               (t.paymentBreakdown && t.paymentBreakdown.pos > 0) || t.paymentMethod === 'POS'
             ).length 
           },
           transfer: { 
             amount: transferAmount, 
-            count: todayTransactions.filter((t: any) => 
+            count: filteredTransactions.filter((t: any) => 
               (t.paymentBreakdown && t.paymentBreakdown.transfer > 0) || t.paymentMethod === 'Transfer'
             ).length 
           },
           cash: { 
             amount: cashAmount, 
-            count: todayTransactions.filter((t: any) => 
+            count: filteredTransactions.filter((t: any) => 
               (t.paymentBreakdown && t.paymentBreakdown.cashInHand > 0) || t.paymentMethod === 'Cash'
             ).length 
           },
           total: { 
             amount: posAmount + transferAmount + cashAmount, 
-            count: todayTransactions.length 
+            count: filteredTransactions.length 
           }
         });
       }
@@ -128,11 +159,39 @@ export default function PaymentsPage() {
       <div style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
         <div style={{ width: '100%', margin: '0' }}>
           {/* Header */}
-          <div style={{ marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
-              Payments & Reconciliation
-            </h1>
-            <p style={{ color: '#6B7280', fontSize: '14px' }}>Track payment methods and reconcile daily transactions</p>
+          <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+                Payments & Reconciliation
+              </h1>
+              <p style={{ color: '#6B7280', fontSize: '14px' }}>Track payment methods and reconcile transactions</p>
+            </div>
+
+            {/* Date Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '14px', color: '#6B7280' }}>Showing:</span>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  backgroundColor: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#374151',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="Today">Today</option>
+                <option value="Yesterday">Yesterday</option>
+                <option value="This Week">This Week</option>
+                <option value="This Month">This Month</option>
+                <option value="All Time">All Time</option>
+              </select>
+            </div>
           </div>
 
           {/* Payment Summary Cards */}

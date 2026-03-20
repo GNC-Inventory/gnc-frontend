@@ -62,6 +62,35 @@ export default function TransactionsPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<Transaction | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
+  // Helper to check if a date falls within a selected range
+  const isDateInFilterRange = (date: Date | null, filter: string) => {
+    if (!date || isNaN(date.getTime())) return false;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    switch (filter) {
+      case 'Today':
+        return itemDate.getTime() === today.getTime();
+      case 'Yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return itemDate.getTime() === yesterday.getTime();
+      case 'This Week':
+        const sun = new Date(today);
+        sun.setDate(today.getDate() - today.getDay());
+        return itemDate >= sun;
+      case 'This Month':
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        return itemDate >= firstDay;
+      case 'All Time':
+        return true;
+      default:
+        return itemDate.getTime() === today.getTime();
+    }
+  };
+
   useEffect(() => {
     const loadTransactions = async () => {
       try {
@@ -114,6 +143,12 @@ export default function TransactionsPage() {
   const filteredTransactions = transactions.filter(transaction => {
     if (!transaction.items || transaction.items.length === 0) return false;
     
+    // 1. Date Filter
+    if (!isDateInFilterRange(transaction.createdAt, dateFilter)) {
+      return false;
+    }
+
+    // 2. Search Query
     const matchesSearch = searchQuery.trim() === '' || 
       transaction.items.some(item => 
         item && (
@@ -132,16 +167,29 @@ export default function TransactionsPage() {
     setShowReceiptModal(true);
   };
 
-  const formatTime = (date: Date | null) => {
+  const formatDateTime = (date: Date | null) => {
     if (!date || isNaN(date.getTime())) {
-      return 'TIME MISSING';
+      return 'DATE MISSING';
     }
     
-    return date.toLocaleTimeString('en-US', { 
+    const dateStr = date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    const timeStr = date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit', 
       hour12: false 
     });
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ color: '#111827', fontWeight: 500 }}>{dateStr}</span>
+        <span style={{ fontSize: '12px', color: '#6B7280' }}>{timeStr}</span>
+      </div>
+    );
   };
 
   const getStatusBadgeStyle = (status: string) => {
@@ -490,7 +538,7 @@ export default function TransactionsPage() {
                           fontSize: '14px',
                           color: '#6B7280'
                         }}>
-                          {formatTime(transaction.createdAt)}
+                          {formatDateTime(transaction.createdAt)}
                         </td>
 
                         <td style={{
