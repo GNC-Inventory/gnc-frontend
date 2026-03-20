@@ -76,11 +76,11 @@ export default function PaymentsPage() {
           if (t.paymentBreakdown) return sum + (t.paymentBreakdown.pos || 0);
           return t.paymentMethod === 'POS' ? sum + t.total : sum;
         }, 0);
-        const transferAmount = todayTransactions.reduce((sum: number, t: any) => {
+        const transferAmount = filteredTransactions.reduce((sum: number, t: any) => {
           if (t.paymentBreakdown) return sum + (t.paymentBreakdown.transfer || 0);
           return t.paymentMethod === 'Transfer' ? sum + t.total : sum;
         }, 0);
-        const cashAmount = todayTransactions.reduce((sum: number, t: any) => {
+        const cashAmount = filteredTransactions.reduce((sum: number, t: any) => {
           if (t.paymentBreakdown) return sum + (t.paymentBreakdown.cashInHand || 0);
           return t.paymentMethod === 'Cash' ? sum + t.total : sum;
         }, 0);
