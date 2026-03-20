@@ -222,26 +222,28 @@ export default function Navbar({
 
         {/* New Sale Button */}
         {showNewSaleButton && (
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              height: '40px',
-              gap: '6px',
-              borderRadius: '10px',
-              padding: '0 16px',
-              backgroundColor: '#375DFB',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              color: 'white'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            <PlusIcon style={{ width: '16px', height: '16px' }} />
-            <span style={{ fontWeight: 500, fontSize: '14px' }}>New Sale</span>
-          </button>
+          <Link href="/products" style={{ textDecoration: 'none' }}>
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '40px',
+                gap: '6px',
+                borderRadius: '10px',
+                padding: '0 16px',
+                backgroundColor: '#375DFB',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s',
+                color: 'white'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              <PlusIcon style={{ width: '16px', height: '16px' }} />
+              <span style={{ fontWeight: 500, fontSize: '14px' }}>New Sale</span>
+            </button>
+          </Link>
         )}
       </div>
     </nav>
