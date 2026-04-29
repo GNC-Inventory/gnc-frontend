@@ -3,7 +3,9 @@
   publish = ".next"
 
 [build.environment]
-  NEXT_PUBLIC_API_URL = "https://gnc-inventory-backend-production.up.railway.app"
+  NEXT_PUBLIC_API_URL = "https://gnc-inventory-backend.fly.dev"
+  NEXT_PUBLIC_BACKEND_URL = "https://gnc-inventory-backend.fly.dev"
+  BACKEND_URL = "https://gnc-inventory-backend.fly.dev"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
